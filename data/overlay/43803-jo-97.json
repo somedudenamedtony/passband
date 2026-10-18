@@ -1,0 +1,9 @@
+{
+  "noradId": 43803,
+  "name": "JO-97",
+  "lotwName": "JO-97",
+  "difficulty": "advanced",
+  "receiveOnly": false,
+  "note": "Linear transponder for SSB and CW.",
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+}

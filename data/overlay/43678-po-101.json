@@ -1,0 +1,18 @@
+{
+  "noradId": 43678,
+  "name": "PO-101",
+  "lotwName": "PO-101",
+  "difficulty": "beginner",
+  "receiveOnly": false,
+  "note": "FM repeater that is switched on for scheduled passes only. The operators announce them in advance.",
+  "transmitterOverrides": [
+    {
+      "id": "HYB3Frb2cf4LUhzfbTCCw4",
+      "source": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-18: uplink 141.3 Hz CTCSS",
+      "set": {
+        "ctcssHz": 141.3
+      }
+    }
+  ],
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+}

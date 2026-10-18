@@ -1,0 +1,9 @@
+{
+  "noradId": 40931,
+  "name": "IO-86",
+  "lotwName": "IO-86",
+  "difficulty": "intermediate",
+  "receiveOnly": false,
+  "note": "FM repeater in a near-equatorial orbit, so it is only reachable from low latitudes.",
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+}
