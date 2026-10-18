@@ -11,7 +11,9 @@ import { Recordings } from './Recordings';
 import { shareOrDownload } from './share';
 
 type Catalog = LoadedCatalog;
-import { Banner, Button, Field, Sheet, inputClass } from './common';
+import { Banner, Button, Sheet } from './common';
+import { IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonSelect, IonSelectOption, IonText, useIonAlert } from '@ionic/react';
+import { shareOutline } from 'ionicons/icons';
 import { useClock } from './clock';
 
 /** D11: nudge for an export after this many unexported contacts. */
@@ -75,72 +77,75 @@ export function LogView({
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Log</h1>
-
-      <div className="grid grid-cols-2 gap-3">
+    <div className="stack">
+      <div className="stat-row">
         <Stat label="Contacts" value={String(qsos.length)} />
         <Stat label="Grids worked" value={`${grids.size} / ${VUCC}`} hint="toward VUCC" />
       </div>
 
       {unexported >= EXPORT_NUDGE && (
-        <Banner tone="warn">
-          {unexported} contacts haven’t been exported. Your phone isn’t a backup — export them now.
-        </Banner>
+        <Banner tone="warn">{unexported} contacts haven’t been exported. Your phone isn’t a backup — export them now.</Banner>
       )}
-      {!station.callsign && qsos.length > 0 && (
-        <Banner tone="warn">Set your callsign in Settings so the export carries it.</Banner>
-      )}
+      {!station.callsign && qsos.length > 0 && <Banner tone="warn">Set your callsign in Settings so the export carries it.</Banner>}
 
-      <div className="flex flex-col gap-2">
+      <div>
         <Button kind="primary" disabled={unexported === 0} onClick={() => void exportAdif('new')}>
+          <IonIcon slot="start" icon={shareOutline} aria-hidden />
           Export ADIF{unexported ? ` — ${unexported} new` : ''}
         </Button>
-        {qsos.length > 0 && <Button onClick={() => void exportAdif('all')}>Export all {qsos.length}</Button>}
+        {qsos.length > 0 && (
+          <Button kind="ghost" onClick={() => void exportAdif('all')}>
+            Export all {qsos.length}
+          </Button>
+        )}
       </div>
 
-      {sats.length > 1 && (
-        <Field label="Satellite">
-          <select
-            className={inputClass}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-          >
-            <option value="all">All satellites</option>
-            {sats.map(([id, name]) => (
-              <option key={id} value={id}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </Field>
-      )}
-
       {qsos.length === 0 ? (
-        <p className="py-6 text-center text-muted">No contacts yet. Use + LOG on the live screen during a pass.</p>
+        <p className="ion-text-center muted" style={{ padding: '24px 0' }}>
+          No contacts yet. Use Log on the live screen during a pass.
+        </p>
       ) : (
-        <ul className="divide-y divide-line rounded-2xl border border-line" aria-label="Contacts">
+        <IonList inset style={{ margin: 0 }} aria-label="Contacts">
+          {sats.length > 1 && (
+            <IonItem>
+              <IonSelect
+                label="Satellite"
+                value={String(filter)}
+                interface="action-sheet"
+                onIonChange={(e) => setFilter(e.detail.value === 'all' ? 'all' : Number(e.detail.value))}
+              >
+                <IonSelectOption value="all">All satellites</IonSelectOption>
+                {sats.map(([id, name]) => (
+                  <IonSelectOption key={id} value={String(id)}>
+                    {name}
+                  </IonSelectOption>
+                ))}
+              </IonSelect>
+            </IonItem>
+          )}
           {shown.map((q) => {
             const problems = lotwProblems(q);
             return (
-              <li key={q.id}>
-                <button type="button" onClick={() => setEditing(q)} className="tabular flex min-h-14 w-full items-center gap-3 px-3 py-2 text-left">
-                  <div className="flex-1">
-                    <div className="text-lg font-bold">
-                      {q.call}
-                      {q.gridsquare && <span className="font-normal text-muted"> · {grid4(q.gridsquare)}</span>}
-                    </div>
-                    <div className="text-sm text-muted">
-                      {q.satDisplayName} · {formatLocalDay(q.timeOn)} {formatLocalTime(q.timeOn)} · {formatUtc(q.timeOn)}
-                    </div>
-                    {problems.length > 0 && <div className="text-sm font-semibold text-danger-fg">{problems.join(' · ')}</div>}
-                  </div>
-                  <span className="text-xs text-muted">{q.exportedAt ? 'exported' : 'new'}</span>
-                </button>
-              </li>
+              <IonItem key={q.id} button onClick={() => setEditing(q)}>
+                <IonLabel className="tabular">
+                  <h2 style={{ fontWeight: 700 }}>
+                    {q.call}
+                    {q.gridsquare && <span className="muted" style={{ fontWeight: 400 }}> · {grid4(q.gridsquare)}</span>}
+                  </h2>
+                  <p>
+                    {q.satDisplayName} · {formatLocalDay(q.timeOn)} {formatLocalTime(q.timeOn)} · {formatUtc(q.timeOn)}
+                  </p>
+                  {problems.length > 0 && (
+                    <IonText color="danger">
+                      <p>{problems.join(' · ')}</p>
+                    </IonText>
+                  )}
+                </IonLabel>
+                <IonNote slot="end">{q.exportedAt ? 'exported' : 'new'}</IonNote>
+              </IonItem>
             );
           })}
-        </ul>
+        </IonList>
       )}
 
       <Recordings
@@ -172,10 +177,10 @@ export function LogView({
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-3">
-      <div className="text-sm text-muted">{label}</div>
-      <div className="tabular text-3xl font-black">{value}</div>
-      {hint && <div className="text-xs text-muted">{hint}</div>}
+    <div className="freq-panel">
+      <IonNote>{label}</IonNote>
+      <div className="readout readout-l">{value}</div>
+      {hint && <IonNote style={{ fontSize: '0.75rem' }}>{hint}</IonNote>}
     </div>
   );
 }
@@ -210,27 +215,37 @@ function EditQso({
   const t = parseUtcInput(time);
   const gridOk = grid === '' || isValidGrid(grid);
   const ok = call.trim().length >= 3 && t !== null && gridOk;
+  const [confirm] = useIonAlert();
   return (
     <Sheet title={`Edit ${qso.call}`} onClose={onClose}>
-      <div className="space-y-4">
-        <Field label="Their callsign">
-          <input className={`${inputClass} uppercase`} value={call} onChange={(e) => setCall(e.target.value.toUpperCase().trim())} />
-        </Field>
-        <Field label="Their grid">
-          <input className={`${inputClass}`} value={grid} maxLength={6} onChange={(e) => setGrid(e.target.value.trim())} aria-invalid={!gridOk} />
-        </Field>
-        <Field label="Time on (UTC)" hint="YYYY-MM-DD HH:MM:SS">
-          <input className={`${inputClass} tabular`} value={time} onChange={(e) => setTime(e.target.value)} aria-invalid={t === null} />
-        </Field>
-        <Field label="Note">
-          <input className={inputClass} value={note} onChange={(e) => setNote(e.target.value)} />
-        </Field>
-        <p className="tabular text-sm text-muted">
-          {qso.satDisplayName} · {qso.mode} · ↑ {formatMHz(qso.freqHz)} ↓ {formatMHz(qso.freqRxHz)} · from {qso.myGridsquare}
-        </p>
+      <IonList inset>
+        <IonItem>
+          <IonInput label="Their callsign" labelPlacement="stacked" value={call} className="callsign-input" onIonInput={(e) => setCall((e.detail.value ?? '').toUpperCase().trim())} />
+        </IonItem>
+        <IonItem>
+          <IonInput label="Their grid" labelPlacement="stacked" value={grid} maxlength={6} aria-invalid={!gridOk} onIonInput={(e) => setGrid((e.detail.value ?? '').trim())} />
+        </IonItem>
+        <IonItem>
+          <IonInput
+            label="Time on (UTC)"
+            labelPlacement="stacked"
+            className="tabular"
+            value={time}
+            helperText="YYYY-MM-DD HH:MM:SS"
+            aria-invalid={t === null}
+            onIonInput={(e) => setTime(e.detail.value ?? '')}
+          />
+        </IonItem>
+        <IonItem>
+          <IonInput label="Note" labelPlacement="stacked" value={note} onIonInput={(e) => setNote(e.detail.value ?? '')} />
+        </IonItem>
+      </IonList>
+      <IonNote className="tabular ion-padding-horizontal" style={{ display: 'block' }}>
+        {qso.satDisplayName} · {qso.mode} · ↑ {formatMHz(qso.freqHz)} ↓ {formatMHz(qso.freqRxHz)} · from {qso.myGridsquare}
+      </IonNote>
+      <div className="ion-padding">
         <Button
           kind="primary"
-          className="w-full"
           disabled={!ok}
           onClick={() =>
             onSave({
@@ -247,10 +262,17 @@ function EditQso({
           Save
         </Button>
         <Button
-          className="w-full"
-          onClick={() => {
-            if (confirm(`Delete the contact with ${qso.call}?`)) onDelete();
-          }}
+          kind="ghost"
+          color="danger"
+          onClick={() =>
+            void confirm({
+              header: `Delete the contact with ${qso.call}?`,
+              buttons: [
+                { text: 'Cancel', role: 'cancel' },
+                { text: 'Delete', role: 'destructive', handler: onDelete },
+              ],
+            })
+          }
         >
           Delete
         </Button>

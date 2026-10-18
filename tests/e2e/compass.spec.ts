@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { segment } from './segment';
 
 /** Feed the page an Android-style absolute orientation reading (D10). */
 async function orient(page: Page, alpha: number, beta: number, gamma: number) {
@@ -35,7 +36,7 @@ async function setup(page: Page) {
 test('compass view points the way to the satellite and shows its accuracy state', async ({ page }) => {
   await setup(page);
   await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click();
-  await page.getByRole('radio', { name: 'Compass' }).click();
+  await segment(page, 'Compass').click();
   await turnOnCompass(page);
   const feed = setInterval(() => void orient(page, 0, 20, 0).catch(() => undefined), 150);
   try {
@@ -50,10 +51,10 @@ test('compass view points the way to the satellite and shows its accuracy state'
 test('without a compass the live screen falls back to the north-up sky plot', async ({ page }) => {
   await setup(page);
   await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click();
-  await page.getByRole('radio', { name: 'Compass' }).click();
+  await segment(page, 'Compass').click();
   await turnOnCompass(page);
   await expect(page.getByText('No compass on this device')).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByRole('radio', { name: 'Sky' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('tab', { name: 'Sky' })).toHaveAttribute('aria-selected', 'true');
 });
 
 test('a horizon mask set by hand is saved with the location', async ({ page }) => {

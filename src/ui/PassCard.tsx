@@ -20,6 +20,8 @@ import { DAY } from '../model/time';
 import { exportPassesToCalendar } from './calendar';
 import { createCue } from '../cue/cue';
 import { Banner, Button } from './common';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon, IonNote } from '@ionic/react';
+import { calendarOutline, playOutline } from 'ionicons/icons';
 import { DifficultyBadge, StatusBadge } from './badges';
 
 interface Doppler {
@@ -105,117 +107,120 @@ export function PassCard({
   const tilde = approx ? '~' : '';
 
   return (
-    <article className="rounded-2xl border-2 border-accent bg-surface p-4" aria-label={`Pass of ${sat.name}`}>
-      <div className="mb-1 flex items-center justify-between text-sm font-semibold text-muted">
-        <span>{isNext ? 'Next good pass' : 'Selected pass'}</span>
-        {onBackToNext && !isNext && (
-          <button type="button" className="min-h-10 px-2 text-accent" onClick={onBackToNext}>
-            Back to next
-          </button>
-        )}
-      </div>
-      <div className="flex flex-wrap items-baseline gap-2">
-        <h2 className="text-3xl font-black">{sat.name}</h2>
-        <StatusBadge status={sat.status} />
-        <DifficultyBadge sat={sat} />
-      </div>
-
-      <p className="tabular mt-2 text-2xl font-bold">
-        {inProgress ? <>Up now · sets in {formatClock(pass.los - now)}</> : <>Rises {tilde}{formatCountdown(pass.aos - now)}</>}
-      </p>
-      <p className="tabular text-muted">
-        {formatLocalDay(pass.aos)} {tilde}
-        {formatLocalTime(pass.aos)}–{formatLocalTime(pass.los)} · {formatUtc(pass.aos)}
-      </p>
-
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <div>
-          <div className="text-sm text-muted">Highest</div>
-          <div className="tabular text-3xl font-black">{Math.round(pass.maxElDeg)}°</div>
+    <IonCard style={{ margin: 0 }} aria-label={`Pass of ${sat.name}`}>
+      <IonCardHeader>
+        <IonCardSubtitle>
+          {isNext ? 'Next good pass' : 'Selected pass'}
+          {onBackToNext && !isNext && (
+            <IonButton fill="clear" size="small" onClick={onBackToNext} style={{ float: 'right', margin: '-6px -8px 0 0' }}>
+              Back to next
+            </IonButton>
+          )}
+        </IonCardSubtitle>
+        <IonCardTitle style={{ fontSize: '2rem', fontWeight: 800 }}>
+          {sat.name} <StatusBadge status={sat.status} /> <DifficultyBadge sat={sat} />
+        </IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <div className="readout readout-m" style={{ color: 'var(--fg)' }}>
+          {inProgress ? <>Up now · sets in {formatClock(pass.los - now)}</> : <>Rises {tilde}{formatCountdown(pass.aos - now)}</>}
         </div>
-        <div>
-          <div className="text-sm text-muted">Duration</div>
-          <div className="tabular text-xl font-bold">{formatDuration(durationS)}</div>
-        </div>
-      </div>
-
-      <p className="mt-3 text-lg">
-        {isNew ? (
-          <>
-            Rises in the <b>{compassWord(pass.aosAzDeg)}</b>, sets in the <b>{compassWord(pass.losAzDeg)}</b>.
-          </>
-        ) : (
-          <span className="tabular">
-            AOS {Math.round(pass.aosAzDeg)}° {compassPoint(pass.aosAzDeg)} → LOS {Math.round(pass.losAzDeg)}°{' '}
-            {compassPoint(pass.losAzDeg)}
-          </span>
-        )}
-      </p>
-
-      {masked && (
-        <p className="mt-1 font-semibold">
-          Only {formatDuration(pass.visibleSecondsAboveMask)} above your horizon mask.
+        <p className="tabular">
+          {formatLocalDay(pass.aos)} {tilde}
+          {formatLocalTime(pass.aos)}–{formatLocalTime(pass.los)} · {formatUtc(pass.aos)}
         </p>
-      )}
 
-      {tx && <Frequencies tx={tx} doppler={doppler} inProgress={inProgress} isNew={isNew} />}
-
-      {!isNew && (
-        <dl className="tabular mt-3 grid grid-cols-3 gap-2 text-sm">
+        <div className="stat-row" style={{ marginTop: 12 }}>
           <div>
-            <dt className="text-muted">AOS</dt>
-            <dd>{formatUtc(pass.aos, true)}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">TCA</dt>
-            <dd>{formatUtc(pass.tca, true)}</dd>
-          </div>
-          <div>
-            <dt className="text-muted">LOS</dt>
-            <dd>{formatUtc(pass.los, true)}</dd>
-          </div>
-          {doppler?.spanHz != null && (
-            <div className="col-span-3">
-              <dt className="inline text-muted">Downlink Doppler, AOS → LOS: </dt>
-              <dd className="inline">{formatOffsetKHz(doppler.spanHz)}</dd>
+            <IonNote>Highest</IonNote>
+            <div className="readout readout-l" style={{ color: 'var(--fg)' }}>
+              {Math.round(pass.maxElDeg)}°
             </div>
-          )}
-        </dl>
-      )}
-
-      {isNew && (sat.overlay.note || tx) && (
-        <div className="mt-3 space-y-2 border-t border-line pt-3 text-base">
-          {sat.overlay.note && <p>{sat.overlay.note}</p>}
-          {tx && (
-            <p className="text-muted">
-              <b className="text-fg">You’ll need:</b> {gearHint(tx)}
-            </p>
-          )}
+          </div>
+          <div>
+            <IonNote>Duration</IonNote>
+            <div className="readout readout-m" style={{ color: 'var(--fg)' }}>
+              {formatDuration(durationS)}
+            </div>
+          </div>
         </div>
-      )}
 
-      <p className={`mt-3 text-sm ${age === 'fresh' ? 'text-muted' : 'font-semibold'}`}>
-        Elements {formatElementAge(pass.elementsEpoch, now)}
-        {approx && ' — times are approximate'}
-      </p>
-      <Button
-        kind="primary"
-        className="mt-4 w-full text-lg"
-        onClick={() => {
-          // The tap is the user gesture browsers need before cues can make a sound (D14).
-          createCue(station.cues).unlock();
-          onStart();
-        }}
-      >
-        {inProgress ? 'Track it now' : 'Start'}
-      </Button>
-      <Reminders pass={pass} sat={sat} location={location} station={station} now={now} />
-      {approx && (
-        <div className="mt-2">
+        <p style={{ fontSize: '1.05rem', marginTop: 12, color: 'var(--fg)' }}>
+          {isNew ? (
+            <>
+              Rises in the <b>{compassWord(pass.aosAzDeg)}</b>, sets in the <b>{compassWord(pass.losAzDeg)}</b>.
+            </>
+          ) : (
+            <span className="tabular">
+              AOS {Math.round(pass.aosAzDeg)}° {compassPoint(pass.aosAzDeg)} → LOS {Math.round(pass.losAzDeg)}°{' '}
+              {compassPoint(pass.losAzDeg)}
+            </span>
+          )}
+        </p>
+
+        {masked && (
+          <p style={{ fontWeight: 600 }}>Only {formatDuration(pass.visibleSecondsAboveMask)} above your horizon mask.</p>
+        )}
+
+        {tx && <Frequencies tx={tx} doppler={doppler} inProgress={inProgress} isNew={isNew} />}
+
+        {!isNew && (
+          <div className="tabular" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
+            <div>
+              <IonNote>AOS</IonNote>
+              <div>{formatUtc(pass.aos, true)}</div>
+            </div>
+            <div>
+              <IonNote>TCA</IonNote>
+              <div>{formatUtc(pass.tca, true)}</div>
+            </div>
+            <div>
+              <IonNote>LOS</IonNote>
+              <div>{formatUtc(pass.los, true)}</div>
+            </div>
+            {doppler?.spanHz != null && (
+              <div style={{ gridColumn: 'span 3' }}>
+                <IonNote>Downlink Doppler, AOS → LOS: </IonNote>
+                {formatOffsetKHz(doppler.spanHz)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {isNew && (sat.overlay.note || tx) && (
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+            {sat.overlay.note && <p style={{ color: 'var(--fg)' }}>{sat.overlay.note}</p>}
+            {tx && (
+              <p style={{ marginTop: 8 }}>
+                <b style={{ color: 'var(--fg)' }}>You’ll need:</b> {gearHint(tx)}
+              </p>
+            )}
+          </div>
+        )}
+
+        <p style={{ marginTop: 12, fontWeight: age === 'fresh' ? 400 : 600 }}>
+          Elements {formatElementAge(pass.elementsEpoch, now)}
+          {approx && ' — times are approximate'}
+        </p>
+        <Button
+          kind="primary"
+          size="large"
+          className="ion-margin-top"
+          onClick={() => {
+            // The tap is the user gesture browsers need before cues can make a sound (D14).
+            createCue(station.cues).unlock();
+            onStart();
+          }}
+        >
+          <IonIcon slot="start" icon={playOutline} aria-hidden />
+          {inProgress ? 'Track it now' : 'Start'}
+        </Button>
+        <Reminders pass={pass} sat={sat} location={location} station={station} now={now} />
+        {approx && (
           <Banner tone="danger">These elements are over two weeks old. The satellite may be minutes away from where this says.</Banner>
-        </div>
-      )}
-    </article>
+        )}
+      </IonCardContent>
+    </IonCard>
   );
 }
 
@@ -226,25 +231,27 @@ function Frequencies({ tx, doppler, inProgress, isNew }: { tx: Transmitter; dopp
     const down = t?.downlinkHz ?? tx.downlinkHz;
     const up = t?.uplinkHz ?? tx.uplinkHz;
     return (
-      <div className="tabular mt-3 space-y-1 rounded-xl bg-bg p-3">
+      <div className="freq-panel" style={{ marginTop: 12 }}>
         {down !== null && (
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-muted">↓ Listen {t?.tuneSide === 'downlink' ? when : ''}</span>
-            <span className="text-2xl font-black">{formatMHz(down)}</span>
+          <div className="freq-row">
+            <span className="freq-label">↓ Listen {t?.tuneSide === 'downlink' ? when : ''}</span>
+            <span className="readout readout-m" style={{ color: 'var(--fg)' }}>{formatMHz(down)}</span>
           </div>
         )}
         {up !== null && (
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-muted">↑ Transmit {t?.tuneSide === 'uplink' ? when : ''}</span>
-            <span className="text-2xl font-black">{formatMHz(up)}</span>
+          <div className="freq-row">
+            <span className="freq-label">↑ Transmit {t?.tuneSide === 'uplink' ? when : ''}</span>
+            <span className="readout readout-m" style={{ color: 'var(--fg)' }}>{formatMHz(up)}</span>
           </div>
         )}
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-muted">Tone</span>
-          <span className={`text-lg font-bold ${tx.ctcssHz === 'unknown' ? 'italic' : ''}`}>{formatTone(tx.ctcssHz)}</span>
+        <div className="freq-row">
+          <span className="freq-label">Tone</span>
+          <b style={{ color: 'var(--fg)', fontStyle: tx.ctcssHz === 'unknown' ? 'italic' : undefined }}>
+            {formatTone(tx.ctcssHz)}
+          </b>
         </div>
         {isNew && t?.tuneSide && (
-          <p className="pt-1 text-sm text-muted">
+          <p style={{ marginTop: 6, fontSize: '0.85rem' }}>
             Leave the {t.tuneSide === 'downlink' ? 'transmit' : 'listen'} frequency alone and retune the{' '}
             {t.tuneSide === 'downlink' ? 'listen' : 'transmit'} side as the satellite passes.
           </p>
@@ -257,20 +264,20 @@ function Frequencies({ tx, doppler, inProgress, isNew }: { tx: Transmitter; dopp
   const down = range(tx.downlinkHz, tx.downlinkHighHz);
   const up = range(tx.uplinkHz, tx.uplinkHighHz);
   return (
-    <div className="tabular mt-3 space-y-1 rounded-xl bg-bg p-3">
-      <div className="text-sm text-muted">
+    <div className="freq-panel" style={{ marginTop: 12 }}>
+      <IonNote>
         {tx.mode} {tx.kind === 'linear_transponder' && (tx.inverting ? '· inverting' : tx.inverting === false ? '· non-inverting' : '')}
-      </div>
+      </IonNote>
       {down && (
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-muted">↓</span>
-          <span className="text-xl font-bold">{down}</span>
+        <div className="freq-row">
+          <span className="freq-label">↓</span>
+          <b className="readout" style={{ fontSize: '1.2rem', color: 'var(--fg)' }}>{down}</b>
         </div>
       )}
       {up && (
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-muted">↑</span>
-          <span className="text-xl font-bold">{up}</span>
+        <div className="freq-row">
+          <span className="freq-label">↑</span>
+          <b className="readout" style={{ fontSize: '1.2rem', color: 'var(--fg)' }}>{up}</b>
         </div>
       )}
     </div>
@@ -281,8 +288,9 @@ function Frequencies({ tx, doppler, inProgress, isNew }: { tx: Transmitter; dopp
 function Reminders({ pass, sat, location, station, now }: { pass: Pass; sat: Satellite; location: Location; station: Station; now: number }) {
   const [busy, setBusy] = useState(false);
   return (
-    <div className="mt-2 grid grid-cols-2 gap-2">
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
       <Button onClick={() => void exportPassesToCalendar([pass], sat, now, `${sat.name}-${formatLocalTime(pass.aos).replace(/\W/g, '')}`)}>
+        <IonIcon slot="start" icon={calendarOutline} aria-hidden />
         Remind me
       </Button>
       <Button
@@ -299,7 +307,7 @@ function Reminders({ pass, sat, location, station, now }: { pass: Pass; sat: Sat
           }
         }}
       >
-        {busy ? 'Working…' : `All ${sat.name} this week`}
+        {busy ? 'Working…' : 'This week'}
       </Button>
     </div>
   );

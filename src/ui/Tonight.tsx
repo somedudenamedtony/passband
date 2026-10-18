@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { IonItem, IonList, IonNote, IonToggle } from '@ionic/react';
 import type { LoadedCatalog } from '../data/catalog';
 import { elementAgeDays, elementAgeLevel } from '../model/elementAge';
 import { listedSatellites, nextGoodPass, samePass } from '../model/selection';
@@ -45,7 +46,7 @@ export function Tonight({
   const catalogDays = elementAgeDays(catalog.catalog.generatedAt, now);
 
   return (
-    <div className="space-y-4">
+    <div className="stack">
       <AgeBanner sats={sats} now={now} />
       {catalogDays >= 3 && (
         <Banner tone="warn">
@@ -57,7 +58,9 @@ export function Tonight({
       {error && <Banner tone="danger">Prediction failed: {error}</Banner>}
 
       {passes === null ? (
-        <p className="py-8 text-center text-muted">Working out passes…</p>
+        <p className="ion-text-center muted" style={{ padding: '32px 0' }}>
+          Working out passes…
+        </p>
       ) : featured && featuredSat ? (
         <PassCard
           pass={featured}
@@ -90,25 +93,22 @@ export function Tonight({
         </>
       )}
 
-      <div className="flex flex-wrap gap-4 text-sm">
-        <label className="flex min-h-12 items-center gap-2">
-          <input type="checkbox" className="size-5" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
-          Show all satellites
-        </label>
-        <label className="flex min-h-12 items-center gap-2">
-          <input
-            type="checkbox"
-            className="size-5"
-            checked={showInactive}
-            onChange={(e) => setShowInactive(e.target.checked)}
-          />
-          Include inactive
-        </label>
-      </div>
-      <p className="text-xs text-muted">
+      <IonList inset style={{ margin: '16px 0 0' }}>
+        <IonItem>
+          <IonToggle checked={showAll} onIonChange={(e) => setShowAll(e.detail.checked)}>
+            Show all satellites
+          </IonToggle>
+        </IonItem>
+        <IonItem lines="none">
+          <IonToggle checked={showInactive} onIonChange={(e) => setShowInactive(e.detail.checked)}>
+            Include inactive
+          </IonToggle>
+        </IonItem>
+      </IonList>
+      <IonNote style={{ display: 'block', fontSize: '0.8rem' }}>
         {sats.length} satellites · {station.experience === 'new' ? 'easy FM satellites and listening targets' : 'all with a working uplink'}
         {showAll && ' · showing all'}
-      </p>
+      </IonNote>
     </div>
   );
 }
@@ -120,7 +120,7 @@ function AgeBanner({ sats, now }: { sats: Satellite[]; now: number }) {
   if (!aging.length && !stale.length) return null;
   const names = (l: Satellite[]) => l.slice(0, 4).map((s) => s.name).join(', ') + (l.length > 4 ? ` and ${l.length - 4} more` : '');
   return (
-    <div className="space-y-2">
+    <div className="stack">
       {stale.length > 0 && (
         <Banner tone="danger">
           Elements over 14 days old for {names(stale)}. Their pass times are approximate.

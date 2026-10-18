@@ -8,7 +8,9 @@ import { formatClock, formatLocalDay, formatLocalTime, formatUtc } from '../mode
 import type { Catalog, Location, QsoRecord, Recording, Station } from '../model/types';
 import { rangeRateAt } from '../predict/client';
 import type { RigSetting } from '../rig/rig';
-import { Button } from './common';
+import { Banner, Button, SectionTitle } from './common';
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonNote, useIonAlert } from '@ionic/react';
+import { addOutline, playOutline, trashOutline } from 'ionicons/icons';
 import { QuickLog } from './QuickLog';
 import { formatBytes } from './share';
 
@@ -38,6 +40,7 @@ export function Recordings({
   const [pending, setPending] = useState<Pending | null>(null);
   const [use, setUse] = useState<StorageUse | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
+  const [confirm] = useIonAlert();
   const url = useMemo(() => (playing ? URL.createObjectURL(playing.blob) : null), [playing]);
   useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url]);
   useEffect(() => {
@@ -69,57 +72,61 @@ export function Recordings({
   if (!recordings.length) return null;
 
   return (
-    <section aria-label="Recordings" className="space-y-2">
-      <h2 className="text-lg font-bold">Recordings</h2>
-      <p className="text-sm text-muted">
+    <section aria-label="Recordings">
+      <SectionTitle>Recordings</SectionTitle>
+      <IonNote style={{ display: 'block', marginBottom: 8 }}>
         {recordings.length} recording{recordings.length === 1 ? '' : 's'}, {formatBytes(use?.recordingsBytes ?? 0)}
         {use?.quotaBytes != null && use.usedBytes != null && ` · ${formatBytes(use.usedBytes)} of ${formatBytes(use.quotaBytes)} used on this device`}
-      </p>
-      <ul className="divide-y divide-line rounded-2xl border border-line">
+      </IonNote>
+      <IonList inset style={{ margin: 0 }}>
         {recordings.map((r) => (
-          <li key={r.id} className="space-y-2 p-3">
-            <div className="tabular flex items-baseline justify-between gap-2">
-              <span className="font-bold">{r.satDisplayName}</span>
-              <span className="text-sm text-muted">
+          <IonItem key={r.id} lines="full">
+            <IonLabel className="tabular" style={{ whiteSpace: 'normal' }}>
+              <h2 style={{ fontWeight: 700 }}>{r.satDisplayName}</h2>
+              <p>
                 {formatLocalDay(r.startedAt)} {formatLocalTime(r.startedAt)} · {formatClock(r.durationMs)}
-              </span>
-            </div>
-            {r.interrupted && <p className="text-sm font-semibold">Interrupted — the screen locked or the app was backgrounded.</p>}
-            {playing?.id === r.id && url ? (
+                {r.interrupted && ' · interrupted (screen locked or app backgrounded)'}
+              </p>
+              {playing?.id === r.id && url && (
+                <div className="stack" style={{ marginTop: 8 }}>
+                  <audio ref={audio} src={url} controls autoPlay style={{ width: '100%' }} onTimeUpdate={(e) => setPos(e.currentTarget.currentTime)} />
+                  <div className="readout readout-m ion-text-center" aria-live="off">
+                    {formatUtc(r.startedAt + pos * 1000, true)}
+                  </div>
+                  <Button kind="primary" onClick={() => void logAtThisMoment(r)}>
+                    <IonIcon slot="start" icon={addOutline} aria-hidden />
+                    Log at this moment
+                  </Button>
+                </div>
+              )}
+            </IonLabel>
+            {playing?.id !== r.id && (
               <>
-                <audio
-                  ref={audio}
-                  src={url}
-                  controls
-                  autoPlay
-                  className="w-full"
-                  onTimeUpdate={(e) => setPos(e.currentTarget.currentTime)}
-                />
-                <p className="tabular text-center font-bold" aria-live="off">
-                  {formatUtc(r.startedAt + pos * 1000, true)}
-                </p>
-                <Button kind="primary" className="w-full" onClick={() => void logAtThisMoment(r)}>
-                  + Log at this moment
-                </Button>
-              </>
-            ) : (
-              <div className="flex gap-2">
-                <Button className="flex-1" onClick={() => { setPos(0); setPlaying(r); }}>
-                  ▶ Play
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (confirm(`Delete this ${r.satDisplayName} recording?`)) onDelete(r.id);
-                  }}
+                <IonButton slot="end" fill="clear" onClick={() => { setPos(0); setPlaying(r); }} aria-label="Play">
+                  <IonIcon slot="icon-only" icon={playOutline} aria-hidden />
+                </IonButton>
+                <IonButton
+                  slot="end"
+                  fill="clear"
+                  color="medium"
                   aria-label={`Delete ${r.satDisplayName} recording`}
+                  onClick={() =>
+                    void confirm({
+                      header: `Delete this ${r.satDisplayName} recording?`,
+                      buttons: [
+                        { text: 'Cancel', role: 'cancel' },
+                        { text: 'Delete', role: 'destructive', handler: () => onDelete(r.id) },
+                      ],
+                    })
+                  }
                 >
-                  🗑
-                </Button>
-              </div>
+                  <IonIcon slot="icon-only" icon={trashOutline} aria-hidden />
+                </IonButton>
+              </>
             )}
-          </li>
+          </IonItem>
         ))}
-      </ul>
+      </IonList>
       {pending && pendingSat && pendingTx && pendingLoc && (
         <QuickLog
           sat={pendingSat}
@@ -136,7 +143,7 @@ export function Recordings({
         />
       )}
       {pending && !(pendingSat && pendingTx && pendingLoc) && (
-        <p className="text-sm font-semibold">That satellite or location is no longer on this device, so this moment can’t be logged.</p>
+        <Banner tone="warn">That satellite or location is no longer on this device, so this moment can’t be logged.</Banner>
       )}
     </section>
   );

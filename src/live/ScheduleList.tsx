@@ -1,4 +1,5 @@
 import { formatMHz } from '../model/freq';
+import { IonItem, IonLabel, IonList, IonNote } from '@ionic/react';
 import { formatClock, formatLocalTime } from '../model/format';
 import type { RetuneSchedule } from '../model/schedule';
 
@@ -9,25 +10,29 @@ export function ScheduleList({ schedule, aos, now }: { schedule: RetuneSchedule;
   const currentIdx = schedule.steps.findLastIndex((s) => s.t <= now);
   return (
     <div>
-      <p className="mb-2 text-sm text-muted">
+      <IonNote style={{ display: 'block', marginBottom: 8 }}>
         {side === 'downlink' ? 'Listen' : 'Transmit'} frequency through the pass. The other side stays put.
-      </p>
-      <ol className="tabular divide-y divide-line rounded-xl border border-line">
+      </IonNote>
+      <IonList inset style={{ margin: 0 }} className="tabular">
         {schedule.steps.map((s, i) => {
           const hz = side === 'downlink' ? s.downlinkHz : s.uplinkHz;
+          const current = i === currentIdx;
           return (
-            <li
-              key={s.t}
-              className={`flex min-h-11 items-center justify-between px-3 ${i === currentIdx ? 'bg-accent font-bold text-accent-fg' : ''}`}
-            >
-              <span className="w-10 text-sm opacity-70">M{i + 1}</span>
-              <span className="flex-1 text-sm">{i === 0 ? 'At rise' : `+${formatClock(s.t - aos)}`}</span>
-              <span className="w-20 whitespace-nowrap text-sm opacity-70">{formatLocalTime(s.t)}</span>
-              <span className="w-24 text-right text-lg font-bold">{hz === null ? '—' : formatMHz(hz)}</span>
-            </li>
+            <IonItem key={s.t} color={current ? 'primary' : undefined} aria-current={current}>
+              <IonNote slot="start" color={current ? 'light' : undefined} style={{ width: 28 }}>
+                M{i + 1}
+              </IonNote>
+              <IonLabel>
+                {i === 0 ? 'At rise' : `+${formatClock(s.t - aos)}`}
+                <p>{formatLocalTime(s.t)}</p>
+              </IonLabel>
+              <b slot="end" className="readout" style={{ fontSize: '1.15rem' }}>
+                {hz === null ? '—' : formatMHz(hz)}
+              </b>
+            </IonItem>
           );
         })}
-      </ol>
+      </IonList>
     </div>
   );
 }

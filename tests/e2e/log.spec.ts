@@ -22,7 +22,7 @@ test('log a contact during a pass and export it as ADIF', async ({ page }) => {
   await expect(page.getByText('Logged K1ABC')).toBeVisible();
 
   await page.getByRole('button', { name: 'Done' }).click();
-  await page.getByRole('button', { name: 'Log', exact: true }).click();
+  await page.getByRole('tab', { name: 'Log', exact: true }).click();
   await expect(page.getByRole('list', { name: 'Contacts' })).toContainText('K1ABC');
   await expect(page.getByText('1 / 100')).toBeVisible();
 

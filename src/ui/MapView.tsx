@@ -15,7 +15,8 @@ import type { Location, QsoRecord, Station } from '../model/types';
 import { formatDistance } from '../model/units';
 import { groundTrack } from '../predict/client';
 import type { GroundPoint } from '../predict/worker';
-import { Field, Segmented, inputClass } from './common';
+import { Segmented } from './common';
+import { IonItem, IonList, IonNote, IonSelect, IonSelectOption, IonToggle } from '@ionic/react';
 import { useNow } from './clock';
 import { gridsWorked } from './LogView';
 import { usePasses } from './usePasses';
@@ -133,17 +134,18 @@ export function MapView({
   const future = track.filter((p) => p.t >= now).map((p) => [p.latDeg, p.lonDeg] as [number, number]);
 
   return (
-    <div className="space-y-3">
-      <h1 className="text-2xl font-bold">Map</h1>
-      <Field label="Satellite">
-        <select className={inputClass} value={satId ?? ''} onChange={(e) => setChoice(Number(e.target.value))}>
-          {sats.map((s) => (
-            <option key={s.noradId} value={s.noradId}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </Field>
+    <div className="stack">
+      <IonList inset style={{ margin: 0 }}>
+        <IonItem lines="none">
+          <IonSelect label="Satellite" value={satId ?? undefined} interface="action-sheet" onIonChange={(e) => setChoice(Number(e.detail.value))}>
+            {sats.map((s) => (
+              <IonSelectOption key={s.noradId} value={s.noradId}>
+                {s.name}
+              </IonSelectOption>
+            ))}
+          </IonSelect>
+        </IonItem>
+      </IonList>
       <Segmented
         label="Zoom"
         value={zoom}
@@ -154,8 +156,8 @@ export function MapView({
           { value: 'local', label: 'Local' },
         ]}
       />
-      <div className="overflow-hidden rounded-2xl border border-line">
-        <svg viewBox={viewBox} className="block aspect-[2/1] w-full bg-surface" role="img" aria-label="Map">
+      <div>
+        <svg viewBox={viewBox} className="map-svg" role="img" aria-label="Map">
           <g fill="var(--bar-dim)" stroke="none">
             {[-360, 0, 360].map((off) => (
               <path
@@ -166,8 +168,8 @@ export function MapView({
           </g>
           {fieldLines}
           {squareLines}
-          {reach && [...reach].map((g) => gridRect(g, 'fill-accent/15', `r${g}`))}
-          {[...worked].filter((g) => isValidGrid(g)).map((g) => gridRect(g, 'fill-accent/60', `w${g}`))}
+          {reach && [...reach].map((g) => gridRect(g, 'fill-reach', `r${g}`))}
+          {[...worked].filter((g) => isValidGrid(g)).map((g) => gridRect(g, 'fill-worked', `w${g}`))}
           {here && (
             <path
               d={pathOf(circle(here.latDeg, here.lonDeg, footprintAngle(here.altM)))}
@@ -189,19 +191,20 @@ export function MapView({
         </svg>
       </div>
       {sat && here && (
-        <p className="tabular text-sm">
+        <p className="tabular" style={{ margin: 0 }}>
           <b>{sat.name}</b> over {grid4(toGrid6(here.latDeg, here.lonDeg))} · {formatDistance(here.altM, station.units)} up ·
           footprint {formatDistance(2 * footprintRadiusM(here.altM), station.units)} across
         </p>
       )}
-      <label className="flex min-h-12 items-center gap-3">
-        <input type="checkbox" className="size-6" checked={showReach} onChange={(e) => setShowReach(e.target.checked)} />
-        <span>
-          Grids {location.name} can reach through {sat?.name ?? 'this satellite'}
-          <span className="block text-sm text-muted">Pick a rove location from the location chip to plan an activation.</span>
-        </span>
-      </label>
-      <p className="text-sm text-muted">
+      <IonList inset style={{ margin: 0 }}>
+        <IonItem lines="none">
+          <IonToggle checked={showReach} onIonChange={(e) => setShowReach(e.detail.checked)}>
+            Grids {location.name} can reach through {sat?.name ?? 'this satellite'}
+            <IonNote style={{ display: 'block' }}>Pick a rove location from the location chip to plan an activation.</IonNote>
+          </IonToggle>
+        </IonItem>
+      </IonList>
+      <p className="muted" style={{ fontSize: '0.85rem' }}>
         {worked.size} grid{worked.size === 1 ? '' : 's'} worked (dark squares). The map works offline; there are no street-level tiles.
       </p>
     </div>

@@ -10,6 +10,8 @@ import { compassPoint } from '../model/format';
 import { foldSweep, type Pointing } from '../model/orientation';
 import type { Location, Station } from '../model/types';
 import { Button, Sheet } from './common';
+import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonLabel, IonList, IonNote } from '@ionic/react';
+import { cameraOutline } from 'ionicons/icons';
 import { useNow } from './clock';
 
 const MAX_MASK = 45;
@@ -45,63 +47,70 @@ export function MaskEditor({
 
   return (
     <Sheet title={`Horizon at ${location.name}`} onClose={onClose}>
-      <div className="space-y-4">
-        <p className="text-sm text-muted">
+      <div className="stack">
+        <IonNote style={{ display: 'block' }}>
           The lowest elevation you can see over trees and buildings, all the way round. Passes are judged on the part
           above it.
-        </p>
+        </IonNote>
         <SkyPlot track={[]} now={null} mask={mask} />
 
         {sweeping ? (
-          <div className="space-y-2">
-            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-black">
-              <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-x-0 top-1/2 h-0.5 bg-white/80" />
-              <p className="tabular absolute inset-x-0 bottom-0 bg-black/60 px-3 py-2 text-center text-white">
+          <div className="stack">
+            <div className="ar-view">
+              <video ref={videoRef} playsInline muted />
+              <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: 2, background: 'rgba(255,255,255,0.8)' }} />
+              <p className="ar-note tabular" style={{ fontSize: '0.9rem', padding: 8 }}>
                 {cam ? `${compassPoint(cam.azDeg)} ${Math.round(cam.azDeg)}° · ${Math.round(cam.elDeg)}° up` : 'Waiting for the compass…'}
                 {camState === 'denied' && ' · camera refused, sweep still works'}
               </p>
             </div>
-            <p className="text-sm">Hold the phone upright, put the line on the treetops, and turn slowly all the way round.</p>
+            <p>Hold the phone upright, put the line on the treetops, and turn slowly all the way round.</p>
             <CompassStatus compass={compass} station={station} now={now} />
-            <Button kind="primary" className="w-full" onClick={stopSweep}>
+            <Button kind="primary" onClick={stopSweep}>
               Done sweeping
             </Button>
           </div>
         ) : (
-          <Button className="w-full" onClick={() => setSweeping(true)}>
+          <Button onClick={() => setSweeping(true)}>
+            <IonIcon slot="start" icon={cameraOutline} aria-hidden />
             Sweep the horizon with the camera
           </Button>
         )}
 
-        <details>
-          <summary className="min-h-12 cursor-pointer font-semibold">Adjust by hand</summary>
-          <ul className="tabular space-y-1">
-            {mask.map((m, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="w-16 text-sm">
-                  {compassPoint(i * 10 + 5)} {i * 10}°
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={MAX_MASK}
-                  value={m}
-                  aria-label={`Minimum elevation from ${i * 10}° to ${i * 10 + 10}°`}
-                  onChange={(e) => setMask((cur) => cur.map((v, j) => (j === i ? Number(e.target.value) : v)))}
-                  className="h-10 flex-1"
-                />
-                <span className="w-10 text-right text-sm">{m}°</span>
-              </li>
-            ))}
-          </ul>
-        </details>
+        <IonAccordionGroup>
+          <IonAccordion value="hand">
+            <IonItem slot="header">
+              <IonLabel>Adjust by hand</IonLabel>
+            </IonItem>
+            <IonList slot="content" className="tabular">
+              {mask.map((m, i) => (
+                <IonItem key={i} lines="none">
+                  <IonLabel style={{ flex: '0 0 72px' }}>
+                    {compassPoint(i * 10 + 5)} {i * 10}°
+                  </IonLabel>
+                  <input
+                    type="range"
+                    min={0}
+                    max={MAX_MASK}
+                    value={m}
+                    aria-label={`Minimum elevation from ${i * 10}° to ${i * 10 + 10}°`}
+                    onChange={(e) => setMask((cur) => cur.map((v, j) => (j === i ? Number(e.target.value) : v)))}
+                    style={{ flex: 1, accentColor: 'var(--ion-color-primary)', minHeight: 40 }}
+                  />
+                  <IonNote slot="end" style={{ width: 36, textAlign: 'right' }}>
+                    {m}°
+                  </IonNote>
+                </IonItem>
+              ))}
+            </IonList>
+          </IonAccordion>
+        </IonAccordionGroup>
 
-        <div className="flex gap-2">
-          <Button className="flex-1" onClick={() => setMask(mask.map(() => 0))}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button expand={undefined} className="ion-flex-1" onClick={() => setMask(mask.map(() => 0))}>
             Clear
           </Button>
-          <Button kind="primary" className="flex-1" onClick={() => onSave({ ...location, horizonMask: mask })}>
+          <Button kind="primary" expand={undefined} className="ion-flex-1" onClick={() => onSave({ ...location, horizonMask: mask })}>
             Save
           </Button>
         </div>

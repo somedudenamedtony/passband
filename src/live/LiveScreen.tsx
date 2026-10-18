@@ -16,7 +16,21 @@ import { usePassRecorder } from '../record/usePassRecorder';
 import { formatDistance } from '../model/units';
 import { passTrackFor } from '../predict/client';
 import { DisplayRig } from '../rig/rig';
-import { Banner, Button, Segmented } from '../ui/common';
+import { Banner, Button, Segmented, SectionTitle } from '../ui/common';
+import {
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonFooter,
+  IonHeader,
+  IonIcon,
+  IonModal,
+  IonNote,
+  IonTitle,
+  IonToast,
+  IonToolbar,
+} from '@ionic/react';
+import { addOutline, micOutline, stopCircleOutline, volumeHighOutline, volumeMuteOutline } from 'ionicons/icons';
 import { QuickLog } from '../ui/QuickLog';
 import { useNow } from '../ui/clock';
 import { CompassStatus } from '../compass/CompassStatus';
@@ -135,217 +149,223 @@ export function LiveScreen({
 
   if (stale && !ackStale) {
     return (
-      <Overlay>
-        <div className="space-y-4 py-6">
-          <h1 className="text-2xl font-bold">These elements are {formatElementAge(pass.elementsEpoch, now)}</h1>
+      <LiveModal onClose={onClose}>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>{sat.name}</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <h1 style={{ fontWeight: 800 }}>These elements are {formatElementAge(pass.elementsEpoch, now)}</h1>
           <p>
             Predictions for {sat.name} come from orbital elements more than two weeks old. The satellite may be minutes
             away from where this screen says, and pointing at the wrong patch of sky is the most common reason a first
             pass fails.
           </p>
-          <div className="flex flex-col gap-2">
+          <div className="stack">
             <Button kind="primary" onClick={() => setAckStale(true)}>
               Start anyway
             </Button>
             <Button onClick={onClose}>Back</Button>
           </div>
-        </div>
-      </Overlay>
+        </IonContent>
+      </LiveModal>
     );
   }
 
+  const nextHz = next ? (schedule?.tuneSide === 'uplink' ? next.uplinkHz : next.downlinkHz) : null;
+
   return (
-    <Overlay>
-      <header className="flex items-center gap-3 py-2">
-        <h1 className="text-3xl font-black">{sat.name}</h1>
-        <span className="tabular text-lg font-bold">▲ {Math.round(pass.maxElDeg)}°</span>
-        <button
-          type="button"
-          className="min-h-12 min-w-12 rounded-full border border-line text-xl disabled:opacity-40"
-          disabled={!anyCueOutput}
-          aria-pressed={cuesOn}
-          aria-label={!anyCueOutput ? 'Cues are off in Settings' : cuesOn ? 'Cues on' : 'Cues off'}
-          onClick={() => {
-            if (!cuesOn) cue.unlock();
-            setCuesOn((c) => !c);
-          }}
-        >
-          {cuesOn && anyCueOutput ? '🔊' : '🔇'}
-        </button>
-        <span className="tabular ml-auto text-lg font-bold" aria-live="off">
-          {phase === 'before' && <>rises {formatCountdown(pass.aos - now)}</>}
-          {phase === 'during' && <>⏱ {formatClock(pass.los - now)}</>}
-          {phase === 'after' && 'Pass over'}
-        </span>
-      </header>
+    <LiveModal onClose={onClose}>
+      <IonHeader>
+        <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton
+              disabled={!anyCueOutput}
+              aria-pressed={cuesOn}
+              aria-label={!anyCueOutput ? 'Cues are off in Settings' : cuesOn ? 'Cues on' : 'Cues off'}
+              onClick={() => {
+                if (!cuesOn) cue.unlock();
+                setCuesOn((c) => !c);
+              }}
+            >
+              <IonIcon slot="icon-only" icon={cuesOn && anyCueOutput ? volumeHighOutline : volumeMuteOutline} aria-hidden />
+            </IonButton>
+          </IonButtons>
+          <IonTitle>
+            {sat.name} <span className="muted tabular">▲ {Math.round(pass.maxElDeg)}°</span>
+          </IonTitle>
+          <IonButtons slot="end">
+            <IonButton strong onClick={onClose}>
+              Done
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+      </IonHeader>
 
-      {rec.state === 'recording' && (
-        <p role="status" className="font-bold text-danger-fg">
-          ● Recording{rec.interrupted && ' — it was interrupted, keep the screen on'}
-        </p>
-      )}
-      {rec.state === 'saved' && rec.last && (
-        <Banner tone={rec.last.interrupted ? 'warn' : 'info'}>
-          {rec.last.interrupted
-            ? `Recording was interrupted (the screen locked or the app went to the background). Kept ${formatClock(rec.last.durationMs)}.`
-            : `Recording saved: ${formatClock(rec.last.durationMs)}. Play it back from the Log.`}
-        </Banner>
-      )}
-      {rec.state === 'error' && <Banner tone="warn">Couldn’t record — microphone access may have been refused.</Banner>}
-      {(wake === 'failed' || wake === 'unsupported') && (
-        <Banner tone="warn">Keep the screen on — your phone may lock.</Banner>
-      )}
-      {stale && <Banner tone="danger">Elements {formatElementAge(pass.elementsEpoch, now)} — positions are approximate.</Banner>}
+      <IonContent className="ion-padding">
+        <div style={{ maxWidth: 560, margin: '0 auto' }} className="stack">
+          <div className="readout readout-m ion-text-center" aria-live="off">
+            {phase === 'before' && <>Rises {formatCountdown(pass.aos - now)}</>}
+            {phase === 'during' && <>Sets in {formatClock(pass.los - now)}</>}
+            {phase === 'after' && 'Pass over'}
+          </div>
 
-      <Segmented
-        label="View"
-        value={effectiveView}
-        onChange={setView}
-        options={[
-          { value: 'sky', label: 'Sky' },
-          { value: 'compass', label: 'Compass' },
-          { value: 'ar', label: 'AR' },
-        ]}
-      />
-      {view !== 'sky' && (
-        <div className="my-2">
-          <CompassStatus compass={compass} station={station} now={now} />
-        </div>
-      )}
-      {effectiveView === 'compass' && compassOk && here && (
-        <PointingGuide target={here} device={compass.reading!.top} />
-      )}
-      <div className="relative">
-        {effectiveView === 'ar' ? (
-          <ARView compass={compass} sat={here} track={track ?? []} />
-        ) : track ? (
-          <SkyPlot
-            track={track}
-            now={here}
-            mask={location.horizonMask}
-            headingDeg={effectiveView === 'compass' && compassOk ? compass.reading!.top.azDeg : null}
+          {rec.state === 'recording' && (
+            <p role="status" className="recording-dot">
+              ● Recording{rec.interrupted && ' — it was interrupted, keep the screen on'}
+            </p>
+          )}
+          {rec.state === 'saved' && rec.last && (
+            <Banner tone={rec.last.interrupted ? 'warn' : 'info'}>
+              {rec.last.interrupted
+                ? `Recording was interrupted (the screen locked or the app went to the background). Kept ${formatClock(rec.last.durationMs)}.`
+                : `Recording saved: ${formatClock(rec.last.durationMs)}. Play it back from the Log.`}
+            </Banner>
+          )}
+          {rec.state === 'error' && <Banner tone="warn">Couldn’t record — microphone access may have been refused.</Banner>}
+          {(wake === 'failed' || wake === 'unsupported') && <Banner tone="warn">Keep the screen on — your phone may lock.</Banner>}
+          {stale && <Banner tone="danger">Elements {formatElementAge(pass.elementsEpoch, now)} — positions are approximate.</Banner>}
+
+          <Segmented
+            label="View"
+            value={effectiveView}
+            onChange={setView}
+            options={[
+              { value: 'sky', label: 'Sky' },
+              { value: 'compass', label: 'Compass' },
+              { value: 'ar', label: 'AR' },
+            ]}
           />
-        ) : (
-          <p className="py-16 text-center text-muted">Plotting the pass…</p>
-        )}
-        <div className="tabular absolute right-0 bottom-0 text-right">
-          {phase === 'during' && here ? (
-            <>
-              <div className="text-3xl font-black">AZ {Math.round(here.azDeg)}</div>
-              <div className="text-3xl font-black">EL {Math.round(here.elDeg)}</div>
-            </>
-          ) : (
-            <div className="text-lg font-bold">
-              Rises {isNew ? `in the ${compassWord(pass.aosAzDeg)}` : `${Math.round(pass.aosAzDeg)}° ${compassPoint(pass.aosAzDeg)}`}
-            </div>
-          )}
-        </div>
-      </div>
-      {phase === 'during' && here && (
-        <p className="tabular text-center text-muted">
-          {compassWord(here.azDeg)} · {formatDistance(here.rangeM, station.units)} away
-          {here.rangeRateMps < 0 ? ' · approaching' : ' · receding'}
-        </p>
-      )}
+          {view !== 'sky' && <CompassStatus compass={compass} station={station} now={now} />}
+          {effectiveView === 'compass' && compassOk && here && <PointingGuide target={here} device={compass.reading!.top} />}
 
-      {tx && setting && (
-        <section aria-label="Frequencies" className="tabular my-3 space-y-1 rounded-2xl border-2 border-accent bg-surface p-3">
-          {setting.uplinkHz !== null && (
-            <div className="flex items-baseline gap-3">
-              <span className="w-6 text-2xl">↑</span>
-              <span className="text-3xl font-black">{formatMHz(setting.uplinkHz)}</span>
-              <span className={`ml-auto text-lg font-bold ${setting.ctcssHz === 'unknown' ? 'italic' : ''}`}>
-                {formatTone(setting.ctcssHz)}
-              </span>
-            </div>
+          <div className="sky-wrap">
+            {effectiveView === 'ar' ? (
+              <ARView compass={compass} sat={here} track={track ?? []} />
+            ) : track ? (
+              <SkyPlot
+                track={track}
+                now={here}
+                mask={location.horizonMask}
+                headingDeg={effectiveView === 'compass' && compassOk ? compass.reading!.top.azDeg : null}
+              />
+            ) : (
+              <p className="ion-text-center muted" style={{ padding: '64px 0' }}>
+                Plotting the pass…
+              </p>
+            )}
+          </div>
+          <div className="azel-row">
+            {phase === 'during' && here ? (
+              <>
+                <div className="readout readout-xl">AZ {Math.round(here.azDeg)}</div>
+                <div className="readout readout-xl">EL {Math.round(here.elDeg)}</div>
+              </>
+            ) : (
+              <b style={{ fontSize: '1.1rem' }}>
+                Rises{' '}
+                {isNew ? `in the ${compassWord(pass.aosAzDeg)}` : `${Math.round(pass.aosAzDeg)}° ${compassPoint(pass.aosAzDeg)}`}
+              </b>
+            )}
+          </div>
+          {phase === 'during' && here && (
+            <p className="tabular ion-text-center muted">
+              {compassWord(here.azDeg)} · {formatDistance(here.rangeM, station.units)} away
+              {here.rangeRateMps < 0 ? ' · approaching' : ' · receding'}
+            </p>
           )}
-          {setting.downlinkHz !== null && (
-            <div className="flex items-baseline gap-3">
-              <span className="w-6 text-2xl">↓</span>
-              <span className="text-3xl font-black">{formatMHz(setting.downlinkHz)}</span>
-              {next && phase !== 'after' && (
-                <span className="ml-auto text-lg font-bold">
-                  next {schedule?.tuneSide === 'uplink' ? '↑' : '↓'}{' '}
-                  {formatClock(next.t - Math.max(now, pass.aos))}
-                </span>
+
+          {tx && setting && (
+            <section aria-label="Frequencies" className="freq-panel" style={{ border: '2px solid var(--ion-color-primary)' }}>
+              {setting.uplinkHz !== null && (
+                <div className="freq-row">
+                  <span className="readout readout-m" aria-hidden>↑</span>
+                  <span className="readout readout-l" style={{ flex: 1 }}>{formatMHz(setting.uplinkHz)}</span>
+                  <b style={{ fontStyle: setting.ctcssHz === 'unknown' ? 'italic' : undefined }}>{formatTone(setting.ctcssHz)}</b>
+                </div>
               )}
-            </div>
+              {setting.downlinkHz !== null && (
+                <div className="freq-row">
+                  <span className="readout readout-m" aria-hidden>↓</span>
+                  <span className="readout readout-l" style={{ flex: 1 }}>{formatMHz(setting.downlinkHz)}</span>
+                  {next && phase !== 'after' && (
+                    <b className="tabular">
+                      next {schedule?.tuneSide === 'uplink' ? '↑' : '↓'} {formatClock(next.t - Math.max(now, pass.aos))}
+                    </b>
+                  )}
+                </div>
+              )}
+              {next && phase !== 'after' && nextHz !== null && (
+                <IonNote style={{ display: 'block', marginTop: 6 }}>
+                  Then {formatMHz(nextHz)}.{isNew && ` Retune the ${schedule?.tuneSide === 'uplink' ? 'transmit' : 'listen'} side only.`}
+                </IonNote>
+              )}
+              {tx.kind !== 'fm_repeater' && here && (
+                <IonNote style={{ display: 'block', marginTop: 6 }}>
+                  {tx.mode}. Doppler now: downlink{' '}
+                  {tx.downlinkHz !== null && formatOffsetKHz((exactAt(tx, here.rangeRateMps).downlinkHz ?? 0) - tx.downlinkHz)}
+                </IonNote>
+              )}
+            </section>
           )}
-          {next && phase !== 'after' && (
-            <p className="text-sm text-muted">
-              Then {formatMHz((schedule?.tuneSide === 'uplink' ? next.uplinkHz : next.downlinkHz) ?? 0)}.
-              {isNew && ` Retune the ${schedule?.tuneSide === 'uplink' ? 'transmit' : 'listen'} side only.`}
-            </p>
+
+          {practice && tx && (
+            <PracticePanel controls={practice} tx={tx} schedule={schedule} here={here} up={phase === 'during'} now={now} stepHz={station.radioStepHz} />
           )}
-          {tx.kind !== 'fm_repeater' && here && (
-            <p className="text-sm text-muted">
-              {tx.mode}. Doppler now: downlink{' '}
-              {tx.downlinkHz !== null && formatOffsetKHz((exactAt(tx, here.rangeRateMps).downlinkHz ?? 0) - tx.downlinkHz)}
-            </p>
+
+          {phase === 'before' && now >= pass.aos - PRE_PASS && (
+            <section>
+              <SectionTitle>Before it rises</SectionTitle>
+              <Checklist pass={pass} tx={tx} />
+            </section>
           )}
-        </section>
-      )}
 
-      {practice && tx && (
-        <PracticePanel
-          controls={practice}
-          tx={tx}
-          schedule={schedule}
-          here={here}
-          up={phase === 'during'}
-          now={now}
-          stepHz={station.radioStepHz}
-        />
-      )}
+          {schedule && (phase === 'before' || !isNew) && (
+            <section>
+              <SectionTitle>Retune schedule</SectionTitle>
+              <ScheduleList schedule={schedule} aos={pass.aos} now={now} />
+            </section>
+          )}
 
-      {phase === 'before' && now >= pass.aos - PRE_PASS && (
-        <section className="my-4">
-          <h2 className="mb-2 text-lg font-bold">Before it rises</h2>
-          <Checklist pass={pass} tx={tx} />
-        </section>
-      )}
-
-      {schedule && (phase === 'before' || !isNew) && (
-        <section className="my-4">
-          <h2 className="mb-2 text-lg font-bold">Retune schedule</h2>
-          <ScheduleList schedule={schedule} aos={pass.aos} now={now} />
-        </section>
-      )}
-
-      {phase === 'before' && now < pass.aos - PRE_PASS && (
-        <p className="my-3 text-sm text-muted">The checklist appears five minutes before the pass.</p>
-      )}
-
-      <div className="sticky bottom-0 mt-auto flex gap-3 bg-bg py-3">
-        <Button
-          kind={rec.state === 'recording' ? 'primary' : 'secondary'}
-          className="flex-1"
-          disabled={!!practice || rec.state === 'unsupported' || rec.state === 'saving'}
-          onClick={rec.toggle}
-          aria-label={practice ? 'Recording is off in practice' : rec.state === 'recording' ? 'Stop recording' : 'Record the pass'}
-        >
-          {rec.state === 'recording' ? '■ STOP' : rec.state === 'saving' ? 'Saving…' : '● REC'}
-        </Button>
-        {tx?.uplinkHz != null && (
-          <Button
-            kind="primary"
-            className="flex-1"
-            disabled={!!practice}
-            onClick={() => setLogAt(now)}
-            aria-label={practice ? 'Logging is off in practice' : 'Log a contact'}
-          >
-            {practice ? 'No log' : '+ LOG'}
-          </Button>
-        )}
-        <Button className="flex-1" onClick={onClose}>
-          Done
-        </Button>
-      </div>
-      {logged && (
-        <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl bg-fg px-4 py-3 text-center font-bold text-bg">
-          Logged {logged}
+          {phase === 'before' && now < pass.aos - PRE_PASS && (
+            <IonNote style={{ display: 'block' }}>The checklist appears five minutes before the pass.</IonNote>
+          )}
         </div>
-      )}
+      </IonContent>
+
+      <IonFooter>
+        <IonToolbar>
+          <div style={{ display: 'flex', gap: 8, padding: '0 8px' }}>
+            <IonButton
+              style={{ flex: 1 }}
+              size="large"
+              color="danger"
+              fill={rec.state === 'recording' ? 'solid' : 'outline'}
+              disabled={!!practice || rec.state === 'unsupported' || rec.state === 'saving'}
+              onClick={rec.toggle}
+              aria-label={practice ? 'Recording is off in practice' : rec.state === 'recording' ? 'Stop recording' : 'Record the pass'}
+            >
+              <IonIcon slot="start" icon={rec.state === 'recording' ? stopCircleOutline : micOutline} aria-hidden />
+              {rec.state === 'recording' ? 'Stop' : rec.state === 'saving' ? 'Saving…' : 'Rec'}
+            </IonButton>
+            {tx?.uplinkHz != null && (
+              <IonButton
+                style={{ flex: 1 }}
+                size="large"
+                disabled={!!practice}
+                onClick={() => setLogAt(now)}
+                aria-label={practice ? 'Logging is off in practice' : 'Log a contact'}
+              >
+                <IonIcon slot="start" icon={addOutline} aria-hidden />
+                {practice ? 'No log' : 'Log'}
+              </IonButton>
+            )}
+          </div>
+        </IonToolbar>
+      </IonFooter>
+
+      <IonToast isOpen={logged !== null} message={logged ? `Logged ${logged}` : ''} duration={2500} position="top" onDidDismiss={() => setLogged(null)} />
       {logAt !== null && tx && (
         <QuickLog
           sat={sat}
@@ -359,26 +379,18 @@ export function LiveScreen({
             onLog(q);
             setLogAt(null);
             setLogged(q.call);
-            setTimeout(() => setLogged(null), 2500);
           }}
         />
       )}
-    </Overlay>
+    </LiveModal>
   );
 }
 
-function Overlay({ children }: { children: ReactNode }) {
-  // The page underneath must not scroll while the live screen is up.
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
+/** Full-screen, above the tabs. The phone's back button closes it (App owns the history entry). */
+function LiveModal({ onClose, children }: { onClose: () => void; children: ReactNode }) {
   return (
-    <div className="fixed inset-0 z-30 overflow-y-auto bg-bg">
-      <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4">{children}</div>
-    </div>
+    <IonModal isOpen onDidDismiss={onClose} aria-label="Live pass">
+      {children}
+    </IonModal>
   );
 }

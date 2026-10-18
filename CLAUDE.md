@@ -16,7 +16,7 @@ repo and package name.
 
 ## Stack
 
-Vite · React · TypeScript · Tailwind · `vite-plugin-pwa` · `satellite.js` in a Web Worker ·
+Vite · React · TypeScript · Ionic React (no Ionic router) · `vite-plugin-pwa` · `satellite.js` in a Web Worker ·
 IndexedDB via `idb`. Static hosting; **no backend** (D1).
 
 ## The things most likely to be got wrong

@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
+import { IonInput, IonItem, IonList, IonNote, IonText } from '@ionic/react';
 import { locationFromCoords, locationFromGrid } from '../data/locations';
 import { isValidGrid } from '../model/grid';
 import type { Location } from '../model/types';
-import { Button, Field, inputClass } from './common';
+import { Button } from './common';
 
 /** D8: a manually entered grid or the Geolocation API. Nothing is sent anywhere. */
 export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Location) => void; submitLabel?: string }) {
@@ -12,8 +13,8 @@ export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Loc
   const [locating, setLocating] = useState(false);
   const canLocate = typeof navigator !== 'undefined' && 'geolocation' in navigator;
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
+  function submit(e?: FormEvent) {
+    e?.preventDefault();
     if (!isValidGrid(grid)) {
       setError('Enter a 4- or 6-character grid square, like CN87 or CN87uo.');
       return;
@@ -44,30 +45,31 @@ export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Loc
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <Field label="Name (optional)">
-        <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Home" />
-      </Field>
-      <Field label="Grid square" hint="Your Maidenhead locator. QRZ or a grid map will tell you yours.">
-        <input
-          className={`${inputClass} uppercase`}
-          value={grid}
-          onChange={(e) => setGrid(e.target.value)}
-          placeholder="CN87uo"
-          autoCapitalize="characters"
-          autoCorrect="off"
-          spellCheck={false}
-          maxLength={6}
-          aria-invalid={error !== null}
-        />
-      </Field>
-      {error && (
-        <p role="alert" className="text-sm font-semibold text-danger-fg">
-          {error}
-        </p>
-      )}
-      <div className="flex flex-col gap-2">
-        <Button type="submit" kind="primary">
+    <form onSubmit={submit}>
+      <IonList inset>
+        <IonItem>
+          <IonInput label="Name (optional)" labelPlacement="stacked" value={name} placeholder="Home" onIonInput={(e) => setName(e.detail.value ?? '')} />
+        </IonItem>
+        <IonItem>
+          <IonInput
+            label="Grid square"
+            labelPlacement="stacked"
+            value={grid}
+            placeholder="CN87uo"
+            autocapitalize="characters"
+            autocorrect={false}
+            spellcheck={false}
+            maxlength={6}
+            helperText="Your Maidenhead locator. QRZ or a grid map will tell you yours."
+            onIonInput={(e) => setGrid(e.detail.value ?? '')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submit();
+            }}
+          />
+        </IonItem>
+      </IonList>
+      <div className="ion-padding-horizontal stack">
+        <Button kind="primary" type="submit">
           {submitLabel}
         </Button>
         {canLocate && (
@@ -75,17 +77,22 @@ export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Loc
             {locating ? 'Finding you…' : 'Use my current location'}
           </Button>
         )}
+        {error && (
+          <IonText color="danger">
+            <p role="alert">{error}</p>
+          </IonText>
+        )}
+        <IonNote>Your location stays on this device.</IonNote>
       </div>
-      <p className="text-sm text-muted">Your location stays on this device.</p>
     </form>
   );
 }
 
 export function LocationSetup({ onSave }: { onSave: (l: Location) => void }) {
   return (
-    <section className="space-y-4 py-4">
-      <h1 className="text-2xl font-bold">Where are you operating from?</h1>
-      <p className="text-muted">Passband needs a location to work out which satellites pass over you, and when.</p>
+    <section>
+      <h1 style={{ fontWeight: 800 }}>Where are you operating from?</h1>
+      <p className="muted">Passband needs a location to work out which satellites pass over you, and when.</p>
       <LocationForm onSave={onSave} submitLabel="Show my passes" />
     </section>
   );

@@ -19,6 +19,9 @@ import { deleteRecording, listRecordings } from '../data/recordings';
 import { EXPORT_NUDGE, LogView, unexportedCount } from './LogView';
 import { ClockContext } from './clock';
 import { Banner, Button } from './common';
+import { TabBar, type TabSpec } from './TabBar';
+import { IonApp, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar } from '@ionic/react';
+import { listOutline, locationOutline, mapOutline, schoolOutline, settingsOutline, telescopeOutline } from 'ionicons/icons';
 import { Learn } from './Learn';
 import { MapView } from './MapView';
 import { LocationSheet } from './LocationSheet';
@@ -142,132 +145,118 @@ export function App() {
 
   if (!ready) return null;
 
+  const tabs = [
+    { id: 'tonight', label: 'Tonight', icon: telescopeOutline },
+    { id: 'map', label: 'Map', icon: mapOutline },
+    { id: 'log', label: 'Log', icon: listOutline },
+    { id: 'learn', label: station.experience === 'new' ? 'Learn' : 'Help', icon: schoolOutline },
+  ] as const satisfies ReadonlyArray<TabSpec<Tab>>;
+  const title = !location ? 'Passband' : (tabs.find((t) => t.id === tab)?.label ?? 'Passband');
+
   return (
-    <div className="mx-auto flex min-h-dvh max-w-lg flex-col px-4">
-      <header className="sticky top-0 z-10 flex items-center gap-2 bg-bg py-3">
-        {location ? (
-          <button
-            type="button"
-            onClick={() => setSheet('locations')}
-            className="min-h-12 flex-1 truncate rounded-full border border-line bg-surface px-4 text-left font-semibold"
-          >
-            <span aria-hidden>📍 </span>
-            {location.name}
-            {location.name !== location.grid6.slice(0, 4) && <span className="text-muted"> · {location.grid6.slice(0, 4)}</span>}
-          </button>
-        ) : (
-          <h1 className="flex-1 text-xl font-bold">Passband</h1>
-        )}
-        <button
-          type="button"
-          onClick={() => setSheet('settings')}
-          className="min-h-12 min-w-12 rounded-full border border-line bg-surface text-xl"
-          aria-label="Settings"
-        >
-          ⚙
-        </button>
-      </header>
+    <IonApp>
+      <div className="ion-page">
+        <IonHeader>
+          <IonToolbar>
+            {location && (
+              <IonButtons slot="start">
+                <IonButton onClick={() => setSheet('locations')} aria-label={`Location: ${location.name}`}>
+                  <IonIcon slot="start" icon={locationOutline} aria-hidden />
+                  {location.name}
+                </IonButton>
+              </IonButtons>
+            )}
+            <IonTitle>{title}</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={() => setSheet('settings')} aria-label="Settings">
+                <IonIcon slot="icon-only" icon={settingsOutline} aria-hidden />
+              </IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
 
-      <main className="flex-1 pb-24">
-        {catalogError && (
-          <Banner tone="danger">
-            Couldn’t load satellite data, and none is saved on this device yet. Connect once to download
-            it; after that Passband works offline.
-            <div className="mt-2">
-              <Button
-                onClick={() => {
-                  setCatalogError(false);
-                  void loadCatalog().then((c) => {
-                    setCatalog(c);
-                    setCatalogError(c === null);
-                  });
-                }}
-              >
-                Try again
-              </Button>
-            </div>
-          </Banner>
-        )}
-        {!location ? (
-          <LocationSetup onSave={addLocation} />
-        ) : catalog ? (
-          tab === 'map' ? (
-            <MapView catalog={catalog} location={location} station={station} qsos={qsos} />
-          ) : tab === 'log' ? (
-            <LogView
-              qsos={qsos}
-              station={station}
-              onSave={(q) => void logQso(q)}
-              onDelete={(id) => void deleteQso(id).then(refreshLog)}
-              onExported={(ids, at) => void markExported(ids, at).then(refreshLog)}
-              recordings={recordings}
-              onDeleteRecording={(id) => void deleteRecording(id).then(refreshRecordings)}
-              catalog={catalog}
-              locations={locations}
-            />
-          ) : tab === 'tonight' ? (
-            <>
-              {unexportedCount(qsos) >= EXPORT_NUDGE && (
-                <div className="mb-4">
-                  <Banner tone="warn">
-                    {unexportedCount(qsos)} contacts aren’t exported yet.{' '}
-                    <button type="button" className="font-bold underline" onClick={() => setTab('log')}>
-                      Export from the Log
-                    </button>
-                  </Banner>
-                </div>
-              )}
-              <Tonight
-              catalog={catalog}
-              location={location}
-              station={station}
-              selected={selected}
-              onSelect={setSelected}
-              onStart={openLive}
-            />
-            </>
-          ) : (
-            <Learn
-              catalog={catalog}
-              location={location}
-              station={station}
-              onPick={(p) => {
-                setSelected(p);
-                setTab('tonight');
-                window.scrollTo(0, 0);
-              }}
-              onPractice={openPractice}
-            />
-          )
-        ) : (
-          !catalogError && <p className="py-8 text-center text-muted">Loading satellite data…</p>
-        )}
-      </main>
-
-      {location && catalog && (
-        <nav aria-label="Sections" className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-bg pb-[env(safe-area-inset-bottom)]">
-          <div className="mx-auto flex max-w-lg">
-            {(
-              [
-                ['tonight', 'Tonight'],
-                ['map', 'Map'],
-                ['log', 'Log'],
-                ['learn', station.experience === 'new' ? 'Learn' : 'Help'],
-              ] as const
-            ).map(([t, label]) => (
-              <button
-                key={t}
-                type="button"
-                aria-current={tab === t ? 'page' : undefined}
-                onClick={() => setTab(t)}
-                className={`min-h-14 flex-1 text-base font-bold ${tab === t ? 'text-accent' : 'text-muted'}`}
-              >
-                {label}
-              </button>
-            ))}
+        <IonContent className="ion-padding pb-page">
+          <div style={{ maxWidth: 560, margin: '0 auto' }}>
+            {catalogError && (
+              <Banner tone="danger">
+                Couldn’t load satellite data, and none is saved on this device yet. Connect once to download it;
+                after that Passband works offline.
+                <Button
+                  kind="secondary"
+                  expand={undefined}
+                  size="small"
+                  onClick={() => {
+                    setCatalogError(false);
+                    void loadCatalog().then((c) => {
+                      setCatalog(c);
+                      setCatalogError(c === null);
+                    });
+                  }}
+                >
+                  Try again
+                </Button>
+              </Banner>
+            )}
+            {!location ? (
+              <LocationSetup onSave={addLocation} />
+            ) : catalog ? (
+              tab === 'map' ? (
+                <MapView catalog={catalog} location={location} station={station} qsos={qsos} />
+              ) : tab === 'log' ? (
+                <LogView
+                  qsos={qsos}
+                  station={station}
+                  onSave={(q) => void logQso(q)}
+                  onDelete={(id) => void deleteQso(id).then(refreshLog)}
+                  onExported={(ids, at) => void markExported(ids, at).then(refreshLog)}
+                  recordings={recordings}
+                  onDeleteRecording={(id) => void deleteRecording(id).then(refreshRecordings)}
+                  catalog={catalog}
+                  locations={locations}
+                />
+              ) : tab === 'tonight' ? (
+                <>
+                  {unexportedCount(qsos) >= EXPORT_NUDGE && (
+                    <Banner tone="warn">
+                      {unexportedCount(qsos)} contacts aren’t exported yet.{' '}
+                      <a href="#log" onClick={(e) => { e.preventDefault(); setTab('log'); }}>
+                        Export from the Log
+                      </a>
+                    </Banner>
+                  )}
+                  <Tonight
+                    catalog={catalog}
+                    location={location}
+                    station={station}
+                    selected={selected}
+                    onSelect={setSelected}
+                    onStart={openLive}
+                  />
+                </>
+              ) : (
+                <Learn
+                  catalog={catalog}
+                  location={location}
+                  station={station}
+                  onPick={(p) => {
+                    setSelected(p);
+                    setTab('tonight');
+                  }}
+                  onPractice={openPractice}
+                />
+              )
+            ) : (
+              !catalogError && (
+                <p className="ion-text-center muted" style={{ padding: '32px 0' }}>
+                  Loading satellite data…
+                </p>
+              )
+            )}
           </div>
-        </nav>
-      )}
+        </IonContent>
+
+        {location && catalog && <TabBar tabs={tabs} selected={tab} onSelect={setTab} />}
+      </div>
 
       {live && location && (
         <ClockContext.Provider value={live.practice?.clock ?? systemClock}>
@@ -315,6 +304,6 @@ export function App() {
           onClose={() => setSheet('none')}
         />
       )}
-    </div>
+    </IonApp>
   );
 }

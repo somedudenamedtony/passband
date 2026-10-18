@@ -1,15 +1,12 @@
+import { IonBadge } from '@ionic/react';
 import type { Satellite, Status } from '../model/types';
 
 export function StatusBadge({ status }: { status: Status }) {
   if (status === 'active') return null;
   return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-        status === 'inactive' ? 'bg-danger-bg text-danger-fg' : 'bg-warn-bg text-warn-fg'
-      }`}
-    >
+    <IonBadge color={status === 'inactive' ? 'danger' : 'warning'} style={{ verticalAlign: 'middle', fontSize: '0.7rem' }}>
       {status === 'inactive' ? 'Inactive' : 'Status unknown'}
-    </span>
+    </IonBadge>
   );
 }
 
@@ -18,8 +15,8 @@ const DIFFICULTY = { beginner: 'Easy', intermediate: 'Intermediate', advanced: '
 export function DifficultyBadge({ sat }: { sat: Satellite }) {
   const d = sat.overlay.difficulty;
   return (
-    <span className="rounded-full border border-line px-2 py-0.5 text-xs font-bold text-muted">
+    <IonBadge color={d === 'beginner' ? 'success' : 'medium'} style={{ verticalAlign: 'middle', fontSize: '0.7rem' }}>
       {d ? DIFFICULTY[d] : 'Difficulty unknown'}
-    </span>
+    </IonBadge>
   );
 }
