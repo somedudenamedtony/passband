@@ -13,7 +13,9 @@ import { applyTheme, loadTheme, saveTheme, type Theme } from '../data/theme';
 import { LiveScreen } from '../live/LiveScreen';
 import { SECOND } from '../model/time';
 import type { PracticeRate } from '../model/practice';
-import type { Location, Pass, Satellite, Station } from '../model/types';
+import type { Location, Pass, QsoRecord, Satellite, Station } from '../model/types';
+import { deleteQso, listQsos, markExported, saveQso } from '../data/log';
+import { EXPORT_NUDGE, LogView, unexportedCount } from './LogView';
 import { ClockContext } from './clock';
 import { Banner, Button } from './common';
 import { Learn } from './Learn';
@@ -23,7 +25,7 @@ import { SettingsSheet } from './SettingsSheet';
 import { Tonight } from './Tonight';
 
 type Sheet = 'none' | 'locations' | 'settings';
-type Tab = 'tonight' | 'learn';
+type Tab = 'tonight' | 'log' | 'learn';
 
 interface Live {
   pass: Pass;
@@ -44,6 +46,16 @@ export function App() {
   const [live, setLive] = useState<Live | null>(null);
   const [tab, setTab] = useState<Tab>('tonight');
   const [selected, setSelected] = useState<Pass | null>(null);
+  const [qsos, setQsos] = useState<QsoRecord[]>([]);
+
+  const refreshLog = useCallback(async () => setQsos(await listQsos()), []);
+  const logQso = useCallback(
+    async (q: QsoRecord) => {
+      await saveQso(q);
+      await refreshLog();
+    },
+    [refreshLog],
+  );
 
   // The live screen is a history entry, so the phone's back button leaves it.
   useEffect(() => {
@@ -76,6 +88,7 @@ export function App() {
       applyTheme(t);
       setLocations(locs);
       setActiveId(active && locs.some((l) => l.id === active) ? active : (locs[0]?.id ?? null));
+      setQsos(await listQsos());
       setReady(true);
       const c = await loadCatalog();
       setCatalog(c);
@@ -173,8 +186,27 @@ export function App() {
         {!location ? (
           <LocationSetup onSave={addLocation} />
         ) : catalog ? (
-          tab === 'tonight' ? (
-            <Tonight
+          tab === 'log' ? (
+            <LogView
+              qsos={qsos}
+              station={station}
+              onSave={(q) => void logQso(q)}
+              onDelete={(id) => void deleteQso(id).then(refreshLog)}
+              onExported={(ids, at) => void markExported(ids, at).then(refreshLog)}
+            />
+          ) : tab === 'tonight' ? (
+            <>
+              {unexportedCount(qsos) >= EXPORT_NUDGE && (
+                <div className="mb-4">
+                  <Banner tone="warn">
+                    {unexportedCount(qsos)} contacts aren’t exported yet.{' '}
+                    <button type="button" className="font-bold underline" onClick={() => setTab('log')}>
+                      Export from the Log
+                    </button>
+                  </Banner>
+                </div>
+              )}
+              <Tonight
               catalog={catalog}
               location={location}
               station={station}
@@ -182,6 +214,7 @@ export function App() {
               onSelect={setSelected}
               onStart={openLive}
             />
+            </>
           ) : (
             <Learn
               catalog={catalog}
@@ -206,6 +239,7 @@ export function App() {
             {(
               [
                 ['tonight', 'Tonight'],
+                ['log', 'Log'],
                 ['learn', station.experience === 'new' ? 'Learn' : 'Help'],
               ] as const
             ).map(([t, label]) => (
@@ -231,6 +265,7 @@ export function App() {
             location={location}
             station={station}
             onClose={closeLive}
+            onLog={(q) => void logQso(q)}
             practice={live.practice && { rate: live.practice.rate, onRate: setPracticeRate }}
           />
         </ClockContext.Provider>

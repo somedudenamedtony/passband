@@ -17,7 +17,8 @@ export interface Finding {
 
 const FREQ_FLOOR = 28_000_000;
 
-/** Blank out comments and string contents but keep line structure, so findings keep line numbers. */
+/** Blank out comments but keep line structure, so findings keep line numbers. Strings are still
+ * scanned: a frequency in a string is still a hardcoded frequency. */
 function stripComments(src: string): string {
   return src
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
