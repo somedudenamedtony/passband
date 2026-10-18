@@ -1,5 +1,4 @@
 import { formatMHz } from '../model/freq';
-import { IonItem, IonLabel, IonList, IonNote } from '@ionic/react';
 import { formatClock, formatLocalTime } from '../model/format';
 import type { RetuneSchedule } from '../model/schedule';
 
@@ -10,29 +9,31 @@ export function ScheduleList({ schedule, aos, now }: { schedule: RetuneSchedule;
   const currentIdx = schedule.steps.findLastIndex((s) => s.t <= now);
   return (
     <div>
-      <IonNote style={{ display: 'block', marginBottom: 8 }}>
+      <p className="hint" style={{ marginBottom: 8 }}>
         {side === 'downlink' ? 'Listen' : 'Transmit'} frequency through the pass. The other side stays put.
-      </IonNote>
-      <IonList inset style={{ margin: 0 }} className="tabular">
-        {schedule.steps.map((s, i) => {
-          const hz = side === 'downlink' ? s.downlinkHz : s.uplinkHz;
-          const current = i === currentIdx;
-          return (
-            <IonItem key={s.t} color={current ? 'primary' : undefined} aria-current={current}>
-              <IonNote slot="start" color={current ? 'light' : undefined} style={{ width: 28 }}>
-                M{i + 1}
-              </IonNote>
-              <IonLabel>
-                {i === 0 ? 'At rise' : `+${formatClock(s.t - aos)}`}
-                <p>{formatLocalTime(s.t)}</p>
-              </IonLabel>
-              <b slot="end" className="readout" style={{ fontSize: '1.15rem' }}>
-                {hz === null ? '—' : formatMHz(hz)}
-              </b>
-            </IonItem>
-          );
-        })}
-      </IonList>
+      </p>
+      <div className="panel">
+        <ul className="rows tabular">
+          {schedule.steps.map((s, i) => {
+            const hz = side === 'downlink' ? s.downlinkHz : s.uplinkHz;
+            const current = i === currentIdx;
+            return (
+              <li key={s.t} className={`row${current ? ' row-current' : ''}`} aria-current={current}>
+                <span className="row-mem" style={{ width: 32 }}>
+                  M{i + 1}
+                </span>
+                <span className="row-main">
+                  <span style={{ display: 'block' }}>{i === 0 ? 'At rise' : `+${formatClock(s.t - aos)}`}</span>
+                  <span className="row-sub">{formatLocalTime(s.t)}</span>
+                </span>
+                <span className="readout readout-s" style={{ color: current ? 'var(--amber)' : undefined }}>
+                  {hz === null ? '—' : formatMHz(hz)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }

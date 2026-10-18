@@ -19,9 +19,8 @@ import { isGoodPass } from '../model/selection';
 import { DAY } from '../model/time';
 import { exportPassesToCalendar } from './calendar';
 import { createCue } from '../cue/cue';
-import { Banner, Button } from './common';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon, IonNote } from '@ionic/react';
-import { calendarOutline, playOutline } from 'ionicons/icons';
+import { Banner, Button, Panel } from './common';
+import { Icon } from './icons';
 import { DifficultyBadge, StatusBadge } from './badges';
 
 interface Doppler {
@@ -106,121 +105,135 @@ export function PassCard({
   const isNew = station.experience === 'new';
   const tilde = approx ? '~' : '';
 
+  const bars = Math.max(1, Math.round(pass.maxElDeg / 9));
+
   return (
-    <IonCard style={{ margin: 0 }} aria-label={`Pass of ${sat.name}`}>
-      <IonCardHeader>
-        <IonCardSubtitle>
-          {isNext ? 'Next good pass' : 'Selected pass'}
-          {onBackToNext && !isNext && (
-            <IonButton fill="clear" size="small" onClick={onBackToNext} style={{ float: 'right', margin: '-6px -8px 0 0' }}>
-              Back to next
-            </IonButton>
-          )}
-        </IonCardSubtitle>
-        <IonCardTitle style={{ fontSize: '2rem', fontWeight: 800 }}>
-          {sat.name} <StatusBadge status={sat.status} /> <DifficultyBadge sat={sat} />
-        </IonCardTitle>
-      </IonCardHeader>
-      <IonCardContent>
-        <div className="readout readout-m" style={{ color: 'var(--fg)' }}>
+    <Panel label={`Pass of ${sat.name}`}>
+      <div className="lcd">
+        <div className="lcd-line lcd-label">
+          <span>{isNext ? 'Next good pass' : 'Selected pass'}</span>
+          <span>
+            <StatusBadge status={sat.status} /> <DifficultyBadge sat={sat} />
+          </span>
+        </div>
+        <div className="lcd-line" style={{ marginTop: 6 }}>
+          <h2 className="readout readout-l" style={{ fontWeight: 400 }}>
+            {sat.name}
+          </h2>
+        </div>
+        <div className="readout readout-m" style={{ marginTop: 6 }}>
           {inProgress ? <>Up now · sets in {formatClock(pass.los - now)}</> : <>Rises {tilde}{formatCountdown(pass.aos - now)}</>}
         </div>
-        <p className="tabular">
+        <p className="lcd-label" style={{ marginTop: 4, textTransform: 'none' }}>
           {formatLocalDay(pass.aos)} {tilde}
           {formatLocalTime(pass.aos)}–{formatLocalTime(pass.los)} · {formatUtc(pass.aos)}
         </p>
 
-        <div className="stat-row" style={{ marginTop: 12 }}>
-          <div>
-            <IonNote>Highest</IonNote>
-            <div className="readout readout-l" style={{ color: 'var(--fg)' }}>
-              {Math.round(pass.maxElDeg)}°
-            </div>
-          </div>
-          <div>
-            <IonNote>Duration</IonNote>
-            <div className="readout readout-m" style={{ color: 'var(--fg)' }}>
-              {formatDuration(durationS)}
-            </div>
-          </div>
-        </div>
-
-        <p style={{ fontSize: '1.05rem', marginTop: 12, color: 'var(--fg)' }}>
-          {isNew ? (
-            <>
-              Rises in the <b>{compassWord(pass.aosAzDeg)}</b>, sets in the <b>{compassWord(pass.losAzDeg)}</b>.
-            </>
-          ) : (
-            <span className="tabular">
-              AOS {Math.round(pass.aosAzDeg)}° {compassPoint(pass.aosAzDeg)} → LOS {Math.round(pass.losAzDeg)}°{' '}
-              {compassPoint(pass.losAzDeg)}
-            </span>
-          )}
-        </p>
-
-        {masked && (
-          <p style={{ fontWeight: 600 }}>Only {formatDuration(pass.visibleSecondsAboveMask)} above your horizon mask.</p>
+        {tx && (
+          <>
+            <hr className="lcd-rule" />
+            <Frequencies tx={tx} doppler={doppler} inProgress={inProgress} isNew={isNew} />
+          </>
         )}
 
-        {tx && <Frequencies tx={tx} doppler={doppler} inProgress={inProgress} isNew={isNew} />}
+        <hr className="lcd-rule" />
+        <div className="lcd-line">
+          <span>
+            <span className="lcd-label">Highest </span>
+            <span className="readout readout-s">{Math.round(pass.maxElDeg)}°</span>
+          </span>
+          <span>
+            <span className="lcd-label">Duration </span>
+            <span className="readout readout-s">{formatDuration(durationS)}</span>
+          </span>
+        </div>
+        <div className="bargraph" aria-hidden>
+          {Array.from({ length: 10 }, (_, i) => (
+            <span key={i} className={i < bars ? 'on' : undefined} />
+          ))}
+        </div>
+        <div className="lcd-line lcd-label" style={{ fontSize: 11, marginTop: 4 }} aria-hidden>
+          <span>0°</span>
+          <span>90°</span>
+        </div>
 
         {!isNew && (
-          <div className="tabular" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
+          <div className="tabular" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 10 }}>
             <div>
-              <IonNote>AOS</IonNote>
+              <div className="lcd-label">AOS</div>
               <div>{formatUtc(pass.aos, true)}</div>
             </div>
             <div>
-              <IonNote>TCA</IonNote>
+              <div className="lcd-label">TCA</div>
               <div>{formatUtc(pass.tca, true)}</div>
             </div>
             <div>
-              <IonNote>LOS</IonNote>
+              <div className="lcd-label">LOS</div>
               <div>{formatUtc(pass.los, true)}</div>
             </div>
             {doppler?.spanHz != null && (
               <div style={{ gridColumn: 'span 3' }}>
-                <IonNote>Downlink Doppler, AOS → LOS: </IonNote>
+                <span className="lcd-label">Downlink Doppler, AOS → LOS: </span>
                 {formatOffsetKHz(doppler.spanHz)}
               </div>
             )}
           </div>
         )}
+      </div>
 
-        {isNew && (sat.overlay.note || tx) && (
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-            {sat.overlay.note && <p style={{ color: 'var(--fg)' }}>{sat.overlay.note}</p>}
-            {tx && (
-              <p style={{ marginTop: 8 }}>
-                <b style={{ color: 'var(--fg)' }}>You’ll need:</b> {gearHint(tx)}
-              </p>
-            )}
-          </div>
+      <div className="stack" style={{ marginTop: 12 }}>
+        {!isNew && (
+          <p className="silk" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+            <span>
+              AOS {Math.round(pass.aosAzDeg)}° {compassPoint(pass.aosAzDeg)}
+            </span>
+            <span>
+              LOS {Math.round(pass.losAzDeg)}° {compassPoint(pass.losAzDeg)}
+            </span>
+          </p>
+        )}
+        {isNew && (
+          <p>
+            Rises in the <b>{compassWord(pass.aosAzDeg)}</b>, sets in the <b>{compassWord(pass.losAzDeg)}</b>.
+          </p>
         )}
 
-        <p style={{ marginTop: 12, fontWeight: age === 'fresh' ? 400 : 600 }}>
+        {masked && <p style={{ fontWeight: 700 }}>Only {formatDuration(pass.visibleSecondsAboveMask)} above your horizon mask.</p>}
+
+        {isNew && sat.overlay.note && <p>{sat.overlay.note}</p>}
+        {isNew && tx && (
+          <p className="muted">
+            <b style={{ color: 'var(--ink)' }}>You’ll need:</b> {gearHint(tx)}
+          </p>
+        )}
+
+        <p className={age === 'fresh' ? 'hint' : undefined} style={{ fontWeight: age === 'fresh' ? undefined : 700 }}>
           Elements {formatElementAge(pass.elementsEpoch, now)}
           {approx && ' — times are approximate'}
         </p>
+        {onBackToNext && !isNext && (
+          <Button kind="ghost" onClick={onBackToNext}>
+            Back to next
+          </Button>
+        )}
         <Button
           kind="primary"
           size="large"
-          className="ion-margin-top"
           onClick={() => {
             // The tap is the user gesture browsers need before cues can make a sound (D14).
             createCue(station.cues).unlock();
             onStart();
           }}
         >
-          <IonIcon slot="start" icon={playOutline} aria-hidden />
+          <Icon name="play" />
           {inProgress ? 'Track it now' : 'Start'}
         </Button>
         <Reminders pass={pass} sat={sat} location={location} station={station} now={now} />
         {approx && (
           <Banner tone="danger">These elements are over two weeks old. The satellite may be minutes away from where this says.</Banner>
         )}
-      </IonCardContent>
-    </IonCard>
+      </div>
+    </Panel>
   );
 }
 
@@ -231,27 +244,27 @@ function Frequencies({ tx, doppler, inProgress, isNew }: { tx: Transmitter; dopp
     const down = t?.downlinkHz ?? tx.downlinkHz;
     const up = t?.uplinkHz ?? tx.uplinkHz;
     return (
-      <div className="freq-panel" style={{ marginTop: 12 }}>
+      <div>
         {down !== null && (
-          <div className="freq-row">
-            <span className="freq-label">↓ Listen {t?.tuneSide === 'downlink' ? when : ''}</span>
-            <span className="readout readout-m" style={{ color: 'var(--fg)' }}>{formatMHz(down)}</span>
+          <div className="lcd-line">
+            <span className="lcd-label">↓ Listen {t?.tuneSide === 'downlink' ? when : ''}</span>
+            <span className="readout readout-l">{formatMHz(down)}</span>
           </div>
         )}
         {up !== null && (
-          <div className="freq-row">
-            <span className="freq-label">↑ Transmit {t?.tuneSide === 'uplink' ? when : ''}</span>
-            <span className="readout readout-m" style={{ color: 'var(--fg)' }}>{formatMHz(up)}</span>
+          <div className="lcd-line">
+            <span className="lcd-label">↑ Transmit {t?.tuneSide === 'uplink' ? when : ''}</span>
+            <span className="readout readout-l">{formatMHz(up)}</span>
           </div>
         )}
-        <div className="freq-row">
-          <span className="freq-label">Tone</span>
-          <b style={{ color: 'var(--fg)', fontStyle: tx.ctcssHz === 'unknown' ? 'italic' : undefined }}>
+        <div className="lcd-line" style={{ marginTop: 6 }}>
+          <span className="lcd-label">Tone</span>
+          <span className="readout readout-s" style={{ fontStyle: tx.ctcssHz === 'unknown' ? 'italic' : undefined }}>
             {formatTone(tx.ctcssHz)}
-          </b>
+          </span>
         </div>
         {isNew && t?.tuneSide && (
-          <p style={{ marginTop: 6, fontSize: '0.85rem' }}>
+          <p className="lcd-note">
             Leave the {t.tuneSide === 'downlink' ? 'transmit' : 'listen'} frequency alone and retune the{' '}
             {t.tuneSide === 'downlink' ? 'listen' : 'transmit'} side as the satellite passes.
           </p>
@@ -264,20 +277,20 @@ function Frequencies({ tx, doppler, inProgress, isNew }: { tx: Transmitter; dopp
   const down = range(tx.downlinkHz, tx.downlinkHighHz);
   const up = range(tx.uplinkHz, tx.uplinkHighHz);
   return (
-    <div className="freq-panel" style={{ marginTop: 12 }}>
-      <IonNote>
+    <div>
+      <p className="lcd-label">
         {tx.mode} {tx.kind === 'linear_transponder' && (tx.inverting ? '· inverting' : tx.inverting === false ? '· non-inverting' : '')}
-      </IonNote>
+      </p>
       {down && (
-        <div className="freq-row">
-          <span className="freq-label">↓</span>
-          <b className="readout" style={{ fontSize: '1.2rem', color: 'var(--fg)' }}>{down}</b>
+        <div className="lcd-line">
+          <span className="lcd-label">↓</span>
+          <span className="readout readout-s">{down}</span>
         </div>
       )}
       {up && (
-        <div className="freq-row">
-          <span className="freq-label">↑</span>
-          <b className="readout" style={{ fontSize: '1.2rem', color: 'var(--fg)' }}>{up}</b>
+        <div className="lcd-line">
+          <span className="lcd-label">↑</span>
+          <span className="readout readout-s">{up}</span>
         </div>
       )}
     </div>
@@ -288,9 +301,9 @@ function Frequencies({ tx, doppler, inProgress, isNew }: { tx: Transmitter; dopp
 function Reminders({ pass, sat, location, station, now }: { pass: Pass; sat: Satellite; location: Location; station: Station; now: number }) {
   const [busy, setBusy] = useState(false);
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+    <div className="key-row">
       <Button onClick={() => void exportPassesToCalendar([pass], sat, now, `${sat.name}-${formatLocalTime(pass.aos).replace(/\W/g, '')}`)}>
-        <IonIcon slot="start" icon={calendarOutline} aria-hidden />
+        <Icon name="calendar" />
         Remind me
       </Button>
       <Button

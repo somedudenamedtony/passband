@@ -5,7 +5,7 @@ export function PointingGuide({ target, device }: { target: Pointing; device: Po
   const hint = pointingHint(target, device);
   const rel = angleDiff(target.azDeg, device.azDeg);
   return (
-    <div className="freq-panel" style={{ display: 'flex', alignItems: 'center', gap: 16 }} role="status" aria-label="Pointing">
+    <div className="lcd" style={{ display: 'flex', alignItems: 'center', gap: 16 }} role="status" aria-label="Pointing">
       <svg viewBox="-50 -50 100 100" style={{ width: 96, height: 96, flex: 'none' }} aria-hidden>
         <circle r={46} fill="none" stroke="var(--border)" strokeWidth={3} />
         <g transform={`rotate(${rel})`}>
@@ -29,7 +29,7 @@ export function PointingGuide({ target, device }: { target: Pointing; device: Po
         ) : (
           <div>On target</div>
         )}
-        <div className="muted" style={{ fontSize: '0.85rem', fontWeight: 400, letterSpacing: 0 }}>Point the top of the phone along your antenna</div>
+        <div className="muted" style={{ fontSize: '0.85rem', fontFamily: 'var(--sans)' }}>Point the top of the phone along your antenna</div>
       </div>
     </div>
   );

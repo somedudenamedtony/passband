@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { IonCheckbox, IonItem, IonList } from '@ionic/react';
 import { compassWord } from '../model/format';
 import { formatTone } from '../model/freq';
 import type { Pass, Transmitter } from '../model/types';
@@ -18,19 +17,15 @@ export function Checklist({ pass, tx }: { pass: Pass; tx: Transmitter | null }) 
   if (tx?.uplinkHz != null) items.push('Listen first. Never transmit until you can hear the satellite.');
   const [done, setDone] = useState<boolean[]>(() => items.map(() => false));
   return (
-    <IonList inset style={{ margin: 0 }}>
+    <ul className="rows">
       {items.map((text, i) => (
-        <IonItem key={text}>
-          <IonCheckbox
-            justify="start"
-            labelPlacement="end"
-            checked={done[i] ?? false}
-            onIonChange={(e) => setDone((d) => d.map((v, j) => (j === i ? e.detail.checked : v)))}
-          >
-            <span style={{ whiteSpace: 'normal', textDecoration: done[i] ? 'line-through' : undefined, opacity: done[i] ? 0.6 : 1 }}>{text}</span>
-          </IonCheckbox>
-        </IonItem>
+        <li key={text}>
+          <label className="check">
+            <input type="checkbox" checked={done[i] ?? false} onChange={(e) => setDone((d) => d.map((v, j) => (j === i ? e.target.checked : v)))} />
+            <span>{text}</span>
+          </label>
+        </li>
       ))}
-    </IonList>
+    </ul>
   );
 }

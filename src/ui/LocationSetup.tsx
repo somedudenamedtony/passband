@@ -1,9 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { IonInput, IonItem, IonList, IonNote, IonText } from '@ionic/react';
 import { locationFromCoords, locationFromGrid } from '../data/locations';
 import { isValidGrid } from '../model/grid';
 import type { Location } from '../model/types';
-import { Button } from './common';
+import { Button, Field, Panel } from './common';
 
 /** D8: a manually entered grid or the Geolocation API. Nothing is sent anywhere. */
 export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Location) => void; submitLabel?: string }) {
@@ -45,45 +44,35 @@ export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Loc
   }
 
   return (
-    <form onSubmit={submit}>
-      <IonList inset>
-        <IonItem>
-          <IonInput label="Name (optional)" labelPlacement="stacked" value={name} placeholder="Home" onIonInput={(e) => setName(e.detail.value ?? '')} />
-        </IonItem>
-        <IonItem>
-          <IonInput
-            label="Grid square"
-            labelPlacement="stacked"
-            value={grid}
-            placeholder="CN87uo"
-            autocapitalize="characters"
-            autocorrect={false}
-            spellcheck={false}
-            maxlength={6}
-            helperText="Your Maidenhead locator. QRZ or a grid map will tell you yours."
-            onIonInput={(e) => setGrid(e.detail.value ?? '')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') submit();
-            }}
-          />
-        </IonItem>
-      </IonList>
-      <div className="ion-padding-horizontal stack">
-        <Button kind="primary" type="submit">
-          {submitLabel}
+    <form onSubmit={submit} className="stack">
+      <Panel>
+        <Field label="Name (optional)" value={name} placeholder="Home" onChange={(e) => setName(e.target.value)} />
+        <Field
+          label="Grid square"
+          value={grid}
+          placeholder="CN87uo"
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+          maxLength={6}
+          hint="Your Maidenhead locator. QRZ or a grid map will tell you yours."
+          onChange={(e) => setGrid(e.target.value)}
+        />
+      </Panel>
+      <Button kind="primary" type="submit" size="large">
+        {submitLabel}
+      </Button>
+      {canLocate && (
+        <Button onClick={locate} disabled={locating}>
+          {locating ? 'Finding you…' : 'Use my current location'}
         </Button>
-        {canLocate && (
-          <Button onClick={locate} disabled={locating}>
-            {locating ? 'Finding you…' : 'Use my current location'}
-          </Button>
-        )}
-        {error && (
-          <IonText color="danger">
-            <p role="alert">{error}</p>
-          </IonText>
-        )}
-        <IonNote>Your location stays on this device.</IonNote>
-      </div>
+      )}
+      {error && (
+        <p role="alert" className="danger-text">
+          {error}
+        </p>
+      )}
+      <p className="hint">Your location stays on this device.</p>
     </form>
   );
 }
@@ -91,8 +80,8 @@ export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Loc
 export function LocationSetup({ onSave }: { onSave: (l: Location) => void }) {
   return (
     <section>
-      <h1 style={{ fontWeight: 800 }}>Where are you operating from?</h1>
-      <p className="muted">Passband needs a location to work out which satellites pass over you, and when.</p>
+      <h1 className="setup-title">Where are you operating from?</h1>
+      <p className="muted" style={{ marginBottom: 16 }}>Passband needs a location to work out which satellites pass over you, and when.</p>
       <LocationForm onSave={onSave} submitLabel="Show my passes" />
     </section>
   );

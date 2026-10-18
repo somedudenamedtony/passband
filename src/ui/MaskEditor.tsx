@@ -9,9 +9,8 @@ import { SkyPlot } from '../live/SkyPlot';
 import { compassPoint } from '../model/format';
 import { foldSweep, type Pointing } from '../model/orientation';
 import type { Location, Station } from '../model/types';
-import { Button, Sheet } from './common';
-import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonLabel, IonList, IonNote } from '@ionic/react';
-import { cameraOutline } from 'ionicons/icons';
+import { Button, Fold, Sheet } from './common';
+import { Icon } from './icons';
 import { useNow } from './clock';
 
 const MAX_MASK = 45;
@@ -48,11 +47,15 @@ export function MaskEditor({
   return (
     <Sheet title={`Horizon at ${location.name}`} onClose={onClose}>
       <div className="stack">
-        <IonNote style={{ display: 'block' }}>
+        <p className="muted">
           The lowest elevation you can see over trees and buildings, all the way round. Passes are judged on the part
           above it.
-        </IonNote>
-        <SkyPlot track={[]} now={null} mask={mask} />
+        </p>
+        <div className="panel">
+          <div className="lcd sky-wrap">
+            <SkyPlot track={[]} now={null} mask={mask} />
+          </div>
+        </div>
 
         {sweeping ? (
           <div className="stack">
@@ -72,45 +75,40 @@ export function MaskEditor({
           </div>
         ) : (
           <Button onClick={() => setSweeping(true)}>
-            <IonIcon slot="start" icon={cameraOutline} aria-hidden />
+            <Icon name="camera" />
             Sweep the horizon with the camera
           </Button>
         )}
 
-        <IonAccordionGroup>
-          <IonAccordion value="hand">
-            <IonItem slot="header">
-              <IonLabel>Adjust by hand</IonLabel>
-            </IonItem>
-            <IonList slot="content" className="tabular">
-              {mask.map((m, i) => (
-                <IonItem key={i} lines="none">
-                  <IonLabel style={{ flex: '0 0 72px' }}>
-                    {compassPoint(i * 10 + 5)} {i * 10}°
-                  </IonLabel>
-                  <input
-                    type="range"
-                    min={0}
-                    max={MAX_MASK}
-                    value={m}
-                    aria-label={`Minimum elevation from ${i * 10}° to ${i * 10 + 10}°`}
-                    onChange={(e) => setMask((cur) => cur.map((v, j) => (j === i ? Number(e.target.value) : v)))}
-                    style={{ flex: 1, accentColor: 'var(--ion-color-primary)', minHeight: 40 }}
-                  />
-                  <IonNote slot="end" style={{ width: 36, textAlign: 'right' }}>
-                    {m}°
-                  </IonNote>
-                </IonItem>
-              ))}
-            </IonList>
-          </IonAccordion>
-        </IonAccordionGroup>
+        <Fold title="Adjust by hand">
+          <ul className="rows tabular">
+            {mask.map((m, i) => (
+              <li key={i} className="row" style={{ minHeight: 44 }}>
+                <span className="mono" style={{ flex: '0 0 72px' }}>
+                  {compassPoint(i * 10 + 5)} {i * 10}°
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={MAX_MASK}
+                  value={m}
+                  aria-label={`Minimum elevation from ${i * 10}° to ${i * 10 + 10}°`}
+                  onChange={(e) => setMask((cur) => cur.map((v, j) => (j === i ? Number(e.target.value) : v)))}
+                  style={{ flex: 1, minHeight: 40 }}
+                />
+                <span className="row-end" style={{ width: 36 }}>
+                  {m}°
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Fold>
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button expand={undefined} className="ion-flex-1" onClick={() => setMask(mask.map(() => 0))}>
+        <div className="key-row">
+          <Button onClick={() => setMask(mask.map(() => 0))}>
             Clear
           </Button>
-          <Button kind="primary" expand={undefined} className="ion-flex-1" onClick={() => onSave({ ...location, horizonMask: mask })}>
+          <Button kind="primary" onClick={() => onSave({ ...location, horizonMask: mask })}>
             Save
           </Button>
         </div>

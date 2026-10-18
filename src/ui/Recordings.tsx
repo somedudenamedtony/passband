@@ -8,9 +8,8 @@ import { formatClock, formatLocalDay, formatLocalTime, formatUtc } from '../mode
 import type { Catalog, Location, QsoRecord, Recording, Station } from '../model/types';
 import { rangeRateAt } from '../predict/client';
 import type { RigSetting } from '../rig/rig';
-import { Banner, Button, SectionTitle } from './common';
-import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonNote, useIonAlert } from '@ionic/react';
-import { addOutline, playOutline, trashOutline } from 'ionicons/icons';
+import { Banner, Button, Panel, SectionTitle, useConfirm } from './common';
+import { Icon } from './icons';
 import { QuickLog } from './QuickLog';
 import { formatBytes } from './share';
 
@@ -40,7 +39,7 @@ export function Recordings({
   const [pending, setPending] = useState<Pending | null>(null);
   const [use, setUse] = useState<StorageUse | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
-  const [confirm] = useIonAlert();
+  const [confirm, confirmNode] = useConfirm();
   const url = useMemo(() => (playing ? URL.createObjectURL(playing.blob) : null), [playing]);
   useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url]);
   useEffect(() => {
@@ -74,59 +73,58 @@ export function Recordings({
   return (
     <section aria-label="Recordings">
       <SectionTitle>Recordings</SectionTitle>
-      <IonNote style={{ display: 'block', marginBottom: 8 }}>
+      <p className="hint" style={{ marginBottom: 8 }}>
         {recordings.length} recording{recordings.length === 1 ? '' : 's'}, {formatBytes(use?.recordingsBytes ?? 0)}
         {use?.quotaBytes != null && use.usedBytes != null && ` · ${formatBytes(use.usedBytes)} of ${formatBytes(use.quotaBytes)} used on this device`}
-      </IonNote>
-      <IonList inset style={{ margin: 0 }}>
-        {recordings.map((r) => (
-          <IonItem key={r.id} lines="full">
-            <IonLabel className="tabular" style={{ whiteSpace: 'normal' }}>
-              <h2 style={{ fontWeight: 700 }}>{r.satDisplayName}</h2>
-              <p>
-                {formatLocalDay(r.startedAt)} {formatLocalTime(r.startedAt)} · {formatClock(r.durationMs)}
-                {r.interrupted && ' · interrupted (screen locked or app backgrounded)'}
-              </p>
+      </p>
+      <Panel>
+        <ul className="rows">
+          {recordings.map((r) => (
+            <li key={r.id}>
+              <div className="row">
+                <span className="row-main tabular">
+                  <span className="row-title row-mem" style={{ display: 'block' }}>
+                    {r.satDisplayName}
+                  </span>
+                  <span className="row-sub">
+                    {formatLocalDay(r.startedAt)} {formatLocalTime(r.startedAt)} · {formatClock(r.durationMs)}
+                    {r.interrupted && ' · interrupted (screen locked or app backgrounded)'}
+                  </span>
+                </span>
+                {playing?.id !== r.id && (
+                  <>
+                    <Button expand="inline" className="key-icon" onClick={() => { setPos(0); setPlaying(r); }} aria-label="Play">
+                      <Icon name="play" />
+                    </Button>
+                    <Button
+                      expand="inline"
+                      kind="ghost"
+                      className="key-icon"
+                      aria-label={`Delete ${r.satDisplayName} recording`}
+                      onClick={() => confirm({ title: `Delete this ${r.satDisplayName} recording?`, onConfirm: () => onDelete(r.id) })}
+                    >
+                      <Icon name="trash" />
+                    </Button>
+                  </>
+                )}
+              </div>
               {playing?.id === r.id && url && (
-                <div className="stack" style={{ marginTop: 8 }}>
+                <div className="stack" style={{ paddingBottom: 12 }}>
                   <audio ref={audio} src={url} controls autoPlay style={{ width: '100%' }} onTimeUpdate={(e) => setPos(e.currentTarget.currentTime)} />
-                  <div className="readout readout-m ion-text-center" aria-live="off">
+                  <div className="lcd readout readout-m center" aria-live="off">
                     {formatUtc(r.startedAt + pos * 1000, true)}
                   </div>
                   <Button kind="primary" onClick={() => void logAtThisMoment(r)}>
-                    <IonIcon slot="start" icon={addOutline} aria-hidden />
+                    <Icon name="add" />
                     Log at this moment
                   </Button>
                 </div>
               )}
-            </IonLabel>
-            {playing?.id !== r.id && (
-              <>
-                <IonButton slot="end" fill="clear" onClick={() => { setPos(0); setPlaying(r); }} aria-label="Play">
-                  <IonIcon slot="icon-only" icon={playOutline} aria-hidden />
-                </IonButton>
-                <IonButton
-                  slot="end"
-                  fill="clear"
-                  color="medium"
-                  aria-label={`Delete ${r.satDisplayName} recording`}
-                  onClick={() =>
-                    void confirm({
-                      header: `Delete this ${r.satDisplayName} recording?`,
-                      buttons: [
-                        { text: 'Cancel', role: 'cancel' },
-                        { text: 'Delete', role: 'destructive', handler: () => onDelete(r.id) },
-                      ],
-                    })
-                  }
-                >
-                  <IonIcon slot="icon-only" icon={trashOutline} aria-hidden />
-                </IonButton>
-              </>
-            )}
-          </IonItem>
-        ))}
-      </IonList>
+            </li>
+          ))}
+        </ul>
+      </Panel>
+      {confirmNode}
       {pending && pendingSat && pendingTx && pendingLoc && (
         <QuickLog
           sat={pendingSat}

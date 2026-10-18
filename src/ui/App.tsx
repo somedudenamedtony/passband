@@ -20,8 +20,7 @@ import { EXPORT_NUDGE, LogView, unexportedCount } from './LogView';
 import { ClockContext } from './clock';
 import { Banner, Button } from './common';
 import { TabBar, type TabSpec } from './TabBar';
-import { IonApp, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar } from '@ionic/react';
-import { listOutline, locationOutline, mapOutline, schoolOutline, settingsOutline, telescopeOutline } from 'ionicons/icons';
+import { Icon } from './icons';
 import { Learn } from './Learn';
 import { MapView } from './MapView';
 import { LocationSheet } from './LocationSheet';
@@ -146,44 +145,37 @@ export function App() {
   if (!ready) return null;
 
   const tabs = [
-    { id: 'tonight', label: 'Tonight', icon: telescopeOutline },
-    { id: 'map', label: 'Map', icon: mapOutline },
-    { id: 'log', label: 'Log', icon: listOutline },
-    { id: 'learn', label: station.experience === 'new' ? 'Learn' : 'Help', icon: schoolOutline },
+    { id: 'tonight', label: 'Tonight', icon: 'pass' },
+    { id: 'map', label: 'Map', icon: 'map' },
+    { id: 'log', label: 'Log', icon: 'log' },
+    { id: 'learn', label: station.experience === 'new' ? 'Learn' : 'Help', icon: 'learn' },
   ] as const satisfies ReadonlyArray<TabSpec<Tab>>;
-  const title = !location ? 'Passband' : (tabs.find((t) => t.id === tab)?.label ?? 'Passband');
-
   return (
-    <IonApp>
-      <div className="ion-page">
-        <IonHeader>
-          <IonToolbar>
-            {location && (
-              <IonButtons slot="start">
-                <IonButton onClick={() => setSheet('locations')} aria-label={`Location: ${location.name}`}>
-                  <IonIcon slot="start" icon={locationOutline} aria-hidden />
-                  {location.name}
-                </IonButton>
-              </IonButtons>
-            )}
-            <IonTitle>{title}</IonTitle>
-            <IonButtons slot="end">
-              <IonButton onClick={() => setSheet('settings')} aria-label="Settings">
-                <IonIcon slot="icon-only" icon={settingsOutline} aria-hidden />
-              </IonButton>
-            </IonButtons>
-          </IonToolbar>
-        </IonHeader>
+    <>
+      <div className="shell" inert={live !== null}>
+        <header className="topbar">
+          <span className="wordmark">Passband</span>
+          <span className="topbar-rule" aria-hidden />
+          {location && (
+            <Button expand="inline" size="small" onClick={() => setSheet('locations')} aria-label={`Location: ${location.name}`}>
+              <Icon name="location" size={16} />
+              {location.name}
+            </Button>
+          )}
+          <Button expand="inline" className="key-icon" onClick={() => setSheet('settings')} aria-label="Settings">
+            <Icon name="settings" />
+          </Button>
+        </header>
 
-        <IonContent className="ion-padding pb-page">
-          <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        <main className="page">
+          <div className="page-inner stack">
             {catalogError && (
               <Banner tone="danger">
                 Couldn’t load satellite data, and none is saved on this device yet. Connect once to download it;
                 after that Passband works offline.
                 <Button
                   kind="secondary"
-                  expand={undefined}
+                  expand="inline"
                   size="small"
                   onClick={() => {
                     setCatalogError(false);
@@ -247,13 +239,13 @@ export function App() {
               )
             ) : (
               !catalogError && (
-                <p className="ion-text-center muted" style={{ padding: '32px 0' }}>
+                <p className="center muted" style={{ padding: '32px 0' }}>
                   Loading satellite data…
                 </p>
               )
             )}
           </div>
-        </IonContent>
+        </main>
 
         {location && catalog && <TabBar tabs={tabs} selected={tab} onSelect={setTab} />}
       </div>
@@ -304,6 +296,6 @@ export function App() {
           onClose={() => setSheet('none')}
         />
       )}
-    </IonApp>
+    </>
   );
 }
