@@ -1,5 +1,7 @@
 import { isGoodPass, samePass } from '../model/selection';
-import { SectionTitle } from './common';
+import { useState } from 'react';
+import { Button, SectionTitle } from './common';
+import { PAGE } from './PassList';
 import { formatLocalHour, formatLocalTime } from '../model/format';
 import { DAY, HOUR } from '../model/time';
 import type { Pass, Satellite, Station } from '../model/types';
@@ -32,7 +34,14 @@ export function Timeline({
     l.push(p);
     byId.set(p.noradId, l);
   }
-  const rows = sats.filter((s) => byId.has(s.noradId));
+  const [expanded, setExpanded] = useState(false);
+  // Soonest first, so the rows that matter tonight are on screen without scrolling. The selected
+  // pass's satellite always keeps its row.
+  const first = (id: number) => byId.get(id)?.[0]?.aos ?? Infinity;
+  const withPasses = sats.filter((s) => byId.has(s.noradId)).sort((a, b) => first(a.noradId) - first(b.noradId));
+  const rows = expanded
+    ? withPasses
+    : withPasses.filter((s, i) => i < PAGE || (selected !== null && s.noradId === selected.noradId));
   if (!rows.length) return null;
 
   const x = (t: number) => ((t - now) / DAY) * 1000;
@@ -94,6 +103,11 @@ export function Timeline({
         ))}
       </div>
       </div>
+      {withPasses.length > PAGE && (
+        <Button kind="ghost" onClick={() => setExpanded((e) => !e)}>
+          {expanded ? `Show the first ${PAGE}` : `Show all ${withPasses.length} satellites`}
+        </Button>
+      )}
     </section>
   );
 }
