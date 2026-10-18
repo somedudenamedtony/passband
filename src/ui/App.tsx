@@ -9,7 +9,8 @@ import {
 } from '../data/locations';
 import { DEFAULT_STATION, loadStation, saveStation } from '../data/station';
 import { applyTheme, loadTheme, saveTheme, type Theme } from '../data/theme';
-import type { Location, Station } from '../model/types';
+import { LiveScreen } from '../live/LiveScreen';
+import type { Location, Pass, Satellite, Station } from '../model/types';
 import { Banner, Button } from './common';
 import { LocationSheet } from './LocationSheet';
 import { LocationSetup } from './LocationSetup';
@@ -27,6 +28,22 @@ export function App() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<Sheet>('none');
+  const [live, setLive] = useState<{ pass: Pass; sat: Satellite } | null>(null);
+
+  // The live screen is a history entry, so the phone's back button leaves it.
+  useEffect(() => {
+    const onPop = () => setLive(null);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+  const openLive = useCallback((pass: Pass, sat: Satellite) => {
+    history.pushState({ live: true }, '');
+    setLive({ pass, sat });
+  }, []);
+  const closeLive = useCallback(() => {
+    if ((history.state as { live?: boolean } | null)?.live) history.back();
+    else setLive(null);
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -133,12 +150,15 @@ export function App() {
         {!location ? (
           <LocationSetup onSave={addLocation} />
         ) : catalog ? (
-          <Tonight catalog={catalog} location={location} station={station} />
+          <Tonight catalog={catalog} location={location} station={station} onStart={openLive} />
         ) : (
           !catalogError && <p className="py-8 text-center text-muted">Loading satellite data…</p>
         )}
       </main>
 
+      {live && location && (
+        <LiveScreen pass={live.pass} sat={live.sat} location={location} station={station} onClose={closeLive} />
+      )}
       {sheet === 'locations' && (
         <LocationSheet
           locations={locations}

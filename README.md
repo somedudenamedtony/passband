@@ -7,7 +7,7 @@ and an antenna, useful to anyone chasing grids.
 Works offline in the field once loaded. Nothing you enter leaves your device.
 
 - **[SPEC.md](SPEC.md)** — what it does and the decisions behind it.
-- Status: **M1** (scaffold, satellite catalog, pass prediction, Tonight screen) built. M2 (live pass) is next.
+- Status: **M1** (catalog, prediction, Tonight) and **M2** (live pass: sky plot, Doppler retune schedule, cues, wake lock) built. M3 (practice mode, first-contact guide) is next.
 
 ## Develop
 

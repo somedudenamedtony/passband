@@ -10,7 +10,17 @@ import { PassList } from './PassList';
 import { Timeline } from './Timeline';
 import { usePasses } from './usePasses';
 
-export function Tonight({ catalog, location, station }: { catalog: LoadedCatalog; location: Location; station: Station }) {
+export function Tonight({
+  catalog,
+  location,
+  station,
+  onStart,
+}: {
+  catalog: LoadedCatalog;
+  location: Location;
+  station: Station;
+  onStart: (pass: Pass, sat: Satellite) => void;
+}) {
   const now = useNow(1000);
   const [showAll, setShowAll] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
@@ -53,6 +63,7 @@ export function Tonight({ catalog, location, station }: { catalog: LoadedCatalog
           now={now}
           isNext={next !== null && samePass(featured, next)}
           onBackToNext={selected ? () => setSelected(null) : undefined}
+          onStart={() => onStart(featured, featuredSat)}
         />
       ) : (
         <Banner tone="info">
