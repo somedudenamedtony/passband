@@ -98,3 +98,14 @@ describe('listen tonight', () => {
     expect(whatYoullHear({ ...fm, kind: 'beacon', mode: 'CW', uplinkHz: null })).toMatch(/Morse/);
   });
 });
+
+describe('horizon mask affects ranking (D9)', () => {
+  const sats = new Map([[1, sat(1, 'beginner')]]);
+  it('a high pass mostly hidden behind trees is not a good pass, and the next one is chosen', async () => {
+    const { isGoodPass, nextGoodPass } = await import('./selection');
+    const hidden = { ...pass(1, HOUR, 47), visibleSecondsAboveMask: 90 };
+    const open = pass(1, 3 * HOUR, 30);
+    expect(isGoodPass(hidden, 'new')).toBe(false);
+    expect(nextGoodPass([hidden, open], sats, 'new', 0)).toEqual(open);
+  });
+});

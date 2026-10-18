@@ -2,8 +2,10 @@ import { cueSupport } from '../cue/cue';
 import type { LoadedCatalog } from '../data/catalog';
 import type { Theme } from '../data/theme';
 import { formatElementAge } from '../model/elementAge';
-import type { RadioStepHz, Station } from '../model/types';
-import { Field, Segmented, Sheet, inputClass } from './common';
+import { useState } from 'react';
+import { SunCalibration } from '../compass/SunCalibration';
+import type { Location, RadioStepHz, Station } from '../model/types';
+import { Button, Field, Segmented, Sheet, inputClass } from './common';
 import { useNow } from './clock';
 
 export function SettingsSheet({
@@ -12,6 +14,7 @@ export function SettingsSheet({
   theme,
   onTheme,
   catalog,
+  location,
   onClose,
 }: {
   station: Station;
@@ -19,8 +22,10 @@ export function SettingsSheet({
   theme: Theme;
   onTheme: (t: Theme) => void;
   catalog: LoadedCatalog | null;
+  location: Location | null;
   onClose: () => void;
 }) {
+  const [calibrating, setCalibrating] = useState(false);
   const now = useNow(60_000);
   return (
     <Sheet title="Settings" onClose={onClose}>
@@ -71,6 +76,13 @@ export function SettingsSheet({
           />
         </Field>
         <CueSettings station={station} onChange={onChange} />
+        {location && (
+          <Field label="Compass" hint={station.compassCalibratedAt === null ? 'Not calibrated yet.' : `Offset ${station.compassOffsetDeg.toFixed(0)}°.`}>
+            <Button className="w-full" onClick={() => setCalibrating(true)}>
+              Calibrate against the sun
+            </Button>
+          </Field>
+        )}
         <Field label="Display">
           <Segmented
             label="Display"
@@ -97,6 +109,9 @@ export function SettingsSheet({
           Everything you enter stays on this device.
         </div>
       </div>
+      {calibrating && location && (
+        <SunCalibration location={location} station={station} onChange={onChange} onClose={() => setCalibrating(false)} />
+      )}
     </Sheet>
   );
 }

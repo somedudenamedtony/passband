@@ -64,6 +64,8 @@ export interface Station {
   radioStepHz: RadioStepHz;
   cues: { speech: boolean; tones: boolean; vibration: boolean };
   compassOffsetDeg: number;
+  /** When sun calibration last set the offset (D10); null = never. */
+  compassCalibratedAt: number | null;
 }
 
 export interface Location {
@@ -88,4 +90,32 @@ export interface Pass {
   losAzDeg: number;
   visibleSecondsAboveMask: number;
   elementsEpoch: number;
+}
+
+/** Maps 1:1 onto ADIF (D12). */
+export interface QsoRecord {
+  id: string;
+  /** Their callsign. */
+  call: string;
+  timeOn: number;
+  satNoradId: number;
+  /** LoTW SAT_NAME at time of logging; null when the satellite has none we know of (D12). */
+  satName: string | null;
+  /** Display name, for the log list. */
+  satDisplayName: string;
+  transmitterId: string;
+  /** What you transmitted on (ADIF FREQ). */
+  freqHz: number;
+  /** What you received on (ADIF FREQ_RX). */
+  freqRxHz: number;
+  /** 'FM' | 'USB' | 'LSB' | 'CW' | 'PKT' | 'SSTV' …; mapped to ADIF MODE/SUBMODE on export. */
+  mode: string;
+  gridsquare: string | null;
+  myGridsquare: string;
+  /** Your callsign when you logged it (ADIF STATION_CALLSIGN). */
+  stationCallsign: string;
+  locationId: string;
+  recordingId: string | null;
+  exportedAt: number | null;
+  note: string | null;
 }
