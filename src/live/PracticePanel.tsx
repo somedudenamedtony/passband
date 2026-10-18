@@ -7,6 +7,8 @@ import type { TrackPoint } from '../model/track';
 import type { RadioStepHz, Transmitter } from '../model/types';
 import { PracticeTone } from '../practice/tone';
 import { Button, Segmented } from '../ui/common';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonChip, IonIcon, IonNote } from '@ionic/react';
+import { chevronDown, chevronUp, volumeHighOutline, volumeMuteOutline } from 'ionicons/icons';
 
 export interface PracticeControls {
   rate: PracticeRate;
@@ -14,9 +16,9 @@ export interface PracticeControls {
 }
 
 const VERDICT = {
-  on: { text: 'On frequency', cls: 'bg-accent text-accent-fg' },
-  close: { text: 'Drifting — retune', cls: 'bg-warn-bg text-warn-fg' },
-  off: { text: 'Off frequency', cls: 'bg-danger-bg text-danger-fg' },
+  on: { text: 'On frequency', color: 'success' },
+  close: { text: 'Drifting — retune', color: 'warning' },
+  off: { text: 'Off frequency', color: 'danger' },
 } as const;
 
 /**
@@ -69,63 +71,65 @@ export function PracticePanel({
   const verdict = errorHz === null ? null : VERDICT[tuningVerdict(errorHz)];
 
   return (
-    <section aria-label="Practice" className="my-3 space-y-3 rounded-2xl border-2 border-dashed border-accent p-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">Practice</h2>
-        <span className="tabular text-sm text-muted">{formatUtc(now, true)} (simulated)</span>
-      </div>
-      <Segmented<PracticeRate>
-        label="Speed"
-        value={controls.rate}
-        onChange={controls.onRate}
-        options={PRACTICE_RATES.map((r) => ({ value: r, label: `${r}×` }))}
-      />
-      <div>
-        <div className="mb-1 text-sm text-muted">
-          Your radio’s {side === 'downlink' ? 'listen' : 'transmit'} dial
+    <IonCard role="region" aria-label="Practice" style={{ margin: 0, border: '2px dashed var(--ion-color-primary)' }}>
+      <IonCardHeader>
+        <IonCardSubtitle className="tabular">{formatUtc(now, true)} (simulated)</IonCardSubtitle>
+        <IonCardTitle>Practice</IonCardTitle>
+      </IonCardHeader>
+      <IonCardContent className="stack">
+        <Segmented<PracticeRate>
+          label="Speed"
+          value={controls.rate}
+          onChange={controls.onRate}
+          options={PRACTICE_RATES.map((r) => ({ value: r, label: `${r}×` }))}
+        />
+        <div>
+          <IonNote>Your radio’s {side === 'downlink' ? 'listen' : 'transmit'} dial</IonNote>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IonButton fill="outline" size="large" onClick={() => turn(-stepHz)} aria-label="Tune down one step">
+              <IonIcon slot="icon-only" icon={chevronDown} aria-hidden />
+            </IonButton>
+            <span className="readout readout-l" style={{ flex: 1, textAlign: 'center', color: 'var(--fg)' }}>
+              {formatMHz(dialHz)}
+            </span>
+            <IonButton fill="outline" size="large" onClick={() => turn(stepHz)} aria-label="Tune up one step">
+              <IonIcon slot="icon-only" icon={chevronUp} aria-hidden />
+            </IonButton>
+          </div>
+          <div role="status" style={{ textAlign: 'center', marginTop: 8 }}>
+            {verdict ? (
+              <IonChip color={verdict.color} style={{ fontWeight: 700 }}>
+                {verdict.text}&nbsp;<span className="tabular" style={{ fontWeight: 400 }}>({formatOffsetKHz(errorHz ?? 0)})</span>
+              </IonChip>
+            ) : (
+              <IonNote>Below the horizon — nothing to hear yet</IonNote>
+            )}
+          </div>
         </div>
-        <div className="tabular flex items-center gap-2">
-          <Button onClick={() => turn(-stepHz)} className="text-2xl" aria-label="Tune down one step">
-            ▼
+        {PracticeTone.supported() && (
+          <Button
+            kind={listening ? 'primary' : 'secondary'}
+            onClick={() => {
+              if (listening) {
+                tone.current?.stop();
+                tone.current = null;
+              } else {
+                tone.current = new PracticeTone();
+                tone.current.start();
+                tone.current.update(errorHz);
+              }
+              setListening(!listening);
+            }}
+          >
+            <IonIcon slot="start" icon={listening ? volumeHighOutline : volumeMuteOutline} aria-hidden />
+            {listening ? 'Practice tone on' : 'Hear the practice tone'}
           </Button>
-          <span className="flex-1 text-center text-3xl font-black">{formatMHz(dialHz)}</span>
-          <Button onClick={() => turn(stepHz)} className="text-2xl" aria-label="Tune up one step">
-            ▲
-          </Button>
-        </div>
-        <div className={`mt-2 rounded-lg px-3 py-2 text-center font-bold ${verdict ? verdict.cls : 'bg-surface text-muted'}`} role="status">
-          {verdict ? (
-            <>
-              {verdict.text} <span className="font-normal">({formatOffsetKHz(errorHz ?? 0)})</span>
-            </>
-          ) : (
-            'Below the horizon — nothing to hear yet'
-          )}
-        </div>
-      </div>
-      {PracticeTone.supported() && (
-        <Button
-          className="w-full"
-          kind={listening ? 'primary' : 'secondary'}
-          onClick={() => {
-            if (listening) {
-              tone.current?.stop();
-              tone.current = null;
-            } else {
-              tone.current = new PracticeTone();
-              tone.current.start();
-              tone.current.update(errorHz);
-            }
-            setListening(!listening);
-          }}
-        >
-          {listening ? '🔊 Practice tone on' : '🔇 Hear the practice tone'}
-        </Button>
-      )}
-      <p className="text-sm text-muted">
-        The tone stands in for the satellite: clean when you’re on frequency, buried in noise as it drifts. Retune when it
-        starts to fizz.
-      </p>
-    </section>
+        )}
+        <p>
+          The tone stands in for the satellite: clean when you’re on frequency, buried in noise as it drifts. Retune when it
+          starts to fizz.
+        </p>
+      </IonCardContent>
+    </IonCard>
   );
 }

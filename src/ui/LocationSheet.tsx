@@ -1,8 +1,21 @@
 import { useState } from 'react';
+import {
+  IonButton,
+  IonIcon,
+  IonItem,
+  IonItemOption,
+  IonItemOptions,
+  IonItemSliding,
+  IonLabel,
+  IonList,
+  IonNote,
+  useIonAlert,
+} from '@ionic/react';
+import { checkmarkCircle, trashOutline } from 'ionicons/icons';
 import type { Location, Station } from '../model/types';
-import { MaskEditor } from './MaskEditor';
 import { Button, Sheet } from './common';
 import { LocationForm } from './LocationSetup';
+import { MaskEditor } from './MaskEditor';
 
 export function LocationSheet({
   locations,
@@ -25,55 +38,67 @@ export function LocationSheet({
 }) {
   const [adding, setAdding] = useState(false);
   const [masking, setMasking] = useState<Location | null>(null);
+  const [confirm] = useIonAlert();
+
+  const askDelete = (l: Location) =>
+    void confirm({
+      header: `Delete ${l.name}?`,
+      message: 'Its horizon mask goes with it. Logged contacts are kept.',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { text: 'Delete', role: 'destructive', handler: () => onDelete(l.id) },
+      ],
+    });
+
   return (
     <Sheet title="Locations" onClose={onClose}>
-      <ul className="mb-4 space-y-2">
+      <IonList inset>
         {locations.map((l) => (
-          <li key={l.id} className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onSelect(l.id)}
-              aria-current={l.id === activeId}
-              className={`min-h-12 flex-1 rounded-xl border px-4 text-left ${
-                l.id === activeId ? 'border-accent bg-surface font-bold' : 'border-line'
-              }`}
-            >
-              {l.name} <span className="text-muted">· {l.grid6}</span>
-              {l.horizonMask.some((m) => m > 0) && <span className="block text-xs text-muted">horizon mask set</span>}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMasking(l)}
-              className="min-h-12 rounded-xl border border-line px-3 text-sm font-semibold"
-              aria-label={`Horizon mask for ${l.name}`}
-            >
-              Horizon
-            </button>
+          <IonItemSliding key={l.id}>
+            <IonItem aria-current={l.id === activeId}>
+              <IonLabel>
+                <h2>{l.name}</h2>
+                <p>
+                  {l.grid6}
+                  {l.horizonMask.some((m) => m > 0) && ' · horizon mask set'}
+                </p>
+              </IonLabel>
+              {l.id === activeId ? (
+                <IonIcon slot="end" icon={checkmarkCircle} color="primary" aria-label="In use" />
+              ) : (
+                <IonButton slot="end" fill="outline" size="small" onClick={() => onSelect(l.id)} aria-label={`Use ${l.name}`}>
+                  Use
+                </IonButton>
+              )}
+              <IonButton slot="end" fill="clear" size="small" onClick={() => setMasking(l)} aria-label={`Horizon mask for ${l.name}`}>
+                Horizon
+              </IonButton>
+              {locations.length > 1 && (
+                <IonButton slot="end" fill="clear" color="medium" onClick={() => askDelete(l)} aria-label={`Delete ${l.name}`}>
+                  <IonIcon slot="icon-only" icon={trashOutline} aria-hidden />
+                </IonButton>
+              )}
+            </IonItem>
             {locations.length > 1 && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm(`Delete ${l.name}?`)) onDelete(l.id);
-                }}
-                className="min-h-12 min-w-12 rounded-xl border border-line text-muted"
-                aria-label={`Delete ${l.name}`}
-              >
-                🗑
-              </button>
+              <IonItemOptions side="end">
+                <IonItemOption color="danger" onClick={() => askDelete(l)}>
+                  Delete
+                </IonItemOption>
+              </IonItemOptions>
             )}
-          </li>
+          </IonItemSliding>
         ))}
-      </ul>
+      </IonList>
       {adding ? (
         <LocationForm onSave={onAdd} submitLabel="Add location" />
       ) : (
-        <Button onClick={() => setAdding(true)} className="w-full">
-          Add a location
-        </Button>
+        <div className="ion-padding-horizontal">
+          <Button onClick={() => setAdding(true)}>Add a location</Button>
+        </div>
       )}
-      <p className="mt-3 text-sm text-muted">
+      <IonNote className="ion-padding" style={{ display: 'block' }}>
         Add the park, a hilltop, or a grid you plan to rove to. Passes are predicted for whichever is selected.
-      </p>
+      </IonNote>
       {masking && (
         <MaskEditor
           location={masking}

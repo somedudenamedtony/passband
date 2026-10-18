@@ -42,7 +42,7 @@ export function SkyPlot({
   const [nx, ny] = now ? xy(now.azDeg, now.elDeg) : [0, 0];
 
   return (
-    <svg viewBox="-120 -120 240 240" className="mx-auto block aspect-square w-full max-w-[22rem]" role="img" aria-label="Sky plot">
+    <svg viewBox="-120 -120 240 240" style={{ display: 'block', margin: '0 auto', width: '100%', maxWidth: '22rem', aspectRatio: '1' }} role="img" aria-label="Sky plot">
       <circle r={R} fill="var(--surface)" stroke="var(--border)" strokeWidth={1.5} />
       <g transform={`rotate(${rot})`}>
       {hasMask && (

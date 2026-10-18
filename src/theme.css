@@ -1,0 +1,405 @@
+/* Ionic core and the utilities Passband uses. */
+@import '@ionic/react/css/core.css';
+@import '@ionic/react/css/normalize.css';
+@import '@ionic/react/css/structure.css';
+@import '@ionic/react/css/typography.css';
+@import '@ionic/react/css/padding.css';
+@import '@ionic/react/css/text-alignment.css';
+@import '@ionic/react/css/flex-utils.css';
+
+/*
+ * §5: sunlight, gloves, one hand. Four palettes, chosen in Settings:
+ *   Auto  — follows the phone (light / dark)
+ *   Day   — Ionic's high-contrast light palette, for direct sun
+ *   Dark  — Ionic's dark palette
+ *   Red   — night mode: red on black only, to keep dark adaptation
+ * The class-based palettes are switched by data/theme.ts.
+ */
+@import '@ionic/react/css/palettes/dark.class.css';
+@import '@ionic/react/css/palettes/high-contrast.class.css';
+
+/* Night always sits on the dark palette; match its specificity (:root.ion-palette-dark.ios) and come
+   later, so red wins everywhere. */
+:root.ion-palette-dark.pb-night,
+:root.ion-palette-dark.pb-night.ios,
+:root.ion-palette-dark.pb-night.md {
+  --ion-background-color: #000;
+  --ion-background-color-rgb: 0, 0, 0;
+  --ion-text-color: #ff453a;
+  --ion-text-color-rgb: 255, 69, 58;
+  --ion-item-background: #000;
+  --ion-card-background: #120000;
+  --ion-toolbar-background: #0a0000;
+  --ion-toolbar-color: #ff453a;
+  --ion-tab-bar-background: #0a0000;
+  --ion-tab-bar-color: #8a1c15;
+  --ion-tab-bar-color-selected: #ff453a;
+  --ion-border-color: #3a0805;
+  --ion-item-border-color: #3a0805;
+  --ion-placeholder-color: #8a1c15;
+
+  --ion-color-primary: #ff453a;
+  --ion-color-primary-rgb: 255, 69, 58;
+  --ion-color-primary-contrast: #000;
+  --ion-color-primary-contrast-rgb: 0, 0, 0;
+  --ion-color-primary-shade: #e03d33;
+  --ion-color-primary-tint: #ff584e;
+  --ion-color-medium: #a3261e;
+  --ion-color-medium-rgb: 163, 38, 30;
+  --ion-color-medium-contrast: #000;
+  --ion-color-medium-shade: #8f211a;
+  --ion-color-medium-tint: #ac3c35;
+  --ion-color-light: #1a0000;
+  --ion-color-light-rgb: 26, 0, 0;
+  --ion-color-light-contrast: #ff453a;
+  --ion-color-light-shade: #170000;
+  --ion-color-light-tint: #311a1a;
+  --ion-color-warning: #ff453a;
+  --ion-color-warning-rgb: 255, 69, 58;
+  --ion-color-warning-contrast: #000;
+  --ion-color-danger: #ff453a;
+  --ion-color-danger-rgb: 255, 69, 58;
+  --ion-color-danger-contrast: #000;
+  --ion-color-success: #ff453a;
+  --ion-color-success-contrast: #000;
+  --ion-color-dark: #ff453a;
+  --ion-color-dark-rgb: 255, 69, 58;
+  --ion-color-dark-contrast: #000;
+  /* Every grey step Ionic uses, as a red-to-black blend: nothing white or grey at night. */
+  --ion-text-color-step-50: #f24237;
+  --ion-background-color-step-50: #080202;
+  --ion-color-step-50: #080202;
+  --ion-text-color-step-100: #e63e34;
+  --ion-background-color-step-100: #0f0403;
+  --ion-color-step-100: #0f0403;
+  --ion-text-color-step-150: #d93b31;
+  --ion-background-color-step-150: #170605;
+  --ion-color-step-150: #170605;
+  --ion-text-color-step-200: #cc372e;
+  --ion-background-color-step-200: #1f0807;
+  --ion-color-step-200: #1f0807;
+  --ion-text-color-step-250: #bf342c;
+  --ion-background-color-step-250: #260a09;
+  --ion-color-step-250: #260a09;
+  --ion-text-color-step-300: #b33029;
+  --ion-background-color-step-300: #2e0c0a;
+  --ion-color-step-300: #2e0c0a;
+  --ion-text-color-step-350: #a62d26;
+  --ion-background-color-step-350: #360e0c;
+  --ion-color-step-350: #360e0c;
+  --ion-text-color-step-400: #992923;
+  --ion-background-color-step-400: #3d110e;
+  --ion-color-step-400: #3d110e;
+  --ion-text-color-step-450: #8c2620;
+  --ion-background-color-step-450: #451310;
+  --ion-color-step-450: #451310;
+  --ion-text-color-step-500: #80231d;
+  --ion-background-color-step-500: #4d1511;
+  --ion-color-step-500: #4d1511;
+  --ion-text-color-step-550: #731f1a;
+  --ion-background-color-step-550: #541713;
+  --ion-color-step-550: #541713;
+  --ion-text-color-step-600: #661c17;
+  --ion-background-color-step-600: #5c1915;
+  --ion-color-step-600: #5c1915;
+  --ion-text-color-step-650: #591814;
+  --ion-background-color-step-650: #631b17;
+  --ion-color-step-650: #631b17;
+  --ion-text-color-step-700: #4d1511;
+  --ion-background-color-step-700: #6b1d18;
+  --ion-color-step-700: #6b1d18;
+  --ion-text-color-step-750: #40110f;
+  --ion-background-color-step-750: #731f1a;
+  --ion-color-step-750: #731f1a;
+  --ion-text-color-step-800: #330e0c;
+  --ion-background-color-step-800: #7a211c;
+  --ion-color-step-800: #7a211c;
+  --ion-text-color-step-850: #260a09;
+  --ion-background-color-step-850: #82231e;
+  --ion-color-step-850: #82231e;
+  --ion-text-color-step-900: #1a0706;
+  --ion-background-color-step-900: #8a251f;
+  --ion-color-step-900: #8a251f;
+  --ion-text-color-step-950: #0d0303;
+  --ion-background-color-step-950: #912721;
+  --ion-color-step-950: #912721;
+}
+
+/*
+ * Instrument tokens for the custom drawings (sky plot, timeline, map, keypad), mapped onto
+ * Ionic's palette so every theme above carries through.
+ */
+:root {
+  --fg: var(--ion-text-color, #000);
+  --bg: var(--ion-background-color, #fff);
+  --muted: var(--ion-color-medium);
+  --accent: var(--ion-color-primary);
+  --border: var(--ion-color-step-200, #ccc);
+  --surface: var(--ion-color-step-50, #f3f3f3);
+  --bar: var(--ion-color-primary);
+  --bar-dim: var(--ion-color-step-300, #b3b3b3);
+}
+
+/* ---- Passband components ---- */
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--ion-color-medium);
+}
+
+.stack > * + * {
+  margin-top: 12px;
+}
+
+/* A large instrument readout: frequencies, AZ/EL, countdowns. */
+.readout {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.readout-xl {
+  font-size: 2.5rem;
+}
+.readout-l {
+  font-size: 2rem;
+}
+.readout-m {
+  font-size: 1.5rem;
+}
+
+.freq-panel {
+  border-radius: 14px;
+  background: var(--ion-color-step-50, #f4f5f8);
+  padding: 12px 14px;
+}
+.freq-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.freq-row + .freq-row {
+  margin-top: 6px;
+}
+.freq-row .freq-label {
+  flex: 1;
+  color: var(--ion-color-medium);
+}
+
+.banner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.banner ion-icon {
+  flex: none;
+  font-size: 1.25rem;
+  margin-top: 1px;
+}
+.banner-warn {
+  background: rgba(var(--ion-color-warning-rgb), 0.16);
+  color: var(--ion-text-color);
+}
+.banner-warn ion-icon {
+  color: var(--ion-color-warning-shade);
+}
+.banner-danger {
+  background: rgba(var(--ion-color-danger-rgb), 0.14);
+  color: var(--ion-text-color);
+}
+.banner-danger ion-icon {
+  color: var(--ion-color-danger);
+}
+.banner-info {
+  background: var(--ion-color-step-50, #f4f5f8);
+}
+
+.keypad {
+  display: grid;
+  gap: 6px;
+}
+.keypad-row {
+  display: flex;
+  gap: 4px;
+}
+.keypad-row button {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--ion-color-step-100, #e8e8e8);
+  color: var(--ion-text-color);
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-family: inherit;
+}
+.keypad-row button:active {
+  background: var(--ion-color-step-200, #d0d0d0);
+}
+.keypad-row button.wide {
+  flex: 2;
+}
+
+.call-field {
+  flex: 1;
+  min-height: 64px;
+  border-radius: 12px;
+  border: 2px solid var(--ion-color-step-150, #ddd);
+  background: transparent;
+  color: var(--ion-text-color);
+  padding: 6px 12px;
+  text-align: left;
+  font-family: inherit;
+}
+.call-field[aria-pressed='true'] {
+  border-color: var(--ion-color-primary);
+}
+.call-field small {
+  display: block;
+  color: var(--ion-color-medium);
+  font-size: 0.75rem;
+}
+
+.sky-wrap {
+  position: relative;
+}
+
+.ar-view {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #000;
+}
+.ar-view > video,
+.ar-view > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ar-view .ar-note {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.75rem;
+  text-align: center;
+}
+.ar-view .ar-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #fff;
+  text-align: center;
+}
+
+.script-line {
+  border-radius: 12px;
+  background: var(--ion-color-step-50, #f4f5f8);
+  padding: 12px 16px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.timeline-label {
+  position: relative;
+  height: 14px;
+  font-size: 10px;
+  color: var(--ion-color-medium);
+}
+.timeline-label span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.map-svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  background: var(--ion-color-step-50, #f4f5f8);
+  border-radius: 14px;
+}
+
+.fill-reach {
+  fill: rgba(var(--ion-color-primary-rgb), 0.15);
+}
+.fill-worked {
+  fill: rgba(var(--ion-color-primary-rgb), 0.6);
+}
+
+.recording-dot {
+  color: var(--ion-color-danger);
+  font-weight: 700;
+}
+
+ion-content.pb-page::part(scroll) {
+  padding-bottom: 24px;
+}
+
+.learn-body h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 18px 0 6px;
+}
+.learn-body h3:first-child {
+  margin-top: 0;
+}
+.learn-body ul {
+  padding-left: 1.2em;
+  margin: 0;
+}
+.learn-body li + li {
+  margin-top: 4px;
+}
+
+.ion-flex-1 {
+  flex: 1;
+}
+
+/*
+ * Instrument readouts stay full-contrast inside cards: Ionic greys card text, so readouts use
+ * --fg, which is resolved once at :root and inherited unchanged.
+ */
+ion-card-content .readout,
+ion-card-title,
+.readout {
+  color: var(--fg);
+}
+
+/* Toggle and select labels wrap rather than truncate: "Grids CN87 can reach through …". */
+ion-toggle::part(label),
+ion-checkbox::part(label) {
+  white-space: normal;
+}
+
+/* Callsigns are typed in capitals; the field label isn't. */
+.callsign-input input {
+  text-transform: uppercase;
+}
+
+.azel-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: -4px;
+}

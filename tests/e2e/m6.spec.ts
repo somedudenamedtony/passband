@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { segment } from './segment';
 import { expect, test, type Page } from '@playwright/test';
 
 async function setup(page: Page) {
@@ -19,12 +20,12 @@ test('record a pass, play it back, and log from playback', async ({ page }) => {
   await expect(page.getByText(/Recording saved/)).toBeVisible();
 
   await page.getByRole('button', { name: 'Done' }).click();
-  await page.getByRole('button', { name: 'Log', exact: true }).click();
+  await page.getByRole('tab', { name: 'Log', exact: true }).click();
   const recs = page.getByRole('region', { name: 'Recordings' });
   await expect(recs).toBeVisible();
-  await recs.getByRole('button', { name: '▶ Play' }).click();
+  await recs.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(recs.getByText(/\d\d:\d\d:\d\d UTC/)).toBeVisible();
-  await recs.getByRole('button', { name: '+ Log at this moment' }).click();
+  await recs.getByRole('button', { name: 'Log at this moment' }).click();
   const keypad = page.getByLabel('Keypad');
   for (const k of 'K1ABC') await keypad.getByRole('button', { name: k, exact: true }).click();
   await page.getByRole('button', { name: 'Save K1ABC' }).click();
@@ -45,10 +46,10 @@ test('remind me exports an .ics with an alarm', async ({ page }) => {
 // §5.3: the map draws offline, with the satellite and its footprint.
 test('map shows the satellite, its footprint, and reach', async ({ page }) => {
   await setup(page);
-  await page.getByRole('button', { name: 'Map', exact: true }).click();
+  await page.getByRole('tab', { name: 'Map', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Map' })).toBeVisible();
   await expect(page.getByText(/footprint .* across/)).toBeVisible({ timeout: 15_000 });
-  await page.getByRole('radio', { name: 'Region' }).click();
+  await segment(page, 'Region').click();
   await page.getByText(/Grids .* can reach/).click();
   await expect(page.getByRole('img', { name: 'Map' })).toBeVisible();
 });

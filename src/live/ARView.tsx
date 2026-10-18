@@ -22,14 +22,14 @@ export function ARView({ compass, sat, track }: { compass: Compass; sat: Pointin
   const edgeAngle = cam && sat ? Math.atan2(-(sat.elDeg - cam.elDeg), angleDiff(sat.azDeg, cam.azDeg)) : 0;
 
   return (
-    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-black" aria-label="AR view">
-      <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
+    <div className="ar-view" aria-label="AR view">
+      <video ref={videoRef} playsInline muted />
       {state !== 'on' && (
-        <p className="absolute inset-0 grid place-items-center p-6 text-center text-white">
+        <p className="ar-center">
           {state === 'denied' ? 'Camera access was refused.' : state === 'unsupported' ? 'No camera available.' : 'Starting the camera…'}
         </p>
       )}
-      <svg viewBox="0 0 100 133" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+      <svg viewBox="0 0 100 133" preserveAspectRatio="none">
         {trackPts.length > 1 && (
           <polyline
             points={trackPts.map((p) => `${p.x * 100},${p.y * 133}`).join(' ')}
@@ -53,7 +53,7 @@ export function ARView({ compass, sat, track }: { compass: Compass; sat: Pointin
         <line x1={47} x2={53} y1={66.5} y2={66.5} stroke="#fff" strokeWidth={0.5} />
         <line x1={50} x2={50} y1={63.5} y2={69.5} stroke="#fff" strokeWidth={0.5} />
       </svg>
-      <p className="absolute inset-x-0 bottom-0 bg-black/60 px-3 py-1 text-center text-xs text-white">
+      <p className="ar-note">
         {compass.status !== 'ok'
           ? 'AR needs the compass.'
           : sat && sat.elDeg < 0

@@ -1,4 +1,20 @@
+// Shared building blocks, on Ionic components so the app looks and behaves like a native one.
+
 import type { ReactNode } from 'react';
+import {
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonModal,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
+  IonTitle,
+  IonToolbar,
+} from '@ionic/react';
+import { alertCircleOutline, informationCircleOutline, warningOutline } from 'ionicons/icons';
 
 export function Button({
   children,
@@ -6,83 +22,70 @@ export function Button({
   kind = 'secondary',
   type = 'button',
   disabled,
-  className = '',
+  expand = 'block',
+  className,
   'aria-label': ariaLabel,
+  color,
+  size,
 }: {
   children: ReactNode;
   onClick?: () => void;
   kind?: 'primary' | 'secondary' | 'ghost';
   type?: 'button' | 'submit';
   disabled?: boolean;
+  expand?: 'block' | 'full' | undefined;
   className?: string;
   'aria-label'?: string;
+  color?: string;
+  size?: 'small' | 'default' | 'large';
 }) {
-  const styles = {
-    primary: 'bg-accent text-accent-fg',
-    secondary: 'bg-surface text-fg border border-line',
-    ghost: 'text-accent',
-  }[kind];
+  const fill = { primary: 'solid', secondary: 'outline', ghost: 'clear' } as const;
   return (
-    <button
+    <IonButton
       type={type}
       onClick={onClick}
       disabled={disabled}
+      expand={expand}
+      fill={fill[kind]}
+      color={color}
+      size={size}
+      className={className}
       aria-label={ariaLabel}
-      className={`min-h-12 rounded-xl px-4 text-base font-semibold disabled:opacity-50 ${styles} ${className}`}
     >
       {children}
-    </button>
+    </IonButton>
   );
 }
+
+const BANNER_ICON = { warn: warningOutline, danger: alertCircleOutline, info: informationCircleOutline };
 
 export function Banner({ tone, children }: { tone: 'warn' | 'danger' | 'info'; children: ReactNode }) {
-  const styles = {
-    warn: 'bg-warn-bg text-warn-fg',
-    danger: 'bg-danger-bg text-danger-fg',
-    info: 'bg-surface text-fg border border-line',
-  }[tone];
   return (
-    <div role="status" className={`rounded-xl px-4 py-3 text-sm font-medium ${styles}`}>
-      {children}
+    <div role="status" className={`banner banner-${tone}`}>
+      <IonIcon icon={BANNER_ICON[tone]} aria-hidden />
+      <div>{children}</div>
     </div>
   );
 }
 
-/** A bottom sheet / dialog. Full width on phones, centred column on wider screens. */
+/** A sheet: card modal on iOS, full-height on Android, with a title bar and Close. */
 export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 sm:items-center" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-bg p-4 pb-8 sm:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">{title}</h2>
-          <button type="button" onClick={onClose} className="min-h-12 min-w-12 text-2xl" aria-label="Close">
-            ×
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
+    <IonModal isOpen onDidDismiss={onClose} aria-label={title}>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>{title}</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={onClose} aria-label="Close">
+              Close
+            </IonButton>
+          </IonButtons>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent className="ion-padding">{children}</IonContent>
+    </IonModal>
   );
 }
-
-export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-semibold text-muted">{label}</span>
-      {children}
-      {hint && <span className="mt-1 block text-sm text-muted">{hint}</span>}
-    </label>
-  );
-}
-
-export const inputClass =
-  'min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-lg text-fg placeholder:text-muted';
 
 export function Segmented<T extends string | number>({
   value,
@@ -96,21 +99,24 @@ export function Segmented<T extends string | number>({
   label: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex rounded-xl border border-line bg-surface p-1">
+    <IonSegment
+      value={String(value)}
+      aria-label={label}
+      onIonChange={(e) => {
+        const v = options.find((o) => String(o.value) === String(e.detail.value));
+        if (v) onChange(v.value);
+      }}
+    >
       {options.map((o) => (
-        <button
-          key={String(o.value)}
-          type="button"
-          role="radio"
-          aria-checked={o.value === value}
-          onClick={() => onChange(o.value)}
-          className={`min-h-11 flex-1 rounded-lg px-2 text-sm font-semibold ${
-            o.value === value ? 'bg-accent text-accent-fg' : 'text-fg'
-          }`}
-        >
-          {o.label}
-        </button>
+        <IonSegmentButton key={String(o.value)} value={String(o.value)}>
+          <IonLabel>{o.label}</IonLabel>
+        </IonSegmentButton>
       ))}
-    </div>
+    </IonSegment>
   );
+}
+
+/** Section heading inside a page, in the platform's list-header style. */
+export function SectionTitle({ children }: { children: ReactNode }) {
+  return <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '20px 0 8px' }}>{children}</h2>;
 }

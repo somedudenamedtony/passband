@@ -1,4 +1,5 @@
 import { isGoodPass, samePass } from '../model/selection';
+import { SectionTitle } from './common';
 import { formatLocalHour, formatLocalTime } from '../model/format';
 import { DAY, HOUR } from '../model/time';
 import type { Pass, Satellite, Station } from '../model/types';
@@ -41,23 +42,23 @@ export function Timeline({
 
   return (
     <section aria-label="24-hour timeline">
-      <h2 className="mb-2 text-lg font-bold">Next 24 hours</h2>
-      <div className="rounded-2xl border border-line p-2">
-        <div className="tabular relative mb-1 h-4 text-[10px] text-muted">
+      <SectionTitle>Next 24 hours</SectionTitle>
+      <div style={{ border: '1px solid var(--border)', borderRadius: 14, padding: 8 }}>
+        <div className="tabular timeline-label">
           {ticks.filter((_, i) => i % 2 === 0).map((t) => (
-            <span key={t} className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: `${(x(t) / 1000) * 100}%` }}>
+            <span key={t} style={{ left: `${(x(t) / 1000) * 100}%` }}>
               {formatLocalHour(t)}
             </span>
           ))}
         </div>
         {rows.map((s) => (
-          <div key={s.noradId} className="border-t border-line py-1">
-            <div className="text-xs font-semibold">
+          <div key={s.noradId} style={{ borderTop: '1px solid var(--border)', padding: '4px 0' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>
               {s.name}
-              {s.status === 'unknown' && <span className="text-muted"> · status unknown</span>}
-              {s.status === 'inactive' && <span className="text-muted"> · inactive</span>}
+              {s.status === 'unknown' && <span className="muted"> · status unknown</span>}
+              {s.status === 'inactive' && <span className="muted"> · inactive</span>}
             </div>
-            <svg viewBox={`0 0 1000 ${ROW_H}`} preserveAspectRatio="none" className="block w-full" height={ROW_H}>
+            <svg viewBox={`0 0 1000 ${ROW_H}`} preserveAspectRatio="none" style={{ display: 'block', width: '100%' }} height={ROW_H}>
               {ticks.map((t) => (
                 <line key={t} x1={x(t)} x2={x(t)} y1={0} y2={ROW_H} stroke="var(--border)" strokeWidth={1} />
               ))}
@@ -78,7 +79,7 @@ export function Timeline({
                     fill={dim ? 'var(--bar-dim)' : 'var(--bar)'}
                     stroke={sel ? 'var(--fg)' : 'none'}
                     strokeWidth={sel ? 3 : 0}
-                    className="cursor-pointer"
+                    style={{ cursor: 'pointer' }}
                     onClick={() => onSelect(p)}
                   >
                     <title>

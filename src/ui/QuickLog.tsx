@@ -7,7 +7,9 @@ import { grid4, isValidGrid, normaliseGrid } from '../model/grid';
 import { newId } from '../model/ids';
 import type { RigSetting } from '../rig/rig';
 import type { Location, QsoRecord, Satellite, Station, Transmitter } from '../model/types';
-import { Button, Segmented, Sheet } from './common';
+import { Banner, Button, Segmented, Sheet } from './common';
+import { IonIcon, IonNote } from '@ionic/react';
+import { backspaceOutline } from 'ionicons/icons';
 
 // The digit row is built rather than written out, so it can't be mistaken for a frequency (§10).
 const DIGITS = Array.from({ length: 10 }, (_, i) => String((i + 1) % 10)).join('');
@@ -76,53 +78,37 @@ export function QuickLog({
 
   return (
     <Sheet title={`Log a contact on ${sat.name}`} onClose={onClose}>
-      <div className="space-y-3">
-        <div className="grid grid-cols-[2fr_1fr] gap-2">
-          <button
-            type="button"
-            onClick={() => setTarget('call')}
-            aria-pressed={target === 'call'}
-            className={`min-h-16 rounded-xl border-2 px-3 text-left ${target === 'call' ? 'border-accent' : 'border-line'}`}
-          >
-            <span className="block text-xs font-semibold text-muted">Their callsign</span>
-            <span className="tabular text-3xl font-black tracking-wide" aria-label="Their callsign">
-              {call || <span className="text-muted">—</span>}
+      <div className="stack">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="button" className="call-field" style={{ flex: 2 }} onClick={() => setTarget('call')} aria-pressed={target === 'call'}>
+            <small>Their callsign</small>
+            <span className="readout readout-l" aria-label="Their callsign">
+              {call || <span className="muted">—</span>}
             </span>
           </button>
-          <button
-            type="button"
-            onClick={() => setTarget('grid')}
-            aria-pressed={target === 'grid'}
-            className={`min-h-16 rounded-xl border-2 px-3 text-left ${target === 'grid' ? 'border-accent' : 'border-line'}`}
-          >
-            <span className="block text-xs font-semibold text-muted">Grid (optional)</span>
-            <span className={`tabular text-2xl font-black ${gridOk ? '' : 'text-danger-fg'}`} aria-label="Their grid">
-              {grid || <span className="text-muted">—</span>}
+          <button type="button" className="call-field" onClick={() => setTarget('grid')} aria-pressed={target === 'grid'}>
+            <small>Grid (optional)</small>
+            <span
+              className="readout readout-m"
+              style={{ color: gridOk ? undefined : 'var(--ion-color-danger)' }}
+              aria-label="Their grid"
+            >
+              {grid || <span className="muted">—</span>}
             </span>
           </button>
         </div>
 
-        <div className="space-y-1" aria-label="Keypad">
+        <div className="keypad" aria-label="Keypad">
           {ROWS.map((row) => (
-            <div key={row} className="flex gap-1">
+            <div key={row} className="keypad-row">
               {row.split('').map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => value.length < max && set(value + k)}
-                  className="min-h-12 flex-1 rounded-lg border border-line bg-surface text-lg font-bold"
-                >
+                <button key={k} type="button" onClick={() => value.length < max && set(value + k)}>
                   {k}
                 </button>
               ))}
               {row === 'ZXCVBNM' && (
-                <button
-                  type="button"
-                  onClick={() => set(value.slice(0, -1))}
-                  className="min-h-12 flex-[2] rounded-lg border border-line bg-surface text-lg font-bold"
-                  aria-label="Delete"
-                >
-                  ⌫
+                <button type="button" className="wide" onClick={() => set(value.slice(0, -1))} aria-label="Delete">
+                  <IonIcon icon={backspaceOutline} aria-hidden />
                 </button>
               )}
             </div>
@@ -131,20 +117,20 @@ export function QuickLog({
 
         {modes.length > 1 && <Segmented label="Mode" value={mode} onChange={setMode} options={modes.map((m) => ({ value: m, label: m }))} />}
 
-        <p className="tabular text-sm text-muted">
+        <IonNote className="tabular" style={{ display: 'block' }}>
           {formatUtc(timeOn, true)} · {mode}
           {setting?.uplinkHz != null && ` · ↑ ${formatMHz(setting.uplinkHz)}`}
           {setting?.downlinkHz != null && ` · ↓ ${formatMHz(setting.downlinkHz)}`} · from {grid4(location.grid6)}
-        </p>
+        </IonNote>
         {!sat.lotwName && (
-          <p className="text-sm font-semibold">
+          <Banner tone="warn">
             {sat.overlay.curated ? `${sat.name} isn’t on LoTW’s satellite list.` : `LoTW name for ${sat.name} is unknown.`} The
             contact is saved, but LoTW won’t accept it as a satellite QSO.
-          </p>
+          </Banner>
         )}
-        {!station.callsign && <p className="text-sm font-semibold">Set your own callsign in Settings before exporting.</p>}
+        {!station.callsign && <Banner tone="warn">Set your own callsign in Settings before exporting.</Banner>}
 
-        <Button kind="primary" className="w-full text-lg" disabled={!canSave} onClick={save}>
+        <Button kind="primary" size="large" disabled={!canSave} onClick={save}>
           Save {call || 'contact'}
         </Button>
       </div>

@@ -1,13 +1,26 @@
+import { useState } from 'react';
+import {
+  IonInput,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonListHeader,
+  IonNote,
+  IonSelect,
+  IonSelectOption,
+  IonToggle,
+} from '@ionic/react';
 import { cueSupport } from '../cue/cue';
 import { canRecord } from '../record/recorder';
 import type { LoadedCatalog } from '../data/catalog';
 import type { Theme } from '../data/theme';
 import { formatElementAge } from '../model/elementAge';
-import { useState } from 'react';
 import { SunCalibration } from '../compass/SunCalibration';
 import type { Location, RadioStepHz, Station } from '../model/types';
-import { Button, Field, Segmented, Sheet, inputClass } from './common';
+import { Segmented, Sheet } from './common';
 import { useNow } from './clock';
+
+const STEPS: RadioStepHz[] = [2500, 5000, 6250];
 
 export function SettingsSheet({
   station,
@@ -28,78 +41,129 @@ export function SettingsSheet({
 }) {
   const [calibrating, setCalibrating] = useState(false);
   const now = useNow(60_000);
+  const support = cueSupport();
+  const cueRows: Array<{ key: keyof Station['cues']; label: string; missing: string }> = [
+    { key: 'speech', label: 'Spoken cues', missing: 'This browser can’t speak.' },
+    { key: 'tones', label: 'Tones', missing: 'This browser can’t play tones.' },
+    { key: 'vibration', label: 'Vibration', missing: 'This device can’t vibrate from a web page.' },
+  ];
+
   return (
     <Sheet title="Settings" onClose={onClose}>
-      <div className="space-y-5">
-        <Field label="Experience" hint="Changes what’s shown by default. Nothing is locked either way.">
+      <IonList inset>
+        <IonListHeader>
+          <IonLabel>Experience</IonLabel>
+        </IonListHeader>
+        <IonItem lines="none">
           <Segmented
             label="Experience"
             value={station.experience}
             onChange={(experience) => onChange({ ...station, experience })}
             options={[
-              { value: 'new', label: 'New to satellites' },
+              { value: 'new', label: 'New' },
               { value: 'experienced', label: 'I’ve made contacts' },
             ]}
           />
-        </Field>
-        <Field label="Callsign">
-          <input
-            className={`${inputClass} uppercase`}
+        </IonItem>
+        <IonItem lines="none">
+          <IonNote>Changes what’s shown by default. Nothing is locked either way.</IonNote>
+        </IonItem>
+      </IonList>
+
+      <IonList inset>
+        <IonListHeader>
+          <IonLabel>Station</IonLabel>
+        </IonListHeader>
+        <IonItem>
+          <IonInput
+            label="Callsign"
             value={station.callsign}
-            onChange={(e) => onChange({ ...station, callsign: e.target.value.toUpperCase().trim() })}
             placeholder="W7LIT"
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
+            autocapitalize="characters"
+            autocorrect={false}
+            spellcheck={false}
+            className="callsign-input"
+            style={{ textAlign: 'right' }}
+            onIonInput={(e) => onChange({ ...station, callsign: (e.detail.value ?? '').toUpperCase().trim() })}
           />
-        </Field>
-        <Field label="Units">
-          <Segmented
-            label="Units"
-            value={station.units}
-            onChange={(units) => onChange({ ...station, units })}
-            options={[
-              { value: 'imperial', label: 'Miles' },
-              { value: 'metric', label: 'Kilometres' },
-            ]}
-          />
-        </Field>
-        <Field label="Radio tuning step" hint="FM frequencies are rounded to what your radio can tune.">
-          <Segmented<RadioStepHz>
+        </IonItem>
+        <IonItem>
+          <IonSelect
             label="Radio tuning step"
             value={station.radioStepHz}
-            onChange={(radioStepHz) => onChange({ ...station, radioStepHz })}
-            options={[
-              { value: 2500, label: '2.5 kHz' },
-              { value: 5000, label: '5 kHz' },
-              { value: 6250, label: '6.25 kHz' },
-            ]}
-          />
-        </Field>
-        <CueSettings station={station} onChange={onChange} />
-        <label className="flex min-h-12 items-center gap-3">
-          <input
-            type="checkbox"
-            className="size-6"
-            disabled={!canRecord()}
+            interface="action-sheet"
+            onIonChange={(e) => onChange({ ...station, radioStepHz: e.detail.value as RadioStepHz })}
+          >
+            {STEPS.map((s) => (
+              <IonSelectOption key={s} value={s}>
+                {(s / 1000).toString()} kHz
+              </IonSelectOption>
+            ))}
+          </IonSelect>
+        </IonItem>
+        <IonItem lines="none">
+          <IonLabel>Units</IonLabel>
+          <div slot="end" style={{ minWidth: 200 }}>
+            <Segmented
+              label="Units"
+              value={station.units}
+              onChange={(units) => onChange({ ...station, units })}
+              options={[
+                { value: 'imperial', label: 'Miles' },
+                { value: 'metric', label: 'km' },
+              ]}
+            />
+          </div>
+        </IonItem>
+      </IonList>
+
+      <IonList inset>
+        <IonListHeader>
+          <IonLabel>Live pass</IonLabel>
+        </IonListHeader>
+        {cueRows.map((r) => (
+          <IonItem key={r.key}>
+            <IonToggle
+              checked={station.cues[r.key] && support[r.key]}
+              disabled={!support[r.key]}
+              onIonChange={(e) => onChange({ ...station, cues: { ...station.cues, [r.key]: e.detail.checked } })}
+            >
+              {r.label}
+              {!support[r.key] && (
+                <IonNote style={{ display: 'block' }}>{r.missing}</IonNote>
+              )}
+            </IonToggle>
+          </IonItem>
+        ))}
+        <IonItem>
+          <IonToggle
             checked={station.recordPasses && canRecord()}
-            onChange={(e) => onChange({ ...station, recordPasses: e.target.checked })}
-          />
-          <span>
-            Record passes automatically from AOS
-            <span className="block text-sm text-muted">
-              {canRecord() ? 'Uses the microphone or a wired input. Recordings stay on this device.' : 'This browser can’t record audio.'}
-            </span>
-          </span>
-        </label>
+            disabled={!canRecord()}
+            onIonChange={(e) => onChange({ ...station, recordPasses: e.detail.checked })}
+          >
+            Record passes from AOS
+            <IonNote style={{ display: 'block' }}>
+              {canRecord() ? 'Microphone or a wired input. Stays on this device.' : 'This browser can’t record audio.'}
+            </IonNote>
+          </IonToggle>
+        </IonItem>
         {location && (
-          <Field label="Compass" hint={station.compassCalibratedAt === null ? 'Not calibrated yet.' : `Offset ${station.compassOffsetDeg.toFixed(0)}°.`}>
-            <Button className="w-full" onClick={() => setCalibrating(true)}>
-              Calibrate against the sun
-            </Button>
-          </Field>
+          <IonItem button detail onClick={() => setCalibrating(true)}>
+            <IonLabel>
+              Calibrate compass against the sun
+              <p>
+                {station.compassCalibratedAt === null ? 'Not calibrated yet' : `Offset ${station.compassOffsetDeg.toFixed(0)}°`}
+              </p>
+            </IonLabel>
+          </IonItem>
         )}
-        <Field label="Display">
+      </IonList>
+
+      <IonList inset>
+        <IonListHeader>
+          <IonLabel>Display</IonLabel>
+        </IonListHeader>
+        <IonItem lines="none">
           <Segmented
             label="Display"
             value={theme}
@@ -111,52 +175,27 @@ export function SettingsSheet({
               { value: 'night', label: 'Red' },
             ]}
           />
-        </Field>
-        <div className="rounded-xl border border-line p-3 text-sm text-muted">
-          {catalog ? (
-            <>
-              Satellite data published {formatElementAge(catalog.catalog.generatedAt, now).replace(' old', ' ago')}
-              {catalog.fromCache && ' (saved copy — offline)'}. {catalog.catalog.satellites.length} satellites.
-            </>
-          ) : (
-            'No satellite data yet.'
-          )}
-          <br />
-          Everything you enter stays on this device.
-        </div>
-      </div>
+        </IonItem>
+        <IonItem lines="none">
+          <IonNote>Day is high-contrast for direct sun. Red keeps your night vision.</IonNote>
+        </IonItem>
+      </IonList>
+
+      <IonNote className="ion-padding" style={{ display: 'block' }}>
+        {catalog ? (
+          <>
+            Satellite data published {formatElementAge(catalog.catalog.generatedAt, now).replace(' old', ' ago')}
+            {catalog.fromCache && ' (saved copy — offline)'}. {catalog.catalog.satellites.length} satellites.
+          </>
+        ) : (
+          'No satellite data yet.'
+        )}{' '}
+        Everything you enter stays on this device.
+      </IonNote>
+
       {calibrating && location && (
         <SunCalibration location={location} station={station} onChange={onChange} onClose={() => setCalibrating(false)} />
       )}
     </Sheet>
-  );
-}
-
-function CueSettings({ station, onChange }: { station: Station; onChange: (s: Station) => void }) {
-  const support = cueSupport();
-  const rows: Array<{ key: keyof Station['cues']; label: string; missing: string }> = [
-    { key: 'speech', label: 'Spoken cues', missing: 'This browser can’t speak.' },
-    { key: 'tones', label: 'Tones', missing: 'This browser can’t play tones.' },
-    { key: 'vibration', label: 'Vibration', missing: 'This device can’t vibrate from a web page.' },
-  ];
-  return (
-    <fieldset>
-      <legend className="mb-1 text-sm font-semibold text-muted">Live-pass cues</legend>
-      {rows.map((r) => (
-        <label key={r.key} className="flex min-h-12 items-center gap-3">
-          <input
-            type="checkbox"
-            className="size-6"
-            disabled={!support[r.key]}
-            checked={station.cues[r.key] && support[r.key]}
-            onChange={(e) => onChange({ ...station, cues: { ...station.cues, [r.key]: e.target.checked } })}
-          />
-          <span>
-            {r.label}
-            {!support[r.key] && <span className="block text-sm text-muted">{r.missing}</span>}
-          </span>
-        </label>
-      ))}
-    </fieldset>
   );
 }
