@@ -285,3 +285,27 @@ export function buildCatalog(inp: BuildInputs): { catalog: Catalog; report: Buil
     report,
   };
 }
+
+// ---- Network resilience ----
+
+/**
+ * Run `fn` up to `delaysMs.length + 1` times, waiting each delay between failures. Data sources
+ * time out from CI runners now and then; one slow response shouldn't fail the daily build.
+ */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  delaysMs: readonly number[],
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms)),
+  onRetry?: (err: unknown, attempt: number) => void,
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const delay = delaysMs[attempt];
+      if (delay === undefined) throw err;
+      onRetry?.(err, attempt + 1);
+      await sleep(delay);
+    }
+  }
+}
