@@ -1,3 +1,4 @@
+import { cueSupport } from '../cue/cue';
 import type { LoadedCatalog } from '../data/catalog';
 import type { Theme } from '../data/theme';
 import { formatElementAge } from '../model/elementAge';
@@ -69,6 +70,7 @@ export function SettingsSheet({
             ]}
           />
         </Field>
+        <CueSettings station={station} onChange={onChange} />
         <Field label="Display">
           <Segmented
             label="Display"
@@ -96,5 +98,34 @@ export function SettingsSheet({
         </div>
       </div>
     </Sheet>
+  );
+}
+
+function CueSettings({ station, onChange }: { station: Station; onChange: (s: Station) => void }) {
+  const support = cueSupport();
+  const rows: Array<{ key: keyof Station['cues']; label: string; missing: string }> = [
+    { key: 'speech', label: 'Spoken cues', missing: 'This browser can’t speak.' },
+    { key: 'tones', label: 'Tones', missing: 'This browser can’t play tones.' },
+    { key: 'vibration', label: 'Vibration', missing: 'This device can’t vibrate from a web page.' },
+  ];
+  return (
+    <fieldset>
+      <legend className="mb-1 text-sm font-semibold text-muted">Live-pass cues</legend>
+      {rows.map((r) => (
+        <label key={r.key} className="flex min-h-12 items-center gap-3">
+          <input
+            type="checkbox"
+            className="size-6"
+            disabled={!support[r.key]}
+            checked={station.cues[r.key] && support[r.key]}
+            onChange={(e) => onChange({ ...station, cues: { ...station.cues, [r.key]: e.target.checked } })}
+          />
+          <span>
+            {r.label}
+            {!support[r.key] && <span className="block text-sm text-muted">{r.missing}</span>}
+          </span>
+        </label>
+      ))}
+    </fieldset>
   );
 }

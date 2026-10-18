@@ -15,6 +15,7 @@ import {
 } from 'satellite.js';
 import type { Location, OmmElements, Pass } from '../model/types';
 import { SECOND } from '../model/time';
+import type { TrackPoint } from '../model/track';
 
 const COARSE_STEP = 30 * SECOND;
 const MASK_STEP = 5 * SECOND;
@@ -204,13 +205,17 @@ export function findPasses(sat: PassSearch, loc: Location, from: number, to: num
   return passes;
 }
 
-/** Points along a pass for the sky plot / timeline, every `stepMs`. */
-export function passTrack(elements: OmmElements, obs: Observer, aos: number, los: number, stepMs = 10 * SECOND) {
+/** The pass sampled every `stepMs` from AOS to LOS inclusive, with range rate (D7). */
+export function passTrack(elements: OmmElements, obs: Observer, aos: number, los: number, stepMs = SECOND): TrackPoint[] {
   const satrec = satrecFromOmm(elements);
-  const pts: Array<{ t: number } & LookAngle> = [];
-  for (let t = aos; t <= los; t += stepMs) {
+  const pts: TrackPoint[] = [];
+  const n = Math.max(1, Math.round((los - aos) / stepMs));
+  const step = (los - aos) / n;
+  for (let i = 0; i <= n; i++) {
+    const t = Math.round(aos + i * step);
     const la = lookAngle(satrec, obs, t);
-    if (la) pts.push({ t, ...la });
+    const rr = rangeRate(satrec, obs, t);
+    if (la && rr !== null) pts.push({ t, ...la, rangeRateMps: rr });
   }
   return pts;
 }

@@ -15,7 +15,8 @@ import {
 import { primaryTransmitter } from '../model/transmitters';
 import type { Location, Pass, Satellite, Station, Transmitter } from '../model/types';
 import { rangeRateAt } from '../predict/client';
-import { Banner } from './common';
+import { createCue } from '../cue/cue';
+import { Banner, Button } from './common';
 import { DifficultyBadge, StatusBadge } from './badges';
 
 interface Doppler {
@@ -79,6 +80,7 @@ export function PassCard({
   now,
   isNext,
   onBackToNext,
+  onStart,
 }: {
   pass: Pass;
   sat: Satellite;
@@ -87,6 +89,7 @@ export function PassCard({
   now: number;
   isNext: boolean;
   onBackToNext?: () => void;
+  onStart: () => void;
 }) {
   const tx = primaryTransmitter(sat);
   const doppler = useDoppler(pass, sat, tx, location, station, now);
@@ -192,6 +195,17 @@ export function PassCard({
         Elements {formatElementAge(pass.elementsEpoch, now)}
         {approx && ' — times are approximate'}
       </p>
+      <Button
+        kind="primary"
+        className="mt-4 w-full text-lg"
+        onClick={() => {
+          // The tap is the user gesture browsers need before cues can make a sound (D14).
+          createCue(station.cues).unlock();
+          onStart();
+        }}
+      >
+        {inProgress ? 'Track it now' : 'Start'}
+      </Button>
       {approx && (
         <div className="mt-2">
           <Banner tone="danger">These elements are over two weeks old. The satellite may be minutes away from where this says.</Banner>

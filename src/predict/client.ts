@@ -1,3 +1,4 @@
+import type { TrackPoint } from '../model/track';
 import type { Location, Pass, Satellite } from '../model/types';
 import type { PassSearch } from './passes';
 import type { WorkerRequest, WorkerResponse } from './worker';
@@ -43,4 +44,9 @@ export async function predictPasses(sats: Satellite[], location: Location, from:
 export async function rangeRateAt(sat: Satellite, location: Location, t: number): Promise<number | null> {
   const r = await ask({ type: 'rangeRate', sat: toSearch(sat), location, t });
   return r.type === 'rangeRate' ? r.rangeRateMps : null;
+}
+
+export async function passTrackFor(sat: Satellite, location: Location, pass: Pass): Promise<TrackPoint[]> {
+  const r = await ask({ type: 'track', sat: toSearch(sat), location, aos: pass.aos, los: pass.los });
+  return r.type === 'track' ? r.track : [];
 }
