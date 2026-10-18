@@ -13,19 +13,21 @@ import { applyTheme, loadTheme, saveTheme, type Theme } from '../data/theme';
 import { LiveScreen } from '../live/LiveScreen';
 import { SECOND } from '../model/time';
 import type { PracticeRate } from '../model/practice';
-import type { Location, Pass, QsoRecord, Satellite, Station } from '../model/types';
+import type { Location, Pass, QsoRecord, Recording, Satellite, Station } from '../model/types';
 import { deleteQso, listQsos, markExported, saveQso } from '../data/log';
+import { deleteRecording, listRecordings } from '../data/recordings';
 import { EXPORT_NUDGE, LogView, unexportedCount } from './LogView';
 import { ClockContext } from './clock';
 import { Banner, Button } from './common';
 import { Learn } from './Learn';
+import { MapView } from './MapView';
 import { LocationSheet } from './LocationSheet';
 import { LocationSetup } from './LocationSetup';
 import { SettingsSheet } from './SettingsSheet';
 import { Tonight } from './Tonight';
 
 type Sheet = 'none' | 'locations' | 'settings';
-type Tab = 'tonight' | 'log' | 'learn';
+type Tab = 'tonight' | 'map' | 'log' | 'learn';
 
 interface Live {
   pass: Pass;
@@ -47,6 +49,8 @@ export function App() {
   const [tab, setTab] = useState<Tab>('tonight');
   const [selected, setSelected] = useState<Pass | null>(null);
   const [qsos, setQsos] = useState<QsoRecord[]>([]);
+  const [recordings, setRecordings] = useState<Recording[]>([]);
+  const refreshRecordings = useCallback(async () => setRecordings(await listRecordings()), []);
 
   const refreshLog = useCallback(async () => setQsos(await listQsos()), []);
   const logQso = useCallback(
@@ -89,6 +93,7 @@ export function App() {
       setLocations(locs);
       setActiveId(active && locs.some((l) => l.id === active) ? active : (locs[0]?.id ?? null));
       setQsos(await listQsos());
+      setRecordings(await listRecordings());
       setReady(true);
       const c = await loadCatalog();
       setCatalog(c);
@@ -186,13 +191,19 @@ export function App() {
         {!location ? (
           <LocationSetup onSave={addLocation} />
         ) : catalog ? (
-          tab === 'log' ? (
+          tab === 'map' ? (
+            <MapView catalog={catalog} location={location} station={station} qsos={qsos} />
+          ) : tab === 'log' ? (
             <LogView
               qsos={qsos}
               station={station}
               onSave={(q) => void logQso(q)}
               onDelete={(id) => void deleteQso(id).then(refreshLog)}
               onExported={(ids, at) => void markExported(ids, at).then(refreshLog)}
+              recordings={recordings}
+              onDeleteRecording={(id) => void deleteRecording(id).then(refreshRecordings)}
+              catalog={catalog}
+              locations={locations}
             />
           ) : tab === 'tonight' ? (
             <>
@@ -239,6 +250,7 @@ export function App() {
             {(
               [
                 ['tonight', 'Tonight'],
+                ['map', 'Map'],
                 ['log', 'Log'],
                 ['learn', station.experience === 'new' ? 'Learn' : 'Help'],
               ] as const
@@ -266,6 +278,7 @@ export function App() {
             station={station}
             onClose={closeLive}
             onLog={(q) => void logQso(q)}
+            onRecorded={() => void refreshRecordings()}
             practice={live.practice && { rate: live.practice.rate, onRate: setPracticeRate }}
           />
         </ClockContext.Provider>

@@ -5,7 +5,12 @@ import { lotwProblems, toAdif } from '../model/adif';
 import { formatMHz } from '../model/freq';
 import { formatLocalDay, formatLocalTime, formatUtc } from '../model/format';
 import { grid4, isValidGrid, normaliseGrid } from '../model/grid';
-import type { QsoRecord, Station } from '../model/types';
+import type { LoadedCatalog } from '../data/catalog';
+import type { Location, QsoRecord, Recording, Station } from '../model/types';
+import { Recordings } from './Recordings';
+import { shareOrDownload } from './share';
+
+type Catalog = LoadedCatalog;
 import { Banner, Button, Field, Sheet, inputClass } from './common';
 import { useClock } from './clock';
 
@@ -27,12 +32,20 @@ export function LogView({
   onSave,
   onDelete,
   onExported,
+  recordings,
+  onDeleteRecording,
+  catalog,
+  locations,
 }: {
   qsos: QsoRecord[];
   station: Station;
   onSave: (q: QsoRecord) => void;
   onDelete: (id: string) => void;
   onExported: (ids: string[], at: number) => void;
+  recordings: Recording[];
+  onDeleteRecording: (id: string) => void;
+  catalog: Catalog;
+  locations: Location[];
 }) {
   const clock = useClock();
   const [filter, setFilter] = useState<number | 'all'>('all');
@@ -54,17 +67,7 @@ export function LogView({
     const stamp = formatUtc(now, true).replace(/[^0-9]/g, '').slice(0, 6);
     const name = `passband-${new Date(now).toISOString().slice(0, 10)}-${stamp}.adi`;
     const file = new File([text], name, { type: 'text/plain' });
-    // §6: share sheet where the platform has one (iOS especially), a download otherwise.
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: 'Passband log' });
-      } catch (e) {
-        if ((e as DOMException).name === 'AbortError') return;
-        download(file);
-      }
-    } else {
-      download(file);
-    }
+    if (!(await shareOrDownload(file, 'Passband log'))) return;
     onExported(
       list.map((q) => q.id),
       now,
@@ -140,6 +143,15 @@ export function LogView({
         </ul>
       )}
 
+      <Recordings
+        recordings={recordings}
+        catalog={catalog.catalog}
+        locations={locations}
+        station={station}
+        onLog={onSave}
+        onDelete={onDeleteRecording}
+      />
+
       {editing && (
         <EditQso
           qso={editing}
@@ -156,17 +168,6 @@ export function LogView({
       )}
     </div>
   );
-}
-
-function download(file: File) {
-  const url = URL.createObjectURL(file);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = file.name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {

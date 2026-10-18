@@ -14,7 +14,10 @@ import {
 } from '../model/format';
 import { primaryTransmitter } from '../model/transmitters';
 import type { Location, Pass, Satellite, Station, Transmitter } from '../model/types';
-import { rangeRateAt } from '../predict/client';
+import { predictPasses, rangeRateAt } from '../predict/client';
+import { isGoodPass } from '../model/selection';
+import { DAY } from '../model/time';
+import { exportPassesToCalendar } from './calendar';
 import { createCue } from '../cue/cue';
 import { Banner, Button } from './common';
 import { DifficultyBadge, StatusBadge } from './badges';
@@ -206,6 +209,7 @@ export function PassCard({
       >
         {inProgress ? 'Track it now' : 'Start'}
       </Button>
+      <Reminders pass={pass} sat={sat} location={location} station={station} now={now} />
       {approx && (
         <div className="mt-2">
           <Banner tone="danger">These elements are over two weeks old. The satellite may be minutes away from where this says.</Banner>
@@ -269,6 +273,34 @@ function Frequencies({ tx, doppler, inProgress, isNew }: { tx: Transmitter; dopp
           <span className="text-xl font-bold">{up}</span>
         </div>
       )}
+    </div>
+  );
+}
+
+/** D17: the phone's own calendar does the reminding — one pass, or the week's good ones. */
+function Reminders({ pass, sat, location, station, now }: { pass: Pass; sat: Satellite; location: Location; station: Station; now: number }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="mt-2 grid grid-cols-2 gap-2">
+      <Button onClick={() => void exportPassesToCalendar([pass], sat, now, `${sat.name}-${formatLocalTime(pass.aos).replace(/\W/g, '')}`)}>
+        Remind me
+      </Button>
+      <Button
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          try {
+            const week = await predictPasses([sat], location, now, now + 7 * DAY);
+            const good = week.filter((p) => p.aos > now && isGoodPass(p, station.experience));
+            if (good.length) await exportPassesToCalendar(good, sat, now, `${sat.name}-this-week`);
+            else alert(`No good ${sat.name} passes in the next week.`);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? 'Working…' : `All ${sat.name} this week`}
+      </Button>
     </div>
   );
 }
