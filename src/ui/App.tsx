@@ -283,6 +283,11 @@ export function App() {
             setSheet('none');
           }}
           onDelete={removeLocation}
+          station={station}
+          onUpdate={async (loc) => {
+            await saveLocation(loc);
+            setLocations(await listLocations());
+          }}
           onClose={() => setSheet('none')}
         />
       )}
@@ -293,6 +298,7 @@ export function App() {
           theme={theme}
           onTheme={updateTheme}
           catalog={catalog}
+          location={location}
           onClose={() => setSheet('none')}
         />
       )}

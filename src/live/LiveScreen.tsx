@@ -15,10 +15,14 @@ import type { Location, Pass, QsoRecord, Satellite, Station } from '../model/typ
 import { formatDistance } from '../model/units';
 import { passTrackFor } from '../predict/client';
 import { DisplayRig } from '../rig/rig';
-import { Banner, Button } from '../ui/common';
+import { Banner, Button, Segmented } from '../ui/common';
 import { QuickLog } from '../ui/QuickLog';
 import { useNow } from '../ui/clock';
+import { CompassStatus } from '../compass/CompassStatus';
+import { useCompass } from '../compass/useCompass';
+import { ARView } from './ARView';
 import { Checklist } from './Checklist';
+import { PointingGuide } from './PointingGuide';
 import { PracticePanel, type PracticeControls } from './PracticePanel';
 import { ScheduleList } from './ScheduleList';
 import { SkyPlot } from './SkyPlot';
@@ -52,6 +56,11 @@ export function LiveScreen({
   // D19: spoken cues on for beginners, off for experienced operators; one tap either way.
   const [cuesOn, setCuesOn] = useState(isNew);
   const [logAt, setLogAt] = useState<number | null>(null);
+  // D10/D19: beginners get the big compass view when there is a compass; everyone can switch.
+  const compass = useCompass(location, station);
+  const [view, setView] = useState<'sky' | 'compass' | 'ar'>(isNew ? 'compass' : 'sky');
+  const compassOk = compass.status === 'ok' && compass.reading !== null;
+  const effectiveView = view !== 'sky' && compass.status === 'unsupported' ? 'sky' : view;
   const [logged, setLogged] = useState<string | null>(null);
   const tx = primaryTransmitter(sat);
 
@@ -147,8 +156,37 @@ export function LiveScreen({
       )}
       {stale && <Banner tone="danger">Elements {formatElementAge(pass.elementsEpoch, now)} — positions are approximate.</Banner>}
 
+      <Segmented
+        label="View"
+        value={effectiveView}
+        onChange={setView}
+        options={[
+          { value: 'sky', label: 'Sky' },
+          { value: 'compass', label: 'Compass' },
+          { value: 'ar', label: 'AR' },
+        ]}
+      />
+      {view !== 'sky' && (
+        <div className="my-2">
+          <CompassStatus compass={compass} station={station} now={now} />
+        </div>
+      )}
+      {effectiveView === 'compass' && compassOk && here && (
+        <PointingGuide target={here} device={compass.reading!.top} />
+      )}
       <div className="relative">
-        {track ? <SkyPlot track={track} now={here} mask={location.horizonMask} /> : <p className="py-16 text-center text-muted">Plotting the pass…</p>}
+        {effectiveView === 'ar' ? (
+          <ARView compass={compass} sat={here} track={track ?? []} />
+        ) : track ? (
+          <SkyPlot
+            track={track}
+            now={here}
+            mask={location.horizonMask}
+            headingDeg={effectiveView === 'compass' && compassOk ? compass.reading!.top.azDeg : null}
+          />
+        ) : (
+          <p className="py-16 text-center text-muted">Plotting the pass…</p>
+        )}
         <div className="tabular absolute right-0 bottom-0 text-right">
           {phase === 'during' && here ? (
             <>
@@ -242,12 +280,13 @@ export function LiveScreen({
           kind={cuesOn ? 'primary' : 'secondary'}
           className="flex-1"
           disabled={!anyCueOutput}
+          aria-label={!anyCueOutput ? 'Cues are off in Settings' : cuesOn ? 'Cues on' : 'Cues off'}
           onClick={() => {
             if (!cuesOn) cue.unlock();
             setCuesOn((c) => !c);
           }}
         >
-          {!anyCueOutput ? 'Cues off in Settings' : cuesOn ? '🔊 Cues on' : '🔇 Cues off'}
+          {!anyCueOutput ? 'No cues' : cuesOn ? '🔊 Cues' : '🔇 Cues'}
         </Button>
         {tx?.uplinkHz != null && (
           <Button

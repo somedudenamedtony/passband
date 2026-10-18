@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { Location } from '../model/types';
+import type { Location, Station } from '../model/types';
+import { MaskEditor } from './MaskEditor';
 import { Button, Sheet } from './common';
 import { LocationForm } from './LocationSetup';
 
@@ -9,6 +10,8 @@ export function LocationSheet({
   onSelect,
   onAdd,
   onDelete,
+  onUpdate,
+  station,
   onClose,
 }: {
   locations: Location[];
@@ -16,9 +19,12 @@ export function LocationSheet({
   onSelect: (id: string) => void;
   onAdd: (l: Location) => void;
   onDelete: (id: string) => void;
+  onUpdate: (l: Location) => void;
+  station: Station;
   onClose: () => void;
 }) {
   const [adding, setAdding] = useState(false);
+  const [masking, setMasking] = useState<Location | null>(null);
   return (
     <Sheet title="Locations" onClose={onClose}>
       <ul className="mb-4 space-y-2">
@@ -33,6 +39,15 @@ export function LocationSheet({
               }`}
             >
               {l.name} <span className="text-muted">· {l.grid6}</span>
+              {l.horizonMask.some((m) => m > 0) && <span className="block text-xs text-muted">horizon mask set</span>}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMasking(l)}
+              className="min-h-12 rounded-xl border border-line px-3 text-sm font-semibold"
+              aria-label={`Horizon mask for ${l.name}`}
+            >
+              Horizon
             </button>
             {locations.length > 1 && (
               <button
@@ -59,6 +74,17 @@ export function LocationSheet({
       <p className="mt-3 text-sm text-muted">
         Add the park, a hilltop, or a grid you plan to rove to. Passes are predicted for whichever is selected.
       </p>
+      {masking && (
+        <MaskEditor
+          location={masking}
+          station={station}
+          onClose={() => setMasking(null)}
+          onSave={(l) => {
+            onUpdate(l);
+            setMasking(null);
+          }}
+        />
+      )}
     </Sheet>
   );
 }

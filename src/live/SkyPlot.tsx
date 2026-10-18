@@ -13,11 +13,15 @@ export function SkyPlot({
   track,
   now,
   mask,
+  headingDeg = null,
 }: {
   track: readonly TrackPoint[];
   now: TrackPoint | null;
   mask: readonly number[];
+  /** D10: rotate so the way the phone points is up. null = north up. */
+  headingDeg?: number | null;
 }) {
+  const rot = headingDeg === null ? 0 : -headingDeg;
   const path = track
     .filter((_, i) => i % 5 === 0 || i === track.length - 1)
     .map((p, i) => {
@@ -40,6 +44,7 @@ export function SkyPlot({
   return (
     <svg viewBox="-120 -120 240 240" className="mx-auto block aspect-square w-full max-w-[22rem]" role="img" aria-label="Sky plot">
       <circle r={R} fill="var(--surface)" stroke="var(--border)" strokeWidth={1.5} />
+      <g transform={`rotate(${rot})`}>
       {hasMask && (
         <path d={`M0,${-R} A${R},${R} 0 1,1 0,${R} A${R},${R} 0 1,1 0,${-R} ${maskPath}`} fill="var(--bar-dim)" fillRule="evenodd" opacity={0.6} />
       )}
@@ -56,7 +61,7 @@ export function SkyPlot({
           ['W', -R - 10, 0],
         ] as const
       ).map(([l, x, y]) => (
-        <text key={l} x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={800} fill="var(--fg)">
+        <text key={l} x={x} y={y} transform={`rotate(${-rot} ${x} ${y})`} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={800} fill="var(--fg)">
           {l}
         </text>
       ))}
@@ -73,6 +78,8 @@ export function SkyPlot({
           <circle cx={nx} cy={ny} r={7} fill="var(--fg)" stroke="var(--bg)" strokeWidth={2} />
         </>
       )}
+      </g>
+      {headingDeg !== null && <path d={`M0,${-R - 2} l-7,-12 l14,0 Z`} fill="var(--accent)" aria-label="You are facing this way" />}
     </svg>
   );
 }

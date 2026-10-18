@@ -8,6 +8,7 @@ export const DEFAULT_STATION: Station = {
   radioStepHz: 5000, // D7
   cues: { speech: true, tones: false, vibration: false }, // D14: speech works everywhere
   compassOffsetDeg: 0,
+  compassCalibratedAt: null,
 };
 
 export async function loadStation(): Promise<Station> {

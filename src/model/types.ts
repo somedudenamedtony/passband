@@ -64,6 +64,8 @@ export interface Station {
   radioStepHz: RadioStepHz;
   cues: { speech: boolean; tones: boolean; vibration: boolean };
   compassOffsetDeg: number;
+  /** When sun calibration last set the offset (D10); null = never. */
+  compassCalibratedAt: number | null;
 }
 
 export interface Location {

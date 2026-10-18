@@ -7,7 +7,7 @@ and an antenna, useful to anyone chasing grids.
 Works offline in the field once loaded. Nothing you enter leaves your device.
 
 - **[SPEC.md](SPEC.md)** — what it does and the decisions behind it.
-- Status: M1–M4 built (catalog and prediction, live pass, practice and Learn, logging with ADIF export). M5 (compass, AR, horizon mask) is next.
+- Status: M1–M5 built (catalog and prediction, live pass, practice and Learn, logging with ADIF export, compass/AR/horizon mask). M6 (recording, calendar export, map) is next.
 
 ## Develop
 
