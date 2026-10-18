@@ -12,6 +12,19 @@ async function orient(page: Page, alpha: number, beta: number, gamma: number) {
   );
 }
 
+/**
+ * Newer Chrome, like iOS Safari, gates motion sensors behind DeviceOrientationEvent.requestPermission()
+ * from a tap, so the app shows "Turn on the compass" first. Tap it when it's there; older engines
+ * go straight to listening.
+ */
+// What a user tapping "Allow" grants. Headless has no one to answer the prompt.
+test.use({ permissions: ['accelerometer', 'gyroscope', 'magnetometer'] });
+
+async function turnOnCompass(page: Page) {
+  const button = page.getByRole('button', { name: 'Turn on the compass' });
+  if (await button.isVisible().catch(() => false)) await button.click();
+}
+
 async function setup(page: Page) {
   await page.goto('./');
   await page.getByPlaceholder('CN87uo').fill('CN87uo');
@@ -23,6 +36,7 @@ test('compass view points the way to the satellite and shows its accuracy state'
   await setup(page);
   await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click();
   await page.getByRole('radio', { name: 'Compass' }).click();
+  await turnOnCompass(page);
   const feed = setInterval(() => void orient(page, 0, 20, 0).catch(() => undefined), 150);
   try {
     await expect(page.getByRole('status', { name: 'Pointing' })).toBeVisible();
@@ -37,6 +51,7 @@ test('without a compass the live screen falls back to the north-up sky plot', as
   await setup(page);
   await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click();
   await page.getByRole('radio', { name: 'Compass' }).click();
+  await turnOnCompass(page);
   await expect(page.getByText('No compass on this device')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole('radio', { name: 'Sky' })).toHaveAttribute('aria-checked', 'true');
 });
