@@ -1,0 +1,18 @@
+{
+  "noradId": 61781,
+  "name": "AO-123",
+  "lotwName": "AO-123",
+  "difficulty": "beginner",
+  "receiveOnly": false,
+  "note": null,
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18",
+  "transmitterOverrides": [
+    {
+      "id": "f7MZKobjSKakAWQsEoLmkq",
+      "source": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-18: uplink 67 Hz CTCSS",
+      "set": {
+        "ctcssHz": 67
+      }
+    }
+  ]
+}

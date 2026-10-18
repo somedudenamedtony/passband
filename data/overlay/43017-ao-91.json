@@ -1,0 +1,9 @@
+{
+  "noradId": 43017,
+  "name": "AO-91",
+  "lotwName": "AO-91",
+  "difficulty": "beginner",
+  "receiveOnly": false,
+  "note": "FM repeater that only works in sunlight, so it is silent on passes while the satellite is in the Earth’s shadow.",
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+}

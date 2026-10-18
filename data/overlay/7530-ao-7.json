@@ -1,0 +1,9 @@
+{
+  "noradId": 7530,
+  "name": "AO-7",
+  "lotwName": "AO-7",
+  "difficulty": "advanced",
+  "receiveOnly": false,
+  "note": "Launched in 1974 and still working, but only in sunlight. Linear transponder for SSB and CW.",
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+}

@@ -1,0 +1,9 @@
+{
+  "noradId": 26931,
+  "name": "NO-44",
+  "lotwName": "NO-44",
+  "difficulty": "intermediate",
+  "receiveOnly": false,
+  "note": "APRS digipeater. Needs a radio or app that sends APRS packets.",
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+}

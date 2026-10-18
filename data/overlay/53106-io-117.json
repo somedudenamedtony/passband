@@ -1,0 +1,9 @@
+{
+  "noradId": 53106,
+  "name": "IO-117",
+  "lotwName": "IO-117",
+  "difficulty": "advanced",
+  "receiveOnly": false,
+  "note": "Packet digipeater in a much higher orbit than most, with long passes. Needs a directional antenna and a digital setup.",
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+}

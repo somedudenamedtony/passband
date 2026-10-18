@@ -1,0 +1,9 @@
+{
+  "noradId": 25544,
+  "name": "ISS",
+  "lotwName": "ARISS",
+  "difficulty": "beginner",
+  "receiveOnly": false,
+  "note": "The space station carries an FM voice repeater and an APRS digipeater. It is big and bright, and its passes are short and fast.",
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+}

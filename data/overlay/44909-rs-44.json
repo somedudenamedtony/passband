@@ -1,0 +1,9 @@
+{
+  "noradId": 44909,
+  "name": "RS-44",
+  "lotwName": "RS-44",
+  "difficulty": "advanced",
+  "receiveOnly": false,
+  "note": "Linear transponder for SSB and CW in a high orbit, with long passes. Needs full-duplex gear.",
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+}
