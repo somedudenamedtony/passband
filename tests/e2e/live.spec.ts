@@ -13,8 +13,8 @@ test('live screen tracks a pass and returns with the back button', async ({ page
   await expect(freqs).toBeVisible();
   await expect(freqs).toContainText(/\d{3}\.\d{3}/);
 
-  // Run the clock forward an hour: the pass ends and the screen says so.
-  await page.clock.fastForward(60 * 60 * 1000);
+  // Run the clock past any pass in the next day: the tracked one ends and the screen says so.
+  await page.clock.fastForward(26 * 60 * 60 * 1000);
   await page.clock.runFor(1000);
   await expect(page.getByText('Pass over')).toBeVisible();
 

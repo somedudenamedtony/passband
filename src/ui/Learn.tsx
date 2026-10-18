@@ -2,17 +2,6 @@
 // D19: open by default for new operators; folded away under Help for experienced ones.
 
 import { useMemo, type ReactNode } from 'react';
-import {
-  IonAccordion,
-  IonAccordionGroup,
-  IonButton,
-  IonCard,
-  IonCardContent,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonNote,
-} from '@ionic/react';
 import type { LoadedCatalog } from '../data/catalog';
 import { formatMHz, formatTone } from '../model/freq';
 import { compassWord, formatCountdown, formatLocalDay, formatLocalTime } from '../model/format';
@@ -22,7 +11,7 @@ import { easiestPass, isDefaultListed } from '../model/selection';
 import { HOUR } from '../model/time';
 import { primaryTransmitter } from '../model/transmitters';
 import type { Location, Pass, Satellite, Station } from '../model/types';
-import { Button } from './common';
+import { Button, Fold, Panel } from './common';
 import { useNow } from './clock';
 import { usePasses } from './usePasses';
 
@@ -56,11 +45,11 @@ export function Learn({
   const easiestSat = easiest ? byId.get(easiest.noradId) : undefined;
 
   // D19: the guide starts open for new operators and folded away for experienced ones.
-  const open = isNew ? ['first', 'listen', 'practice'] : ['listen'];
+  const open = (k: string) => (isNew ? true : k === 'listen');
 
   return (
-    <IonAccordionGroup multiple value={open}>
-      <Section value="first" title="Your first contact">
+    <div>
+      <Section open={open('first')} title="Your first contact">
         <h3>1. Gear</h3>
         <ul>
           <li>A dual-band FM radio that can transmit on one band while listening on the other. A common handheld works.</li>
@@ -72,21 +61,19 @@ export function Learn({
         <h3>2. Pick a pass</h3>
         <p>Start with an easy FM satellite on a high pass: it’s up for longer, louder, and easier to point at.</p>
         {passes === null ? (
-          <IonNote>Working out passes…</IonNote>
+          <p className="hint">Working out passes…</p>
         ) : easiest && easiestSat ? (
-          <IonCard style={{ margin: '8px 0' }}>
-            <IonCardContent>
-              <p style={{ fontWeight: 600, color: 'var(--fg)' }}>
+          <Panel className="stack">
+              <p style={{ fontWeight: 700 }}>
                 {easiestSat.name}, {formatLocalDay(easiest.aos)} {formatLocalTime(easiest.aos)} ({formatCountdown(easiest.aos - now)}), up
                 to {Math.round(easiest.maxElDeg)}°, rising in the {compassWord(easiest.aosAzDeg)}.
               </p>
-              <Button kind="primary" className="ion-margin-top" onClick={() => onPick(easiest)}>
+              <Button kind="primary" onClick={() => onPick(easiest)}>
                 Use this pass
               </Button>
-            </IonCardContent>
-          </IonCard>
+          </Panel>
         ) : (
-          <IonNote>No easy pass in the next 24 hours from {location.name}.</IonNote>
+          <p className="hint">No easy pass in the next 24 hours from {location.name}.</p>
         )}
 
         <h3>3. Listen first</h3>
@@ -104,9 +91,9 @@ export function Learn({
         <Script>
           K1ABC, {callsign(station)}, thanks, {grid4(location.grid6)}
         </Script>
-        <IonNote>
+        <p className="hint">
           K1ABC stands in for whoever answers.{!station.callsign && ' Set your own callsign in Settings.'}
-        </IonNote>
+        </p>
 
         <h3>5. Etiquette</h3>
         <ul>
@@ -124,19 +111,19 @@ export function Learn({
         </p>
       </Section>
 
-      <Section value="listen" title="Listen tonight">
-        <IonNote>No licence needed to listen. Any radio or SDR that covers the frequency will do.</IonNote>
+      <Section open={open('listen')} title="Listen tonight">
+        <p className="hint">No licence needed to listen. Any radio or SDR that covers the frequency will do.</p>
         <ListenList sats={sats} passes={passes} now={now} />
       </Section>
 
-      <Section value="practice" title="Practice a pass">
+      <Section open={open('practice')} title="Practice a pass">
         <p>
           Run a real pass — one coming up or one from earlier today — through the live screen on a simulated clock, at
           normal speed or faster. A practice tone stands in for the satellite so you can learn to retune by ear.
         </p>
         <PracticeList passes={passes} sats={byId} station={station} now={now} onPractice={onPractice} />
       </Section>
-    </IonAccordionGroup>
+    </div>
   );
 }
 
@@ -144,48 +131,47 @@ function callsign(station: Station): string {
   return station.callsign || 'W7LIT';
 }
 
-function Section({ value, title, children }: { value: string; title: string; children: ReactNode }) {
+function Section({ open, title, children }: { open: boolean; title: string; children: ReactNode }) {
   return (
-    <IonAccordion value={value}>
-      <IonItem slot="header">
-        <IonLabel style={{ fontWeight: 700, fontSize: '1.1rem' }}>{title}</IonLabel>
-      </IonItem>
-      <div slot="content" className="ion-padding learn-body">
-        {children}
-      </div>
-    </IonAccordion>
+    <Fold title={title} open={open} className="learn-body">
+      {children}
+    </Fold>
   );
 }
 
 function Script({ children }: { children: ReactNode }) {
-  return <p className="script-line">“{children}”</p>;
+  return (
+    <div className="panel" style={{ padding: 8, margin: '8px 0' }}>
+      <p className="lcd script-line">“{children}”</p>
+    </div>
+  );
 }
 
 function ListenList({ sats, passes, now }: { sats: Satellite[]; passes: Pass[] | null; now: number }) {
-  if (!passes) return <IonNote>Working out passes…</IonNote>;
+  if (!passes) return <p className="hint">Working out passes…</p>;
   const rows = sats
     .map((s) => ({ sat: s, tx: listeningTransmitter(s), next: passes.find((p) => p.noradId === s.noradId && p.los > now && p.maxElDeg >= 15) }))
     .filter((r): r is { sat: Satellite; tx: NonNullable<typeof r.tx>; next: Pass } => r.tx !== null && r.next !== undefined)
     .sort((a, b) => a.next.aos - b.next.aos)
     .slice(0, 8);
-  if (!rows.length) return <IonNote>Nothing high enough to hear in the next 24 hours.</IonNote>;
+  if (!rows.length) return <p className="hint">Nothing high enough to hear in the next 24 hours.</p>;
   return (
-    <IonList lines="full">
+    <ul className="rows">
       {rows.map(({ sat, tx, next }) => (
-        <IonItem key={sat.noradId}>
-          <IonLabel className="tabular" style={{ whiteSpace: 'normal' }}>
-            <h2 style={{ fontWeight: 700 }}>{sat.name}</h2>
-            <h3>
-              Listen on <b>{tx.downlinkHz !== null && formatMHz(tx.downlinkHz)}</b> {tx.mode} · up to {Math.round(next.maxElDeg)}°
-            </h3>
-            <p>{whatYoullHear(tx)}</p>
-          </IonLabel>
-          <IonNote slot="end" className="tabular">
-            {next.aos <= now ? 'up now' : formatLocalTime(next.aos)}
-          </IonNote>
-        </IonItem>
+        <li key={sat.noradId} className="row" style={{ alignItems: 'flex-start' }}>
+          <span className="row-main tabular">
+            <span className="row-title row-mem" style={{ display: 'block' }}>
+              {sat.name}
+            </span>
+            <span style={{ display: 'block' }}>
+              Listen on <b className="mono">{tx.downlinkHz !== null && formatMHz(tx.downlinkHz)}</b> {tx.mode} · up to {Math.round(next.maxElDeg)}°
+            </span>
+            <span className="row-sub">{whatYoullHear(tx)}</span>
+          </span>
+          <span className="row-end">{next.aos <= now ? 'up now' : formatLocalTime(next.aos)}</span>
+        </li>
       ))}
-    </IonList>
+    </ul>
   );
 }
 
@@ -202,7 +188,7 @@ function PracticeList({
   now: number;
   onPractice: (pass: Pass, sat: Satellite) => void;
 }) {
-  if (!passes) return <IonNote>Working out passes…</IonNote>;
+  if (!passes) return <p className="hint">Working out passes…</p>;
   const usable = passes.filter((p) => {
     const s = sats.get(p.noradId);
     const tx = s && primaryTransmitter(s);
@@ -211,29 +197,29 @@ function PracticeList({
   const past = usable.filter((p) => p.los <= now).slice(-3);
   const future = usable.filter((p) => p.los > now).slice(0, 6);
   const rows = [...past, ...future];
-  if (!rows.length) return <IonNote>No FM passes to practise on right now.</IonNote>;
+  if (!rows.length) return <p className="hint">No FM passes to practise on right now.</p>;
   return (
-    <IonList lines="full">
+    <ul className="rows">
       {rows.map((p) => {
         const sat = sats.get(p.noradId)!;
         const tx = primaryTransmitter(sat);
         return (
-          <IonItem key={`${p.noradId}-${p.aos}`}>
-            <IonLabel className="tabular">
-              <h2 style={{ fontWeight: 700 }}>
+          <li key={`${p.noradId}-${p.aos}`} className="row">
+            <span className="row-main tabular">
+              <span className="row-title row-mem" style={{ display: 'block' }}>
                 {sat.name} · {Math.round(p.maxElDeg)}°
-              </h2>
-              <p>
+              </span>
+              <span className="row-sub">
                 {p.los <= now ? 'Earlier' : formatLocalDay(p.aos)} {formatLocalTime(p.aos)}
                 {tx && ` · ${formatTone(tx.ctcssHz)}`}
-              </p>
-            </IonLabel>
-            <IonButton slot="end" fill="outline" onClick={() => onPractice(p, sat)} aria-label={`Practice ${sat.name} at ${formatLocalTime(p.aos)}`}>
+              </span>
+            </span>
+            <Button expand="inline" size="small" onClick={() => onPractice(p, sat)} aria-label={`Practice ${sat.name} at ${formatLocalTime(p.aos)}`}>
               Practice
-            </IonButton>
-          </IonItem>
+            </Button>
+          </li>
         );
       })}
-    </IonList>
+    </ul>
   );
 }

@@ -64,18 +64,21 @@ harder: keep data access behind small modules (`catalog`, `log`, `locations`) so
 sit behind the same functions, and keep IDs as client-generated UUIDs so records can be uploaded
 without renumbering.
 
-### D2 — Vite + React + TypeScript. Ionic React for the UI.
+### D2 — Vite + React + TypeScript. A custom radio-front-panel UI, no UI library.
 
 No server rendering is needed (D1), so Next.js would add weight for nothing. Vite's PWA plugin
 (`vite-plugin-pwa`, Workbox underneath) generates the service worker and manifest.
 
-The UI is **Ionic React** (changed from Tailwind on 2026-10-18, by owner decision): native-looking
-controls — iOS styling on Apple devices, Material elsewhere — with platform tab bars, sheets, lists,
-toggles and ionicons, so the app looks and feels like a phone app rather than a web page. No Ionic
-router: tabs are plain state with the core `<ion-tab-bar>`, which keeps the `base` path and the
-live screen's history entry simple. Custom instruments (sky plot, timeline, map, keypad) are SVG
-and CSS on Ionic's colour variables, so every palette — including red night mode — carries through.
-The cost is bundle size: about 350 KB gzipped, downloaded once and precached for offline use.
+The UI is a **radio front panel**, built from plain elements and one stylesheet (`src/theme.css`) with
+no UI library (owner decision, 2026-10-18, after trying Tailwind and then Ionic React): a matte
+chassis, rubber keys, recessed wells, and a backlit segment LCD for frequencies, countdowns and
+pointing — the numbers you read off a radio, shown the way a radio shows them. Shared pieces
+(`Button`, `Panel`, `Sheet`, `Segmented`, `Toggle`, `Field`, `Fold`) live in `src/ui/common.tsx`.
+Three finishes: Dark (amber LCD), Day (unlit reflective LCD, for direct sun) and Red (night mode).
+The drawings (sky plot, timeline, map) use the same colour tokens, and inside an LCD they become LCD
+segments. Fonts (Chakra Petch, Share Tech Mono) ship with the app so it looks the same offline.
+Tabs are plain state; there is no router, which keeps the `base` path and the live screen's
+history entry simple. The whole app is about 135 KB gzipped.
 
 Hosting: **GitHub Pages**, because the daily data job (D4) already lives in GitHub Actions and can
 deploy in the same run. The app is served from a project path (`/passband/`) until there is a
@@ -546,6 +549,6 @@ Settled 2026-10-18:
 | Satellites | Every satellite with a 2 m or 70 cm transmitter (D4). |
 | Licence | **MIT** — matches `satellite.js` and most of the JS ecosystem, and keeps a later hosted version simple. |
 | Units | Miles by default, kilometres by toggle (D20). |
-| UI library | Ionic React, for a native look (D2). Settled 2026-10-18. |
+| UI library | None: a custom radio-front-panel look (D2). Settled 2026-10-18. |
 
 Still open: a domain, if and when one is wanted.

@@ -1,15 +1,4 @@
 import { useState } from 'react';
-import {
-  IonInput,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonNote,
-  IonSelect,
-  IonSelectOption,
-  IonToggle,
-} from '@ionic/react';
 import { cueSupport } from '../cue/cue';
 import { canRecord } from '../record/recorder';
 import type { LoadedCatalog } from '../data/catalog';
@@ -17,7 +6,7 @@ import type { Theme } from '../data/theme';
 import { formatElementAge } from '../model/elementAge';
 import { SunCalibration } from '../compass/SunCalibration';
 import type { Location, RadioStepHz, Station } from '../model/types';
-import { Segmented, Sheet } from './common';
+import { Button, Field, Panel, SectionTitle, Segmented, Select, Sheet, Toggle } from './common';
 import { useNow } from './clock';
 
 const STEPS: RadioStepHz[] = [2500, 5000, 6250];
@@ -50,60 +39,43 @@ export function SettingsSheet({
 
   return (
     <Sheet title="Settings" onClose={onClose}>
-      <IonList inset>
-        <IonListHeader>
-          <IonLabel>Experience</IonLabel>
-        </IonListHeader>
-        <IonItem lines="none">
-          <Segmented
-            label="Experience"
-            value={station.experience}
-            onChange={(experience) => onChange({ ...station, experience })}
-            options={[
-              { value: 'new', label: 'New' },
-              { value: 'experienced', label: 'I’ve made contacts' },
-            ]}
-          />
-        </IonItem>
-        <IonItem lines="none">
-          <IonNote>Changes what’s shown by default. Nothing is locked either way.</IonNote>
-        </IonItem>
-      </IonList>
+      <SectionTitle>Experience</SectionTitle>
+      <Panel className="stack">
+        <Segmented
+          label="Experience"
+          value={station.experience}
+          onChange={(experience) => onChange({ ...station, experience })}
+          options={[
+            { value: 'new', label: 'New' },
+            { value: 'experienced', label: 'I’ve made contacts' },
+          ]}
+        />
+        <p className="hint">Changes what’s shown by default. Nothing is locked either way.</p>
+      </Panel>
 
-      <IonList inset>
-        <IonListHeader>
-          <IonLabel>Station</IonLabel>
-        </IonListHeader>
-        <IonItem>
-          <IonInput
-            label="Callsign"
-            value={station.callsign}
-            placeholder="W7LIT"
-            autocapitalize="characters"
-            autocorrect={false}
-            spellcheck={false}
-            className="callsign-input"
-            style={{ textAlign: 'right' }}
-            onIonInput={(e) => onChange({ ...station, callsign: (e.detail.value ?? '').toUpperCase().trim() })}
-          />
-        </IonItem>
-        <IonItem>
-          <IonSelect
-            label="Radio tuning step"
-            value={station.radioStepHz}
-            interface="action-sheet"
-            onIonChange={(e) => onChange({ ...station, radioStepHz: e.detail.value as RadioStepHz })}
-          >
-            {STEPS.map((s) => (
-              <IonSelectOption key={s} value={s}>
-                {(s / 1000).toString()} kHz
-              </IonSelectOption>
-            ))}
-          </IonSelect>
-        </IonItem>
-        <IonItem lines="none">
-          <IonLabel>Units</IonLabel>
-          <div slot="end" style={{ minWidth: 200 }}>
+      <SectionTitle>Station</SectionTitle>
+      <Panel className="stack">
+        <Field
+          label="Callsign"
+          className="callsign-input"
+          value={station.callsign}
+          placeholder="W7LIT"
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+          onChange={(e) => onChange({ ...station, callsign: e.target.value.toUpperCase().trim() })}
+        />
+        <Select
+          label="Radio tuning step"
+          value={station.radioStepHz}
+          onChange={(radioStepHz) => onChange({ ...station, radioStepHz })}
+          options={STEPS.map((s) => ({ value: s, label: `${(s / 1000).toString()} kHz` }))}
+        />
+        <div className="field-inline field">
+          <span className="silk" style={{ flex: 1 }}>
+            Units
+          </span>
+          <div style={{ minWidth: 180 }}>
             <Segmented
               label="Units"
               value={station.units}
@@ -114,74 +86,57 @@ export function SettingsSheet({
               ]}
             />
           </div>
-        </IonItem>
-      </IonList>
+        </div>
+      </Panel>
 
-      <IonList inset>
-        <IonListHeader>
-          <IonLabel>Live pass</IonLabel>
-        </IonListHeader>
+      <SectionTitle>Live pass</SectionTitle>
+      <Panel>
         {cueRows.map((r) => (
-          <IonItem key={r.key}>
-            <IonToggle
-              checked={station.cues[r.key] && support[r.key]}
-              disabled={!support[r.key]}
-              onIonChange={(e) => onChange({ ...station, cues: { ...station.cues, [r.key]: e.detail.checked } })}
-            >
-              {r.label}
-              {!support[r.key] && (
-                <IonNote style={{ display: 'block' }}>{r.missing}</IonNote>
-              )}
-            </IonToggle>
-          </IonItem>
-        ))}
-        <IonItem>
-          <IonToggle
-            checked={station.recordPasses && canRecord()}
-            disabled={!canRecord()}
-            onIonChange={(e) => onChange({ ...station, recordPasses: e.detail.checked })}
+          <Toggle
+            key={r.key}
+            checked={station.cues[r.key] && support[r.key]}
+            disabled={!support[r.key]}
+            onChange={(v) => onChange({ ...station, cues: { ...station.cues, [r.key]: v } })}
+            hint={!support[r.key] ? r.missing : undefined}
           >
-            Record passes from AOS
-            <IonNote style={{ display: 'block' }}>
-              {canRecord() ? 'Microphone or a wired input. Stays on this device.' : 'This browser can’t record audio.'}
-            </IonNote>
-          </IonToggle>
-        </IonItem>
+            {r.label}
+          </Toggle>
+        ))}
+        <Toggle
+          checked={station.recordPasses && canRecord()}
+          disabled={!canRecord()}
+          onChange={(v) => onChange({ ...station, recordPasses: v })}
+          hint={canRecord() ? 'Microphone or a wired input. Stays on this device.' : 'This browser can’t record audio.'}
+        >
+          Record passes from AOS
+        </Toggle>
         {location && (
-          <IonItem button detail onClick={() => setCalibrating(true)}>
-            <IonLabel>
-              Calibrate compass against the sun
-              <p>
-                {station.compassCalibratedAt === null ? 'Not calibrated yet' : `Offset ${station.compassOffsetDeg.toFixed(0)}°`}
-              </p>
-            </IonLabel>
-          </IonItem>
+          <div style={{ marginTop: 8 }}>
+            <Button onClick={() => setCalibrating(true)}>Calibrate compass against the sun</Button>
+            <p className="hint" style={{ marginTop: 6 }}>
+              {station.compassCalibratedAt === null ? 'Not calibrated yet' : `Offset ${station.compassOffsetDeg.toFixed(0)}°`}
+            </p>
+          </div>
         )}
-      </IonList>
+      </Panel>
 
-      <IonList inset>
-        <IonListHeader>
-          <IonLabel>Display</IonLabel>
-        </IonListHeader>
-        <IonItem lines="none">
-          <Segmented
-            label="Display"
-            value={theme}
-            onChange={onTheme}
-            options={[
-              { value: 'auto', label: 'Auto' },
-              { value: 'light', label: 'Day' },
-              { value: 'dark', label: 'Dark' },
-              { value: 'night', label: 'Red' },
-            ]}
-          />
-        </IonItem>
-        <IonItem lines="none">
-          <IonNote>Day is high-contrast for direct sun. Red keeps your night vision.</IonNote>
-        </IonItem>
-      </IonList>
+      <SectionTitle>Display</SectionTitle>
+      <Panel className="stack">
+        <Segmented
+          label="Display"
+          value={theme}
+          onChange={onTheme}
+          options={[
+            { value: 'auto', label: 'Auto' },
+            { value: 'light', label: 'Day' },
+            { value: 'dark', label: 'Dark' },
+            { value: 'night', label: 'Red' },
+          ]}
+        />
+        <p className="hint">Day is high-contrast for direct sun. Red keeps your night vision.</p>
+      </Panel>
 
-      <IonNote className="ion-padding" style={{ display: 'block' }}>
+      <p className="hint" style={{ marginTop: 18 }}>
         {catalog ? (
           <>
             Satellite data published {formatElementAge(catalog.catalog.generatedAt, now).replace(' old', ' ago')}
@@ -191,7 +146,7 @@ export function SettingsSheet({
           'No satellite data yet.'
         )}{' '}
         Everything you enter stays on this device.
-      </IonNote>
+      </p>
 
       {calibrating && location && (
         <SunCalibration location={location} station={station} onChange={onChange} onClose={() => setCalibrating(false)} />

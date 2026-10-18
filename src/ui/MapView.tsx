@@ -15,8 +15,7 @@ import type { Location, QsoRecord, Station } from '../model/types';
 import { formatDistance } from '../model/units';
 import { groundTrack } from '../predict/client';
 import type { GroundPoint } from '../predict/worker';
-import { Segmented } from './common';
-import { IonItem, IonList, IonNote, IonSelect, IonSelectOption, IonToggle } from '@ionic/react';
+import { Segmented, Select, Toggle } from './common';
 import { useNow } from './clock';
 import { gridsWorked } from './LogView';
 import { usePasses } from './usePasses';
@@ -135,17 +134,9 @@ export function MapView({
 
   return (
     <div className="stack">
-      <IonList inset style={{ margin: 0 }}>
-        <IonItem lines="none">
-          <IonSelect label="Satellite" value={satId ?? undefined} interface="action-sheet" onIonChange={(e) => setChoice(Number(e.detail.value))}>
-            {sats.map((s) => (
-              <IonSelectOption key={s.noradId} value={s.noradId}>
-                {s.name}
-              </IonSelectOption>
-            ))}
-          </IonSelect>
-        </IonItem>
-      </IonList>
+      {satId !== null && (
+        <Select label="Satellite" value={satId} onChange={setChoice} options={sats.map((s) => ({ value: s.noradId, label: s.name }))} />
+      )}
       <Segmented
         label="Zoom"
         value={zoom}
@@ -156,7 +147,8 @@ export function MapView({
           { value: 'local', label: 'Local' },
         ]}
       />
-      <div>
+      <div className="panel" style={{ padding: 8 }}>
+        <div className="lcd" style={{ padding: 4 }}>
         <svg viewBox={viewBox} className="map-svg" role="img" aria-label="Map">
           <g fill="var(--bar-dim)" stroke="none">
             {[-360, 0, 360].map((off) => (
@@ -189,6 +181,7 @@ export function MapView({
               </text>
             ))}
         </svg>
+        </div>
       </div>
       {sat && here && (
         <p className="tabular" style={{ margin: 0 }}>
@@ -196,16 +189,15 @@ export function MapView({
           footprint {formatDistance(2 * footprintRadiusM(here.altM), station.units)} across
         </p>
       )}
-      <IonList inset style={{ margin: 0 }}>
-        <IonItem lines="none">
-          <IonToggle checked={showReach} onIonChange={(e) => setShowReach(e.detail.checked)}>
-            Grids {location.name} can reach through {sat?.name ?? 'this satellite'}
-            <IonNote style={{ display: 'block' }}>Pick a rove location from the location chip to plan an activation.</IonNote>
-          </IonToggle>
-        </IonItem>
-      </IonList>
-      <p className="muted" style={{ fontSize: '0.85rem' }}>
-        {worked.size} grid{worked.size === 1 ? '' : 's'} worked (dark squares). The map works offline; there are no street-level tiles.
+      <Toggle
+        checked={showReach}
+        onChange={setShowReach}
+        hint="Pick a rove location from the location key to plan an activation."
+      >
+        Grids {location.name} can reach through {sat?.name ?? 'this satellite'}
+      </Toggle>
+      <p className="hint">
+        {worked.size} grid{worked.size === 1 ? '' : 's'} worked (filled squares). The map works offline; there are no street-level tiles.
       </p>
     </div>
   );

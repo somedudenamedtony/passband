@@ -8,8 +8,7 @@ import { newId } from '../model/ids';
 import type { RigSetting } from '../rig/rig';
 import type { Location, QsoRecord, Satellite, Station, Transmitter } from '../model/types';
 import { Banner, Button, Segmented, Sheet } from './common';
-import { IonIcon, IonNote } from '@ionic/react';
-import { backspaceOutline } from 'ionicons/icons';
+import { Icon } from './icons';
 
 // The digit row is built rather than written out, so it can't be mistaken for a frequency (§10).
 const DIGITS = Array.from({ length: 10 }, (_, i) => String((i + 1) % 10)).join('');
@@ -79,21 +78,21 @@ export function QuickLog({
   return (
     <Sheet title={`Log a contact on ${sat.name}`} onClose={onClose}>
       <div className="stack">
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="lcd" style={{ display: 'flex', gap: 8, padding: 6 }}>
           <button type="button" className="call-field" style={{ flex: 2 }} onClick={() => setTarget('call')} aria-pressed={target === 'call'}>
             <small>Their callsign</small>
             <span className="readout readout-l" aria-label="Their callsign">
-              {call || <span className="muted">—</span>}
+              {call || <span className="muted">----</span>}
             </span>
           </button>
           <button type="button" className="call-field" onClick={() => setTarget('grid')} aria-pressed={target === 'grid'}>
             <small>Grid (optional)</small>
             <span
               className="readout readout-m"
-              style={{ color: gridOk ? undefined : 'var(--ion-color-danger)' }}
+              style={{ textDecoration: gridOk ? undefined : 'line-through' }}
               aria-label="Their grid"
             >
-              {grid || <span className="muted">—</span>}
+              {grid || <span className="muted">----</span>}
             </span>
           </button>
         </div>
@@ -108,7 +107,7 @@ export function QuickLog({
               ))}
               {row === 'ZXCVBNM' && (
                 <button type="button" className="wide" onClick={() => set(value.slice(0, -1))} aria-label="Delete">
-                  <IonIcon icon={backspaceOutline} aria-hidden />
+                  <Icon name="backspace" />
                 </button>
               )}
             </div>
@@ -117,11 +116,11 @@ export function QuickLog({
 
         {modes.length > 1 && <Segmented label="Mode" value={mode} onChange={setMode} options={modes.map((m) => ({ value: m, label: m }))} />}
 
-        <IonNote className="tabular" style={{ display: 'block' }}>
+        <p className="hint mono">
           {formatUtc(timeOn, true)} · {mode}
           {setting?.uplinkHz != null && ` · ↑ ${formatMHz(setting.uplinkHz)}`}
           {setting?.downlinkHz != null && ` · ↓ ${formatMHz(setting.downlinkHz)}`} · from {grid4(location.grid6)}
-        </IonNote>
+        </p>
         {!sat.lotwName && (
           <Banner tone="warn">
             {sat.overlay.curated ? `${sat.name} isn’t on LoTW’s satellite list.` : `LoTW name for ${sat.name} is unknown.`} The

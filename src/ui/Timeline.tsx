@@ -43,7 +43,8 @@ export function Timeline({
   return (
     <section aria-label="24-hour timeline">
       <SectionTitle>Next 24 hours</SectionTitle>
-      <div style={{ border: '1px solid var(--border)', borderRadius: 14, padding: 8 }}>
+      <div className="panel" style={{ padding: 8 }}>
+      <div className="lcd" style={{ padding: 8 }}>
         <div className="tabular timeline-label">
           {ticks.filter((_, i) => i % 2 === 0).map((t) => (
             <span key={t} style={{ left: `${(x(t) / 1000) * 100}%` }}>
@@ -53,7 +54,7 @@ export function Timeline({
         </div>
         {rows.map((s) => (
           <div key={s.noradId} style={{ borderTop: '1px solid var(--border)', padding: '4px 0' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+            <div style={{ fontSize: '0.8rem' }}>
               {s.name}
               {s.status === 'unknown' && <span className="muted"> · status unknown</span>}
               {s.status === 'inactive' && <span className="muted"> · inactive</span>}
@@ -91,6 +92,7 @@ export function Timeline({
             </svg>
           </div>
         ))}
+      </div>
       </div>
     </section>
   );

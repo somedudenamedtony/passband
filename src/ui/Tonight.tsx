@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
-import { IonItem, IonList, IonNote, IonToggle } from '@ionic/react';
 import type { LoadedCatalog } from '../data/catalog';
 import { elementAgeDays, elementAgeLevel } from '../model/elementAge';
 import { listedSatellites, nextGoodPass, samePass } from '../model/selection';
 import type { Location, Pass, Satellite, Station } from '../model/types';
-import { Banner } from './common';
+import { Banner, Toggle } from './common';
 import { useNow } from './clock';
 import { PassCard } from './PassCard';
 import { PassList } from './PassList';
@@ -58,7 +57,7 @@ export function Tonight({
       {error && <Banner tone="danger">Prediction failed: {error}</Banner>}
 
       {passes === null ? (
-        <p className="ion-text-center muted" style={{ padding: '32px 0' }}>
+        <p className="center muted" style={{ padding: '32px 0' }}>
           Working out passes…
         </p>
       ) : featured && featuredSat ? (
@@ -93,22 +92,18 @@ export function Tonight({
         </>
       )}
 
-      <IonList inset style={{ margin: '16px 0 0' }}>
-        <IonItem>
-          <IonToggle checked={showAll} onIonChange={(e) => setShowAll(e.detail.checked)}>
-            Show all satellites
-          </IonToggle>
-        </IonItem>
-        <IonItem lines="none">
-          <IonToggle checked={showInactive} onIonChange={(e) => setShowInactive(e.detail.checked)}>
-            Include inactive
-          </IonToggle>
-        </IonItem>
-      </IonList>
-      <IonNote style={{ display: 'block', fontSize: '0.8rem' }}>
-        {sats.length} satellites · {station.experience === 'new' ? 'easy FM satellites and listening targets' : 'all with a working uplink'}
-        {showAll && ' · showing all'}
-      </IonNote>
+      <div>
+        <Toggle checked={showAll} onChange={setShowAll}>
+          Show all satellites
+        </Toggle>
+        <Toggle checked={showInactive} onChange={setShowInactive}>
+          Include inactive
+        </Toggle>
+        <p className="hint">
+          {sats.length} satellites · {station.experience === 'new' ? 'easy FM satellites and listening targets' : 'all with a working uplink'}
+          {showAll && ' · showing all'}
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,12 @@
 import { db } from './db';
 
-/** Settings → Display. Day is Ionic's high-contrast palette, for direct sunlight (§5). */
+/**
+ * Settings → Display (§5). The panel comes in three finishes:
+ *   Dark — black chassis, amber backlit LCD (the default at night and in Auto on a dark phone)
+ *   Day  — light chassis, unlit reflective LCD: high contrast in direct sun
+ *   Red  — night mode, red on black only, to keep dark adaptation
+ * Auto follows the phone between Day and Dark.
+ */
 export type Theme = 'auto' | 'light' | 'dark' | 'night';
 
 export async function loadTheme(): Promise<Theme> {
@@ -15,11 +21,10 @@ let media: MediaQueryList | null = null;
 let current: Theme = 'auto';
 
 function paint() {
-  const root = document.documentElement.classList;
-  const systemDark = media?.matches ?? false;
-  root.toggle('ion-palette-high-contrast', current === 'light');
-  root.toggle('ion-palette-dark', current === 'dark' || current === 'night' || (current === 'auto' && systemDark));
-  root.toggle('pb-night', current === 'night');
+  const systemDark = media?.matches ?? true;
+  const finish = current === 'auto' ? (systemDark ? 'dark' : 'day') : current === 'light' ? 'day' : current;
+  document.documentElement.dataset.finish = finish;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--chassis').trim() || '#1b1e20');
 }
 
 export function applyTheme(t: Theme): void {

@@ -1,20 +1,8 @@
-// Shared building blocks, on Ionic components so the app looks and behaves like a native one.
+// Shared building blocks for the radio front panel: rubber keys, bezel panels, an LCD, sheets.
+// Plain elements and CSS (theme.css); no UI library.
 
-import type { ReactNode } from 'react';
-import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonIcon,
-  IonModal,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/react';
-import { alertCircleOutline, informationCircleOutline, warningOutline } from 'ionicons/icons';
+import { useEffect, useId, useState, type ReactNode } from 'react';
+import { Icon } from './icons';
 
 export function Button({
   children,
@@ -25,68 +13,112 @@ export function Button({
   expand = 'block',
   className,
   'aria-label': ariaLabel,
-  color,
+  'aria-pressed': ariaPressed,
   size,
 }: {
   children: ReactNode;
   onClick?: () => void;
-  kind?: 'primary' | 'secondary' | 'ghost';
+  /** primary: the amber key. danger: red. ghost: a flat text key. */
+  kind?: 'primary' | 'secondary' | 'ghost' | 'danger';
   type?: 'button' | 'submit';
   disabled?: boolean;
-  expand?: 'block' | 'full' | undefined;
+  /** block fills the row; inline sizes to the label. */
+  expand?: 'block' | 'inline';
   className?: string;
   'aria-label'?: string;
-  color?: string;
+  'aria-pressed'?: boolean;
   size?: 'small' | 'default' | 'large';
 }) {
-  const fill = { primary: 'solid', secondary: 'outline', ghost: 'clear' } as const;
+  const cls = ['key', `key-${kind}`, expand === 'block' && 'key-block', size === 'large' && 'key-lg', size === 'small' && 'key-sm', className]
+    .filter(Boolean)
+    .join(' ');
   return (
-    <IonButton
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      expand={expand}
-      fill={fill[kind]}
-      color={color}
-      size={size}
-      className={className}
-      aria-label={ariaLabel}
-    >
+    <button type={type} className={cls} onClick={onClick} disabled={disabled} aria-label={ariaLabel} aria-pressed={ariaPressed}>
       {children}
-    </IonButton>
+    </button>
   );
 }
 
-const BANNER_ICON = { warn: warningOutline, danger: alertCircleOutline, info: informationCircleOutline };
+const BANNER_ICON = { warn: 'warning', danger: 'alert', info: 'info' } as const;
 
 export function Banner({ tone, children }: { tone: 'warn' | 'danger' | 'info'; children: ReactNode }) {
   return (
     <div role="status" className={`banner banner-${tone}`}>
-      <IonIcon icon={BANNER_ICON[tone]} aria-hidden />
+      <Icon name={BANNER_ICON[tone]} />
       <div>{children}</div>
     </div>
   );
 }
 
-/** A sheet: card modal on iOS, full-height on Android, with a title bar and Close. */
+/** Close on Escape, the way a native sheet does. */
+function useEscape(onClose: () => void) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+}
+
+/** A sheet over the panel, with a title strip and Close. */
 export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  useEscape(onClose);
+  const id = useId();
   return (
-    <IonModal isOpen onDidDismiss={onClose} aria-label={title}>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>{title}</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={onClose} aria-label="Close">
-              Close
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent className="ion-padding">{children}</IonContent>
-    </IonModal>
+    <div className="sheet-scrim">
+      <div role="dialog" aria-modal="true" aria-labelledby={id} className="sheet">
+        <header className="sheet-head">
+          <h2 id={id} className="sheet-title">
+            {title}
+          </h2>
+          <Button expand="inline" size="small" onClick={onClose} aria-label="Close">
+            Close
+          </Button>
+        </header>
+        <div className="sheet-body">{children}</div>
+      </div>
+    </div>
   );
 }
 
+export interface ConfirmSpec {
+  title: string;
+  message?: string;
+  confirmLabel?: string;
+  onConfirm: () => void;
+}
+
+/** A yes/no question. Returns the asker and the element to render while one is open. */
+export function useConfirm(): [(c: ConfirmSpec) => void, ReactNode] {
+  const [spec, setSpec] = useState<ConfirmSpec | null>(null);
+  const id = useId();
+  const node = spec && (
+    <div className="sheet-scrim sheet-scrim-center">
+      <div role="alertdialog" aria-modal="true" aria-labelledby={id} className="confirm">
+        <h2 id={id} className="sheet-title">
+          {spec.title}
+        </h2>
+        {spec.message && <p className="muted">{spec.message}</p>}
+        <div className="key-row">
+          <Button onClick={() => setSpec(null)}>Cancel</Button>
+          <Button
+            kind="danger"
+            onClick={() => {
+              spec.onConfirm();
+              setSpec(null);
+            }}
+          >
+            {spec.confirmLabel ?? 'Delete'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+  return [setSpec, node];
+}
+
+/** A row of keys where one is down, like a band or mode selector. */
 export function Segmented<T extends string | number>({
   value,
   options,
@@ -99,24 +131,131 @@ export function Segmented<T extends string | number>({
   label: string;
 }) {
   return (
-    <IonSegment
-      value={String(value)}
-      aria-label={label}
-      onIonChange={(e) => {
-        const v = options.find((o) => String(o.value) === String(e.detail.value));
-        if (v) onChange(v.value);
-      }}
-    >
+    <div role="tablist" aria-label={label} className="segmented">
       {options.map((o) => (
-        <IonSegmentButton key={String(o.value)} value={String(o.value)}>
-          <IonLabel>{o.label}</IonLabel>
-        </IonSegmentButton>
+        <button
+          key={String(o.value)}
+          type="button"
+          role="tab"
+          aria-selected={o.value === value}
+          className="segment"
+          onClick={() => onChange(o.value)}
+        >
+          {o.label}
+        </button>
       ))}
-    </IonSegment>
+    </div>
   );
 }
 
-/** Section heading inside a page, in the platform's list-header style. */
+/** A silk-screened label over a group of controls. */
 export function SectionTitle({ children }: { children: ReactNode }) {
-  return <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '20px 0 8px' }}>{children}</h2>;
+  return <h2 className="section-title">{children}</h2>;
+}
+
+/** A recessed well in the chassis. */
+export function Panel({ children, label, className }: { children: ReactNode; label?: string; className?: string }) {
+  return (
+    <section aria-label={label} className={['panel', className].filter(Boolean).join(' ')}>
+      {children}
+    </section>
+  );
+}
+
+export function Toggle({
+  checked,
+  onChange,
+  disabled,
+  children,
+  hint,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+  children: ReactNode;
+  hint?: ReactNode;
+}) {
+  return (
+    <label className={`toggle${disabled ? ' is-disabled' : ''}`}>
+      <span className="toggle-text">
+        {children}
+        {hint && <small className="hint">{hint}</small>}
+      </span>
+      <input type="checkbox" role="switch" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+      <span className="toggle-led" aria-hidden />
+    </label>
+  );
+}
+
+export function Field({
+  label,
+  hint,
+  invalid,
+  className,
+  ...input
+}: {
+  label: string;
+  hint?: string;
+  invalid?: boolean;
+  className?: string;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'className'>) {
+  const id = useId();
+  return (
+    <div className={['field', className].filter(Boolean).join(' ')}>
+      <label htmlFor={id}>{label}</label>
+      <input id={id} aria-invalid={invalid || undefined} {...input} />
+      {hint && <small className="hint">{hint}</small>}
+    </div>
+  );
+}
+
+export function Select<T extends string | number>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: Array<{ value: T; label: string }>;
+  onChange: (v: T) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="field field-inline">
+      <label htmlFor={id}>{label}</label>
+      <select
+        id={id}
+        value={String(value)}
+        onChange={(e) => {
+          const o = options.find((x) => String(x.value) === e.target.value);
+          if (o) onChange(o.value);
+        }}
+      >
+        {options.map((o) => (
+          <option key={String(o.value)} value={String(o.value)}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/** A small lamp-style tag: Easy, Inactive, FM. */
+export function Tag({ tone = 'plain', children }: { tone?: 'plain' | 'ok' | 'warn' | 'danger'; children: ReactNode }) {
+  return <span className={`tag tag-${tone}`}>{children}</span>;
+}
+
+/** A folding section. Starts open or closed; after that the user decides. */
+export function Fold({ title, open, children, className }: { title: ReactNode; open?: boolean; children: ReactNode; className?: string }) {
+  return (
+    <details className={['fold', className].filter(Boolean).join(' ')} open={open}>
+      <summary>
+        <span>{title}</span>
+        <Icon name="chevronDown" />
+      </summary>
+      <div className="fold-body">{children}</div>
+    </details>
+  );
 }

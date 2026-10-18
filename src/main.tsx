@@ -1,13 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { setupIonicReact } from '@ionic/react';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './ui/App';
+// The panel's typefaces ship with the app, so it looks the same offline (D1: nothing fetched at runtime).
+import '@fontsource/chakra-petch/latin-500.css';
+import '@fontsource/chakra-petch/latin-600.css';
+import '@fontsource/chakra-petch/latin-700.css';
+import '@fontsource/share-tech-mono/latin-400.css';
 import './theme.css';
 
-// Native look per platform: Ionic styles iOS-like on Apple devices and Material elsewhere. That
-// is a styling choice only; device capabilities are still feature-detected (D14, D18).
-setupIonicReact();
 registerSW({ immediate: true });
 
 const root = document.getElementById('root');

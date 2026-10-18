@@ -56,7 +56,7 @@ export function SunCalibration({
         )}
         <CompassStatus compass={compass} station={station} now={now} />
         {shown !== undefined && (
-          <p className="readout ion-text-center" style={{ fontSize: '1.15rem' }}>
+          <p className="readout center" style={{ fontSize: '1.15rem' }}>
             Phone points {Math.round(shown)}° · target {Math.round(target)}° · off by {Math.round(Math.abs(angleDiff(target, shown)))}°
           </p>
         )}
@@ -79,7 +79,7 @@ export function SunCalibration({
             {station.compassOffsetDeg.toFixed(0)}°)
           </Button>
         )}
-        <p className="muted" style={{ fontSize: '0.85rem' }}>Calibrate where you’ll operate, holding the phone the way you will during a pass.</p>
+        <p className="hint">Calibrate where you’ll operate, holding the phone the way you will during a pass.</p>
       </div>
     </Sheet>
   );
