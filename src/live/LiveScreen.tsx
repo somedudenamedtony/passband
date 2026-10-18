@@ -18,6 +18,7 @@ import { DisplayRig } from '../rig/rig';
 import { Banner, Button } from '../ui/common';
 import { useNow } from '../ui/clock';
 import { Checklist } from './Checklist';
+import { PracticePanel, type PracticeControls } from './PracticePanel';
 import { ScheduleList } from './ScheduleList';
 import { SkyPlot } from './SkyPlot';
 import { useWakeLock } from './useWakeLock';
@@ -30,12 +31,15 @@ export function LiveScreen({
   location,
   station,
   onClose,
+  practice,
 }: {
   pass: Pass;
   sat: Satellite;
   location: Location;
   station: Station;
   onClose: () => void;
+  /** D16: present only in practice. Everything else on this screen is identical. */
+  practice?: PracticeControls;
 }) {
   const now = useNow(250);
   const isNew = station.experience === 'new';
@@ -195,6 +199,18 @@ export function LiveScreen({
             </p>
           )}
         </section>
+      )}
+
+      {practice && tx && (
+        <PracticePanel
+          controls={practice}
+          tx={tx}
+          schedule={schedule}
+          here={here}
+          up={phase === 'during'}
+          now={now}
+          stepHz={station.radioStepHz}
+        />
       )}
 
       {phase === 'before' && now >= pass.aos - PRE_PASS && (

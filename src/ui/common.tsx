@@ -7,6 +7,7 @@ export function Button({
   type = 'button',
   disabled,
   className = '',
+  'aria-label': ariaLabel,
 }: {
   children: ReactNode;
   onClick?: () => void;
@@ -14,6 +15,7 @@ export function Button({
   type?: 'button' | 'submit';
   disabled?: boolean;
   className?: string;
+  'aria-label'?: string;
 }) {
   const styles = {
     primary: 'bg-accent text-accent-fg',
@@ -25,6 +27,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      aria-label={ariaLabel}
       className={`min-h-12 rounded-xl px-4 text-base font-semibold disabled:opacity-50 ${styles} ${className}`}
     >
       {children}

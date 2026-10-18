@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { SimulatedClock, systemClock } from '../clock';
 import { loadCatalog, type LoadedCatalog } from '../data/catalog';
 import {
   getActiveLocationId,
@@ -10,14 +11,26 @@ import {
 import { DEFAULT_STATION, loadStation, saveStation } from '../data/station';
 import { applyTheme, loadTheme, saveTheme, type Theme } from '../data/theme';
 import { LiveScreen } from '../live/LiveScreen';
+import { SECOND } from '../model/time';
+import type { PracticeRate } from '../model/practice';
 import type { Location, Pass, Satellite, Station } from '../model/types';
+import { ClockContext } from './clock';
 import { Banner, Button } from './common';
+import { Learn } from './Learn';
 import { LocationSheet } from './LocationSheet';
 import { LocationSetup } from './LocationSetup';
 import { SettingsSheet } from './SettingsSheet';
 import { Tonight } from './Tonight';
 
 type Sheet = 'none' | 'locations' | 'settings';
+type Tab = 'tonight' | 'learn';
+
+interface Live {
+  pass: Pass;
+  sat: Satellite;
+  /** D16: practice is the live screen on a simulated clock. */
+  practice?: { clock: SimulatedClock; rate: PracticeRate };
+}
 
 export function App() {
   const [ready, setReady] = useState(false);
@@ -28,7 +41,9 @@ export function App() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<Sheet>('none');
-  const [live, setLive] = useState<{ pass: Pass; sat: Satellite } | null>(null);
+  const [live, setLive] = useState<Live | null>(null);
+  const [tab, setTab] = useState<Tab>('tonight');
+  const [selected, setSelected] = useState<Pass | null>(null);
 
   // The live screen is a history entry, so the phone's back button leaves it.
   useEffect(() => {
@@ -39,6 +54,14 @@ export function App() {
   const openLive = useCallback((pass: Pass, sat: Satellite) => {
     history.pushState({ live: true }, '');
     setLive({ pass, sat });
+  }, []);
+  const openPractice = useCallback((pass: Pass, sat: Satellite) => {
+    history.pushState({ live: true }, '');
+    // Start a minute before AOS: enough to see the pre-pass state and hear the rise cue.
+    setLive({ pass, sat, practice: { clock: new SimulatedClock(pass.aos - 60 * SECOND, 1), rate: 1 } });
+  }, []);
+  const setPracticeRate = useCallback((rate: PracticeRate) => {
+    setLive((l) => (l?.practice ? { ...l, practice: { clock: new SimulatedClock(l.practice.clock.now(), rate), rate } } : l));
   }, []);
   const closeLive = useCallback(() => {
     if ((history.state as { live?: boolean } | null)?.live) history.back();
@@ -127,7 +150,7 @@ export function App() {
         </button>
       </header>
 
-      <main className="flex-1 pb-8">
+      <main className="flex-1 pb-24">
         {catalogError && (
           <Banner tone="danger">
             Couldn’t load satellite data, and none is saved on this device yet. Connect once to download
@@ -150,14 +173,67 @@ export function App() {
         {!location ? (
           <LocationSetup onSave={addLocation} />
         ) : catalog ? (
-          <Tonight catalog={catalog} location={location} station={station} onStart={openLive} />
+          tab === 'tonight' ? (
+            <Tonight
+              catalog={catalog}
+              location={location}
+              station={station}
+              selected={selected}
+              onSelect={setSelected}
+              onStart={openLive}
+            />
+          ) : (
+            <Learn
+              catalog={catalog}
+              location={location}
+              station={station}
+              onPick={(p) => {
+                setSelected(p);
+                setTab('tonight');
+                window.scrollTo(0, 0);
+              }}
+              onPractice={openPractice}
+            />
+          )
         ) : (
           !catalogError && <p className="py-8 text-center text-muted">Loading satellite data…</p>
         )}
       </main>
 
+      {location && catalog && (
+        <nav aria-label="Sections" className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-bg pb-[env(safe-area-inset-bottom)]">
+          <div className="mx-auto flex max-w-lg">
+            {(
+              [
+                ['tonight', 'Tonight'],
+                ['learn', station.experience === 'new' ? 'Learn' : 'Help'],
+              ] as const
+            ).map(([t, label]) => (
+              <button
+                key={t}
+                type="button"
+                aria-current={tab === t ? 'page' : undefined}
+                onClick={() => setTab(t)}
+                className={`min-h-14 flex-1 text-base font-bold ${tab === t ? 'text-accent' : 'text-muted'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </nav>
+      )}
+
       {live && location && (
-        <LiveScreen pass={live.pass} sat={live.sat} location={location} station={station} onClose={closeLive} />
+        <ClockContext.Provider value={live.practice?.clock ?? systemClock}>
+          <LiveScreen
+            pass={live.pass}
+            sat={live.sat}
+            location={location}
+            station={station}
+            onClose={closeLive}
+            practice={live.practice && { rate: live.practice.rate, onRate: setPracticeRate }}
+          />
+        </ClockContext.Provider>
       )}
       {sheet === 'locations' && (
         <LocationSheet
