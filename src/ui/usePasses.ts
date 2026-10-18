@@ -6,8 +6,11 @@ import { useClock } from './clock';
 
 const REFRESH = 30 * MINUTE;
 
-/** Passes for the next 24 h, recomputed every half hour and whenever inputs change. */
-export function usePasses(sats: Satellite[], location: Location) {
+/**
+ * Passes from `beforeMs` ago to 24 h ahead, recomputed every half hour and whenever inputs change.
+ * Tonight looks forward only; practice (D16) also offers passes that already happened.
+ */
+export function usePasses(sats: Satellite[], location: Location, beforeMs = 0) {
   const clock = useClock();
   const [passes, setPasses] = useState<Pass[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -20,9 +23,10 @@ export function usePasses(sats: Satellite[], location: Location) {
 
   useEffect(() => {
     let cancelled = false;
-    const from = clock.now();
+    const now = clock.now();
+    const from = now - beforeMs;
     setError(null);
-    predictPasses(sats, location, from, from + DAY)
+    predictPasses(sats, location, from, now + DAY)
       .then((p) => {
         if (!cancelled) setPasses(p);
       })
@@ -32,7 +36,7 @@ export function usePasses(sats: Satellite[], location: Location) {
     return () => {
       cancelled = true;
     };
-  }, [sats, location, clock, tick]);
+  }, [sats, location, clock, tick, beforeMs]);
 
   return { passes, error };
 }

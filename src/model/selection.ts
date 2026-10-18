@@ -1,3 +1,4 @@
+import { HOUR } from './time';
 // D19: experience changes defaults only. Nothing here hides a satellite the user asks for.
 
 import { hasWorkingUplink } from './transmitters';
@@ -42,4 +43,25 @@ export function nextGoodPass(
 
 export function samePass(a: Pass | null, b: Pass | null): boolean {
   return a !== null && b !== null && a.noradId === b.noradId && a.aos === b.aos;
+}
+
+/**
+ * §5.5 "picking the pass": the easiest coming pass for a first contact. Beginner FM satellites
+ * only; the highest pass in the next 12 hours (a high pass is longer, stronger and easier to
+ * point at), falling back to the next 24 if nothing good comes sooner.
+ */
+export function easiestPass(passes: readonly Pass[], sats: ReadonlyMap<number, Satellite>, now: number): Pass | null {
+  const candidates = passes.filter((p) => {
+    const s = sats.get(p.noradId);
+    return (
+      s !== undefined &&
+      p.aos > now &&
+      s.status !== 'inactive' &&
+      s.overlay.difficulty === 'beginner' &&
+      s.transmitters.some((t) => t.kind === 'fm_repeater' && t.status !== 'inactive') &&
+      isGoodPass(p, 'new')
+    );
+  });
+  const best = (list: Pass[]) => list.reduce<Pass | null>((b, p) => (!b || p.maxElDeg > b.maxElDeg ? p : b), null);
+  return best(candidates.filter((p) => p.aos < now + 12 * HOUR)) ?? best(candidates);
 }

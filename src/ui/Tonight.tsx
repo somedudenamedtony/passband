@@ -14,17 +14,21 @@ export function Tonight({
   catalog,
   location,
   station,
+  selected,
+  onSelect,
   onStart,
 }: {
   catalog: LoadedCatalog;
   location: Location;
   station: Station;
+  /** A pass the user picked (here, or from Learn). null = the next good pass. */
+  selected: Pass | null;
+  onSelect: (p: Pass | null) => void;
   onStart: (pass: Pass, sat: Satellite) => void;
 }) {
   const now = useNow(1000);
   const [showAll, setShowAll] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
-  const [selected, setSelected] = useState<Pass | null>(null);
 
   const sats = useMemo(
     () => listedSatellites(catalog.catalog, station.experience, { showAll, showInactive }),
@@ -62,7 +66,7 @@ export function Tonight({
           station={station}
           now={now}
           isNext={next !== null && samePass(featured, next)}
-          onBackToNext={selected ? () => setSelected(null) : undefined}
+          onBackToNext={selected ? () => onSelect(null) : undefined}
           onStart={() => onStart(featured, featuredSat)}
         />
       ) : (
@@ -74,14 +78,14 @@ export function Tonight({
 
       {passes && (
         <>
-          <PassList passes={upcoming} sats={satById} station={station} now={now} selected={featured} onSelect={setSelected} />
+          <PassList passes={upcoming} sats={satById} station={station} now={now} selected={featured} onSelect={onSelect} />
           <Timeline
             passes={upcoming}
             sats={sats}
             station={station}
             now={now}
             selected={featured}
-            onSelect={setSelected}
+            onSelect={onSelect}
           />
         </>
       )}
