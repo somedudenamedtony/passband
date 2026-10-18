@@ -9,6 +9,7 @@ import {
   buildCatalog,
   inScopeTransmitter,
   tleToOmm,
+  withRetry,
   type OverlayEntry,
   type SatnogsSatellite,
   type SatnogsTransmitter,
@@ -22,10 +23,23 @@ const CELESTRAK = 'https://celestrak.org/NORAD/elements/gp.php';
 const SATNOGS = 'https://db.satnogs.org/api';
 const UA = 'passband-catalog/0.1 (+https://github.com/somedudenamedtony/passband)';
 
+const RETRY_DELAYS_MS = [5_000, 20_000];
+const TIMEOUT_MS = 60_000;
+
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-  return (await res.json()) as T;
+  return withRetry(
+    async () => {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': UA, Accept: 'application/json' },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+      return (await res.json()) as T;
+    },
+    RETRY_DELAYS_MS,
+    undefined,
+    (err, attempt) => console.warn(`Retrying ${url} (attempt ${attempt + 1}): ${(err as Error).message}`),
+  );
 }
 
 async function celestrakGroup(group: string): Promise<OmmElements[]> {
@@ -60,17 +74,26 @@ async function main() {
     readOverlay(),
   ]);
 
-  let elements = await celestrakGroup('amateur');
-  // The scope is set by transmitter frequency, not CelesTrak's grouping, so anything in scope
-  // but outside the amateur group is looked up in the active group (one more request).
-  const have = new Set(elements.map((e) => Number(e.NORAD_CAT_ID)));
-  const wanted = satnogsTransmitters
-    .filter(inScopeTransmitter)
-    .map((t) => t.norad_cat_id)
-    .filter((n): n is number => n !== null);
-  if (wanted.some((n) => !have.has(n))) {
-    const active = await celestrakGroup('active');
-    elements = elements.concat(active.filter((e) => !have.has(Number(e.NORAD_CAT_ID))));
+  // D4 prefers CelesTrak OMM. If CelesTrak can't be reached even after retries, every satellite
+  // falls back to its SatNOGS TLE (recorded per satellite as elementsSource) rather than the
+  // build failing and the app keeping ever-older elements.
+  let elements: OmmElements[] = [];
+  try {
+    elements = await celestrakGroup('amateur');
+    // The scope is set by transmitter frequency, not CelesTrak's grouping, so anything in scope
+    // but outside the amateur group is looked up in the active group (one more request).
+    const have = new Set(elements.map((e) => Number(e.NORAD_CAT_ID)));
+    const wanted = satnogsTransmitters
+      .filter(inScopeTransmitter)
+      .map((t) => t.norad_cat_id)
+      .filter((n): n is number => n !== null);
+    if (wanted.some((n) => !have.has(n))) {
+      const active = await celestrakGroup('active');
+      elements = elements.concat(active.filter((e) => !have.has(Number(e.NORAD_CAT_ID))));
+    }
+  } catch (err) {
+    // A GitHub Actions warning annotation, so a degraded build is visible on the run.
+    console.warn(`::warning::CelesTrak unavailable (${(err as Error).message}); using SatNOGS TLEs for all satellites.`);
   }
 
   const { catalog, report } = buildCatalog({

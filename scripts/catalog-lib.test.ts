@@ -8,6 +8,7 @@ import {
   parseCtcss,
   satelliteStatus,
   tleToOmm,
+  withRetry,
   type SatnogsTransmitter,
 } from './catalog-lib.ts';
 
@@ -142,5 +143,36 @@ describe('buildCatalog', () => {
     const { catalog, report } = buildCatalog({ ...base, elements: [], overlay: [] });
     expect(catalog.satellites).toHaveLength(0);
     expect(report.missingElements).toEqual([{ noradId: 27607, name: 'SO-50' }]);
+  });
+});
+
+describe('withRetry', () => {
+  const noSleep = async () => undefined;
+  it('retries until success', async () => {
+    let n = 0;
+    const out = await withRetry(
+      async () => {
+        if (++n < 3) throw new Error('timeout');
+        return 'ok';
+      },
+      [1, 1],
+      noSleep,
+    );
+    expect(out).toBe('ok');
+    expect(n).toBe(3);
+  });
+  it('gives up after the last delay and rethrows', async () => {
+    let n = 0;
+    await expect(
+      withRetry(
+        async () => {
+          n++;
+          throw new Error('down');
+        },
+        [1],
+        noSleep,
+      ),
+    ).rejects.toThrow('down');
+    expect(n).toBe(2);
   });
 });
