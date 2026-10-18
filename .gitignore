@@ -6,3 +6,4 @@ public/catalog.json
 test-results/
 playwright-report/
 *.log
+*.tsbuildinfo
