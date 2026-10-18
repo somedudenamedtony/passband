@@ -51,7 +51,7 @@ export function Banner({ tone, children }: { tone: 'warn' | 'danger' | 'info'; c
 /** A bottom sheet / dialog. Full width on phones, centred column on wider screens. */
 export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
-    <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/60 sm:items-center" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 sm:items-center" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"

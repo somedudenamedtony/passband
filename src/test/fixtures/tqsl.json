@@ -1,0 +1,1444 @@
+{
+ "source": "TQSL configuration, https://lotw.arrl.org/lotw/config.tq6, fetched 2026-10-18",
+ "satellites": [
+  {
+   "name": "AISAT1",
+   "ended": false
+  },
+  {
+   "name": "AO-10",
+   "ended": false
+  },
+  {
+   "name": "AO-109",
+   "ended": false
+  },
+  {
+   "name": "AO-123",
+   "ended": false
+  },
+  {
+   "name": "AO-13",
+   "ended": true
+  },
+  {
+   "name": "AO-16",
+   "ended": false
+  },
+  {
+   "name": "AO-21",
+   "ended": true
+  },
+  {
+   "name": "AO-27",
+   "ended": false
+  },
+  {
+   "name": "AO-3",
+   "ended": true
+  },
+  {
+   "name": "AO-4",
+   "ended": true
+  },
+  {
+   "name": "AO-40",
+   "ended": true
+  },
+  {
+   "name": "AO-51",
+   "ended": true
+  },
+  {
+   "name": "AO-6",
+   "ended": true
+  },
+  {
+   "name": "AO-7",
+   "ended": false
+  },
+  {
+   "name": "AO-73",
+   "ended": false
+  },
+  {
+   "name": "AO-8",
+   "ended": true
+  },
+  {
+   "name": "AO-85",
+   "ended": false
+  },
+  {
+   "name": "AO-91",
+   "ended": false
+  },
+  {
+   "name": "AO-92",
+   "ended": false
+  },
+  {
+   "name": "ARISS",
+   "ended": false
+  },
+  {
+   "name": "Arsene",
+   "ended": true
+  },
+  {
+   "name": "BO-102",
+   "ended": false
+  },
+  {
+   "name": "BY70-1",
+   "ended": true
+  },
+  {
+   "name": "CAS-2T",
+   "ended": false
+  },
+  {
+   "name": "CAS-3H",
+   "ended": false
+  },
+  {
+   "name": "CAS-4A",
+   "ended": false
+  },
+  {
+   "name": "CAS-4B",
+   "ended": false
+  },
+  {
+   "name": "DO-64",
+   "ended": false
+  },
+  {
+   "name": "EO-79",
+   "ended": false
+  },
+  {
+   "name": "EO-88",
+   "ended": false
+  },
+  {
+   "name": "FO-118",
+   "ended": false
+  },
+  {
+   "name": "FO-12",
+   "ended": true
+  },
+  {
+   "name": "FO-20",
+   "ended": false
+  },
+  {
+   "name": "FO-29",
+   "ended": false
+  },
+  {
+   "name": "FO-99",
+   "ended": false
+  },
+  {
+   "name": "FS-3",
+   "ended": false
+  },
+  {
+   "name": "HO-107",
+   "ended": false
+  },
+  {
+   "name": "HO-113",
+   "ended": false
+  },
+  {
+   "name": "HO-119",
+   "ended": false
+  },
+  {
+   "name": "HO-68",
+   "ended": false
+  },
+  {
+   "name": "INSPR7",
+   "ended": false
+  },
+  {
+   "name": "IO-117",
+   "ended": false
+  },
+  {
+   "name": "IO-86",
+   "ended": false
+  },
+  {
+   "name": "JO-97",
+   "ended": false
+  },
+  {
+   "name": "KEDR",
+   "ended": true
+  },
+  {
+   "name": "LEDSAT",
+   "ended": false
+  },
+  {
+   "name": "LO-19",
+   "ended": false
+  },
+  {
+   "name": "LO-78",
+   "ended": true
+  },
+  {
+   "name": "LO-87",
+   "ended": false
+  },
+  {
+   "name": "LO-90",
+   "ended": false
+  },
+  {
+   "name": "MAYA-3",
+   "ended": false
+  },
+  {
+   "name": "MAYA-4",
+   "ended": false
+  },
+  {
+   "name": "MIREX",
+   "ended": true
+  },
+  {
+   "name": "MO-112",
+   "ended": false
+  },
+  {
+   "name": "MO-122",
+   "ended": false
+  },
+  {
+   "name": "NO-103",
+   "ended": false
+  },
+  {
+   "name": "NO-104",
+   "ended": false
+  },
+  {
+   "name": "NO-44",
+   "ended": false
+  },
+  {
+   "name": "NO-83",
+   "ended": false
+  },
+  {
+   "name": "NO-84",
+   "ended": false
+  },
+  {
+   "name": "PO-101",
+   "ended": false
+  },
+  {
+   "name": "QO-100",
+   "ended": false
+  },
+  {
+   "name": "RS-1",
+   "ended": true
+  },
+  {
+   "name": "RS-10",
+   "ended": true
+  },
+  {
+   "name": "RS-11",
+   "ended": true
+  },
+  {
+   "name": "RS-12",
+   "ended": true
+  },
+  {
+   "name": "RS-13",
+   "ended": true
+  },
+  {
+   "name": "RS-15",
+   "ended": false
+  },
+  {
+   "name": "RS-2",
+   "ended": true
+  },
+  {
+   "name": "RS-44",
+   "ended": false
+  },
+  {
+   "name": "RS-5",
+   "ended": true
+  },
+  {
+   "name": "RS-6",
+   "ended": true
+  },
+  {
+   "name": "RS-7",
+   "ended": true
+  },
+  {
+   "name": "RS-8",
+   "ended": true
+  },
+  {
+   "name": "SAREX",
+   "ended": true
+  },
+  {
+   "name": "SO-121",
+   "ended": false
+  },
+  {
+   "name": "SO-124",
+   "ended": false
+  },
+  {
+   "name": "SO-125",
+   "ended": false
+  },
+  {
+   "name": "SO-35",
+   "ended": true
+  },
+  {
+   "name": "SO-41",
+   "ended": false
+  },
+  {
+   "name": "SO-50",
+   "ended": false
+  },
+  {
+   "name": "SO-67",
+   "ended": false
+  },
+  {
+   "name": "SONATE",
+   "ended": false
+  },
+  {
+   "name": "TAURUS",
+   "ended": false
+  },
+  {
+   "name": "TEVEL1",
+   "ended": false
+  },
+  {
+   "name": "TEVEL2",
+   "ended": false
+  },
+  {
+   "name": "TEVEL3",
+   "ended": false
+  },
+  {
+   "name": "TEVEL4",
+   "ended": false
+  },
+  {
+   "name": "TEVEL5",
+   "ended": false
+  },
+  {
+   "name": "TEVEL6",
+   "ended": false
+  },
+  {
+   "name": "TEVEL7",
+   "ended": false
+  },
+  {
+   "name": "TEVEL8",
+   "ended": false
+  },
+  {
+   "name": "TO-108",
+   "ended": false
+  },
+  {
+   "name": "UKUBE1",
+   "ended": false
+  },
+  {
+   "name": "UO-14",
+   "ended": false
+  },
+  {
+   "name": "UVSQ",
+   "ended": false
+  },
+  {
+   "name": "VO-52",
+   "ended": true
+  },
+  {
+   "name": "XW-2A",
+   "ended": false
+  },
+  {
+   "name": "XW-2B",
+   "ended": false
+  },
+  {
+   "name": "XW-2C",
+   "ended": false
+  },
+  {
+   "name": "XW-2D",
+   "ended": false
+  },
+  {
+   "name": "XW-2E",
+   "ended": false
+  },
+  {
+   "name": "XW-2F",
+   "ended": false
+  },
+  {
+   "name": "TEV2-1",
+   "ended": false
+  },
+  {
+   "name": "TEV2-2",
+   "ended": false
+  },
+  {
+   "name": "TEV2-3",
+   "ended": false
+  },
+  {
+   "name": "TEV2-4",
+   "ended": false
+  },
+  {
+   "name": "TEV2-5",
+   "ended": false
+  },
+  {
+   "name": "TEV2-6",
+   "ended": false
+  },
+  {
+   "name": "TEV2-7",
+   "ended": false
+  },
+  {
+   "name": "TEV2-8",
+   "ended": false
+  },
+  {
+   "name": "TEV2-9",
+   "ended": false
+  }
+ ],
+ "modes": [
+  "AM",
+  "AMTOR",
+  "ARDOP",
+  "ATV",
+  "C4FM",
+  "CHIP",
+  "CLOVER",
+  "CONTESTI",
+  "CW",
+  "DATA",
+  "DIGITALVOICE",
+  "DOMINO",
+  "DSTAR",
+  "FAX",
+  "FM",
+  "FSK31",
+  "FSK441",
+  "FST4",
+  "FT4",
+  "FT8",
+  "GTOR",
+  "HELL",
+  "HFSK",
+  "IMAGE",
+  "ISCAT",
+  "JT4",
+  "JT65",
+  "JT6M",
+  "JT9",
+  "MFSK16",
+  "MFSK8",
+  "MINIRTTY",
+  "MSK144",
+  "MT63",
+  "OLIVIA",
+  "OPERA",
+  "PACKET",
+  "PACTOR",
+  "PAX",
+  "PHONE",
+  "PSK10",
+  "PSK125",
+  "PSK2K",
+  "PSK31",
+  "PSK63",
+  "PSK63F",
+  "PSKAM",
+  "PSKFEC31",
+  "Q15",
+  "Q65",
+  "QRA64",
+  "ROS",
+  "RTTY",
+  "RTTYM",
+  "SSB",
+  "SSTV",
+  "T10",
+  "THOR",
+  "THROB",
+  "VOI",
+  "WINMOR",
+  "WSPR"
+ ],
+ "bands": [
+  {
+   "name": "1.25CM",
+   "lowHz": 24000000000,
+   "highHz": 24250000000
+  },
+  {
+   "name": "1.25M",
+   "lowHz": 220000000,
+   "highHz": 225000000
+  },
+  {
+   "name": "10M",
+   "lowHz": 28000000,
+   "highHz": 29700000
+  },
+  {
+   "name": "12M",
+   "lowHz": 24890000,
+   "highHz": 24990000
+  },
+  {
+   "name": "13CM",
+   "lowHz": 2300000000,
+   "highHz": 2450000000
+  },
+  {
+   "name": "15M",
+   "lowHz": 21000000,
+   "highHz": 21450000
+  },
+  {
+   "name": "160M",
+   "lowHz": 1800000,
+   "highHz": 2000000
+  },
+  {
+   "name": "17M",
+   "lowHz": 18068000,
+   "highHz": 18168000
+  },
+  {
+   "name": "1MM",
+   "lowHz": 241000000000,
+   "highHz": 250000000000
+  },
+  {
+   "name": "2.5MM",
+   "lowHz": 122250000000,
+   "highHz": 123000000000
+  },
+  {
+   "name": "20M",
+   "lowHz": 14000000,
+   "highHz": 14350000
+  },
+  {
+   "name": "2190M",
+   "lowHz": 135000,
+   "highHz": 138000
+  },
+  {
+   "name": "23CM",
+   "lowHz": 1240000000,
+   "highHz": 1300000000
+  },
+  {
+   "name": "2M",
+   "lowHz": 144000000,
+   "highHz": 148000000
+  },
+  {
+   "name": "2MM",
+   "lowHz": 142000000000,
+   "highHz": 149000000000
+  },
+  {
+   "name": "30M",
+   "lowHz": 10100000,
+   "highHz": 10150000
+  },
+  {
+   "name": "33CM",
+   "lowHz": 902000000,
+   "highHz": 928000000
+  },
+  {
+   "name": "3CM",
+   "lowHz": 10000000000,
+   "highHz": 10500000000
+  },
+  {
+   "name": "40M",
+   "lowHz": 7000000,
+   "highHz": 7300000
+  },
+  {
+   "name": "4M",
+   "lowHz": 70000000,
+   "highHz": 71000000
+  },
+  {
+   "name": "4MM",
+   "lowHz": 75500000000,
+   "highHz": 81000000000
+  },
+  {
+   "name": "60M",
+   "lowHz": 5250000,
+   "highHz": 5450000
+  },
+  {
+   "name": "630M",
+   "lowHz": 472000,
+   "highHz": 479000
+  },
+  {
+   "name": "6CM",
+   "lowHz": 5650000000,
+   "highHz": 5925000000
+  },
+  {
+   "name": "6M",
+   "lowHz": 50000000,
+   "highHz": 54000000
+  },
+  {
+   "name": "6MM",
+   "lowHz": 47000000000,
+   "highHz": 47200000000
+  },
+  {
+   "name": "70CM",
+   "lowHz": 420000000,
+   "highHz": 450000000
+  },
+  {
+   "name": "80M",
+   "lowHz": 3500000,
+   "highHz": 4000000
+  },
+  {
+   "name": "9CM",
+   "lowHz": 3300000000,
+   "highHz": 3500000000
+  },
+  {
+   "name": "SUBMM",
+   "lowHz": 300000000000,
+   "highHz": 2000000000000000
+  },
+  {
+   "name": "8M",
+   "lowHz": 40000000,
+   "highHz": 41000000
+  }
+ ],
+ "propModes": [
+  "AS",
+  "AUE",
+  "AUR",
+  "BS",
+  "ECH",
+  "EME",
+  "ES",
+  "F2",
+  "FAI",
+  "ION",
+  "IRL",
+  "MS",
+  "RS",
+  "SAT",
+  "TEP",
+  "TR"
+ ],
+ "adifModes": [
+  {
+   "adifMode": "AM",
+   "adifSubmode": null,
+   "mode": "AM"
+  },
+  {
+   "adifMode": "ARDOP",
+   "adifSubmode": null,
+   "mode": "ARDOP"
+  },
+  {
+   "adifMode": "ATV",
+   "adifSubmode": null,
+   "mode": "ATV"
+  },
+  {
+   "adifMode": "C4FM",
+   "adifSubmode": null,
+   "mode": "C4FM"
+  },
+  {
+   "adifMode": "CHIP",
+   "adifSubmode": "CHIP128",
+   "mode": "CHIP"
+  },
+  {
+   "adifMode": "CHIP",
+   "adifSubmode": "CHIP64",
+   "mode": "CHIP"
+  },
+  {
+   "adifMode": "CHIP",
+   "adifSubmode": null,
+   "mode": "CHIP"
+  },
+  {
+   "adifMode": "CLO",
+   "adifSubmode": null,
+   "mode": "CLOVER"
+  },
+  {
+   "adifMode": "CONTESTI",
+   "adifSubmode": null,
+   "mode": "CONTESTI"
+  },
+  {
+   "adifMode": "CW",
+   "adifSubmode": "PCW",
+   "mode": "CW"
+  },
+  {
+   "adifMode": "CW",
+   "adifSubmode": null,
+   "mode": "CW"
+  },
+  {
+   "adifMode": "DIGITALVOICE",
+   "adifSubmode": null,
+   "mode": "DIGITALVOICE"
+  },
+  {
+   "adifMode": "DOMINO",
+   "adifSubmode": "DOMINOEX",
+   "mode": "DOMINO"
+  },
+  {
+   "adifMode": "DOMINO",
+   "adifSubmode": "DOMINOF",
+   "mode": "DOMINO"
+  },
+  {
+   "adifMode": "DOMINO",
+   "adifSubmode": null,
+   "mode": "DOMINO"
+  },
+  {
+   "adifMode": "DSTAR",
+   "adifSubmode": null,
+   "mode": "DSTAR"
+  },
+  {
+   "adifMode": "FAX",
+   "adifSubmode": null,
+   "mode": "FAX"
+  },
+  {
+   "adifMode": "FM",
+   "adifSubmode": null,
+   "mode": "FM"
+  },
+  {
+   "adifMode": "FSK441",
+   "adifSubmode": null,
+   "mode": "FSK441"
+  },
+  {
+   "adifMode": "FT8",
+   "adifSubmode": null,
+   "mode": "FT8"
+  },
+  {
+   "adifMode": "HELL",
+   "adifSubmode": "FMHELL",
+   "mode": "HELL"
+  },
+  {
+   "adifMode": "HELL",
+   "adifSubmode": "FSKHELL",
+   "mode": "HELL"
+  },
+  {
+   "adifMode": "HELL",
+   "adifSubmode": "HELL80",
+   "mode": "HELL"
+  },
+  {
+   "adifMode": "HELL",
+   "adifSubmode": "HFSK",
+   "mode": "HFSK"
+  },
+  {
+   "adifMode": "HELL",
+   "adifSubmode": "PSKHELL",
+   "mode": "HELL"
+  },
+  {
+   "adifMode": "HELL",
+   "adifSubmode": null,
+   "mode": "HELL"
+  },
+  {
+   "adifMode": "ISCAT",
+   "adifSubmode": "ISCAT-A",
+   "mode": "ISCAT"
+  },
+  {
+   "adifMode": "ISCAT",
+   "adifSubmode": "ISCAT-B",
+   "mode": "ISCAT"
+  },
+  {
+   "adifMode": "ISCAT",
+   "adifSubmode": null,
+   "mode": "ISCAT"
+  },
+  {
+   "adifMode": "JT4",
+   "adifSubmode": "JT4A",
+   "mode": "JT4"
+  },
+  {
+   "adifMode": "JT4",
+   "adifSubmode": "JT4B",
+   "mode": "JT4"
+  },
+  {
+   "adifMode": "JT4",
+   "adifSubmode": "JT4C",
+   "mode": "JT4"
+  },
+  {
+   "adifMode": "JT4",
+   "adifSubmode": "JT4D",
+   "mode": "JT4"
+  },
+  {
+   "adifMode": "JT4",
+   "adifSubmode": "JT4E",
+   "mode": "JT4"
+  },
+  {
+   "adifMode": "JT4",
+   "adifSubmode": "JT4F",
+   "mode": "JT4"
+  },
+  {
+   "adifMode": "JT4",
+   "adifSubmode": "JT4G",
+   "mode": "JT4"
+  },
+  {
+   "adifMode": "JT4",
+   "adifSubmode": null,
+   "mode": "JT4"
+  },
+  {
+   "adifMode": "JT65",
+   "adifSubmode": "JT65A",
+   "mode": "JT65"
+  },
+  {
+   "adifMode": "JT65",
+   "adifSubmode": "JT65B",
+   "mode": "JT65"
+  },
+  {
+   "adifMode": "JT65",
+   "adifSubmode": "JT65B2",
+   "mode": "JT65"
+  },
+  {
+   "adifMode": "JT65",
+   "adifSubmode": "JT65C",
+   "mode": "JT65"
+  },
+  {
+   "adifMode": "JT65",
+   "adifSubmode": "JT65C2",
+   "mode": "JT65"
+  },
+  {
+   "adifMode": "JT65",
+   "adifSubmode": null,
+   "mode": "JT65"
+  },
+  {
+   "adifMode": "JT6M",
+   "adifSubmode": null,
+   "mode": "JT6M"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9-1",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9-10",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9-2",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9-30",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9-5",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9A",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9B",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9C",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9D",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9E",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9E FAST",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9F",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9F FAST",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9G",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9G FAST",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9H",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": "JT9H FAST",
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "JT9",
+   "adifSubmode": null,
+   "mode": "JT9"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "FSQCALL",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "FST4",
+   "mode": "FST4"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "FT4",
+   "mode": "FT4"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "JS8",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "MFSK11",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "MFSK128",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "MFSK16",
+   "mode": "MFSK16"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "MFSK22",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "MFSK31",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "MFSK32",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "MFSK4",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "MFSK64",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "MFSK8",
+   "mode": "MFSK8"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": "Q65",
+   "mode": "Q65"
+  },
+  {
+   "adifMode": "MFSK",
+   "adifSubmode": null,
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "MSK144",
+   "adifSubmode": null,
+   "mode": "MSK144"
+  },
+  {
+   "adifMode": "MT63",
+   "adifSubmode": null,
+   "mode": "MT63"
+  },
+  {
+   "adifMode": "OLIVIA",
+   "adifSubmode": "OLIVIA 16/1000",
+   "mode": "OLIVIA"
+  },
+  {
+   "adifMode": "OLIVIA",
+   "adifSubmode": "OLIVIA 16/500",
+   "mode": "OLIVIA"
+  },
+  {
+   "adifMode": "OLIVIA",
+   "adifSubmode": "OLIVIA 32/1000",
+   "mode": "OLIVIA"
+  },
+  {
+   "adifMode": "OLIVIA",
+   "adifSubmode": "OLIVIA 4/125",
+   "mode": "OLIVIA"
+  },
+  {
+   "adifMode": "OLIVIA",
+   "adifSubmode": "OLIVIA 4/250",
+   "mode": "OLIVIA"
+  },
+  {
+   "adifMode": "OLIVIA",
+   "adifSubmode": "OLIVIA 8/250",
+   "mode": "OLIVIA"
+  },
+  {
+   "adifMode": "OLIVIA",
+   "adifSubmode": "OLIVIA 8/500",
+   "mode": "OLIVIA"
+  },
+  {
+   "adifMode": "OLIVIA",
+   "adifSubmode": null,
+   "mode": "OLIVIA"
+  },
+  {
+   "adifMode": "OPERA",
+   "adifSubmode": "OPERA-BEACON",
+   "mode": "OPERA"
+  },
+  {
+   "adifMode": "OPERA",
+   "adifSubmode": "OPERA-QSO",
+   "mode": "OPERA"
+  },
+  {
+   "adifMode": "OPERA",
+   "adifSubmode": null,
+   "mode": "OPERA"
+  },
+  {
+   "adifMode": "PAC",
+   "adifSubmode": "PAC2",
+   "mode": "PACTOR"
+  },
+  {
+   "adifMode": "PAC",
+   "adifSubmode": "PAC3",
+   "mode": "PACTOR"
+  },
+  {
+   "adifMode": "PAC",
+   "adifSubmode": "PAC4",
+   "mode": "PACTOR"
+  },
+  {
+   "adifMode": "PAC",
+   "adifSubmode": null,
+   "mode": "PACTOR"
+  },
+  {
+   "adifMode": "PAX",
+   "adifSubmode": "PAX2",
+   "mode": "PAX"
+  },
+  {
+   "adifMode": "PAX",
+   "adifSubmode": null,
+   "mode": "PAX"
+  },
+  {
+   "adifMode": "PKT",
+   "adifSubmode": null,
+   "mode": "PACKET"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "BPSK125",
+   "mode": "PSK125"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "BPSK31",
+   "mode": "PSK31"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "BPSK63",
+   "mode": "PSK63"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "FSK31",
+   "mode": "FSK31"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSK10",
+   "mode": "PSK10"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSK1000",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSK125",
+   "mode": "PSK125"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSK250",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSK31",
+   "mode": "PSK31"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSK500",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSK63",
+   "mode": "PSK63"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSK63F",
+   "mode": "PSK63F"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSKAM10",
+   "mode": "PSKAM"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSKAM31",
+   "mode": "PSKAM"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSKAM50",
+   "mode": "PSKAM"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "PSKFEC31",
+   "mode": "PSKFEC31"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "QPSK125",
+   "mode": "PSK125"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "QPSK250",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "QPSK31",
+   "mode": "PSK31"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "QPSK500",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "QPSK63",
+   "mode": "PSK63"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": "SIM31",
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "PSK",
+   "adifSubmode": null,
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "PSK2K",
+   "adifSubmode": "PSK2K",
+   "mode": "PSK2K"
+  },
+  {
+   "adifMode": "Q15",
+   "adifSubmode": null,
+   "mode": "Q15"
+  },
+  {
+   "adifMode": "QRA64",
+   "adifSubmode": "QRA64A",
+   "mode": "QRA64"
+  },
+  {
+   "adifMode": "QRA64",
+   "adifSubmode": "QRA64B",
+   "mode": "QRA64"
+  },
+  {
+   "adifMode": "QRA64",
+   "adifSubmode": "QRA64C",
+   "mode": "QRA64"
+  },
+  {
+   "adifMode": "QRA64",
+   "adifSubmode": "QRA64D",
+   "mode": "QRA64"
+  },
+  {
+   "adifMode": "QRA64",
+   "adifSubmode": "QRA64E",
+   "mode": "QRA64"
+  },
+  {
+   "adifMode": "QRA64",
+   "adifSubmode": null,
+   "mode": "QRA64"
+  },
+  {
+   "adifMode": "ROS",
+   "adifSubmode": "ROS-EME",
+   "mode": "ROS"
+  },
+  {
+   "adifMode": "ROS",
+   "adifSubmode": "ROS-HF",
+   "mode": "ROS"
+  },
+  {
+   "adifMode": "ROS",
+   "adifSubmode": "ROS-MF",
+   "mode": "ROS"
+  },
+  {
+   "adifMode": "ROS",
+   "adifSubmode": null,
+   "mode": "ROS"
+  },
+  {
+   "adifMode": "RTTY",
+   "adifSubmode": "ASCI",
+   "mode": "RTTY"
+  },
+  {
+   "adifMode": "RTTY",
+   "adifSubmode": null,
+   "mode": "RTTY"
+  },
+  {
+   "adifMode": "RTTYM",
+   "adifSubmode": null,
+   "mode": "RTTYM"
+  },
+  {
+   "adifMode": "SSB",
+   "adifSubmode": "LSB",
+   "mode": "SSB"
+  },
+  {
+   "adifMode": "SSB",
+   "adifSubmode": "USB",
+   "mode": "SSB"
+  },
+  {
+   "adifMode": "SSB",
+   "adifSubmode": null,
+   "mode": "SSB"
+  },
+  {
+   "adifMode": "SSTV",
+   "adifSubmode": null,
+   "mode": "SSTV"
+  },
+  {
+   "adifMode": "T10",
+   "adifSubmode": null,
+   "mode": "T10"
+  },
+  {
+   "adifMode": "THOR",
+   "adifSubmode": null,
+   "mode": "THOR"
+  },
+  {
+   "adifMode": "THRB",
+   "adifSubmode": "THRBX",
+   "mode": "THROB"
+  },
+  {
+   "adifMode": "THRB",
+   "adifSubmode": null,
+   "mode": "THROB"
+  },
+  {
+   "adifMode": "TOR",
+   "adifSubmode": "AMTORFEC",
+   "mode": "AMTOR"
+  },
+  {
+   "adifMode": "TOR",
+   "adifSubmode": "GTOR",
+   "mode": "GTOR"
+  },
+  {
+   "adifMode": "TOR",
+   "adifSubmode": null,
+   "mode": "AMTOR"
+  },
+  {
+   "adifMode": "V4",
+   "adifSubmode": null,
+   "mode": "DATA"
+  },
+  {
+   "adifMode": "VOI",
+   "adifSubmode": null,
+   "mode": "VOI"
+  },
+  {
+   "adifMode": "WINMOR",
+   "adifSubmode": null,
+   "mode": "WINMOR"
+  },
+  {
+   "adifMode": "WSPR",
+   "adifSubmode": null,
+   "mode": "WSPR"
+  }
+ ]
+}

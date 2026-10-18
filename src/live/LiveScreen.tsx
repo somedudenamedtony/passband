@@ -11,11 +11,12 @@ import { exactAt, retuneSchedule, stepAt } from '../model/schedule';
 import { MINUTE } from '../model/time';
 import { sampleAt, type TrackPoint } from '../model/track';
 import { primaryTransmitter } from '../model/transmitters';
-import type { Location, Pass, Satellite, Station } from '../model/types';
+import type { Location, Pass, QsoRecord, Satellite, Station } from '../model/types';
 import { formatDistance } from '../model/units';
 import { passTrackFor } from '../predict/client';
 import { DisplayRig } from '../rig/rig';
 import { Banner, Button } from '../ui/common';
+import { QuickLog } from '../ui/QuickLog';
 import { useNow } from '../ui/clock';
 import { Checklist } from './Checklist';
 import { PracticePanel, type PracticeControls } from './PracticePanel';
@@ -31,6 +32,7 @@ export function LiveScreen({
   location,
   station,
   onClose,
+  onLog,
   practice,
 }: {
   pass: Pass;
@@ -38,6 +40,8 @@ export function LiveScreen({
   location: Location;
   station: Station;
   onClose: () => void;
+  /** Save a contact from the quick log. */
+  onLog: (q: QsoRecord) => void;
   /** D16: present only in practice. Everything else on this screen is identical. */
   practice?: PracticeControls;
 }) {
@@ -47,6 +51,8 @@ export function LiveScreen({
   const [ackStale, setAckStale] = useState(false);
   // D19: spoken cues on for beginners, off for experienced operators; one tap either way.
   const [cuesOn, setCuesOn] = useState(isNew);
+  const [logAt, setLogAt] = useState<number | null>(null);
+  const [logged, setLogged] = useState<string | null>(null);
   const tx = primaryTransmitter(sat);
 
   useEffect(() => {
@@ -243,10 +249,43 @@ export function LiveScreen({
         >
           {!anyCueOutput ? 'Cues off in Settings' : cuesOn ? '🔊 Cues on' : '🔇 Cues off'}
         </Button>
+        {tx?.uplinkHz != null && (
+          <Button
+            kind="primary"
+            className="flex-1"
+            disabled={!!practice}
+            onClick={() => setLogAt(now)}
+            aria-label={practice ? 'Logging is off in practice' : 'Log a contact'}
+          >
+            {practice ? 'No log in practice' : '+ LOG'}
+          </Button>
+        )}
         <Button className="flex-1" onClick={onClose}>
           Done
         </Button>
       </div>
+      {logged && (
+        <div role="status" className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-md rounded-xl bg-fg px-4 py-3 text-center font-bold text-bg">
+          Logged {logged}
+        </div>
+      )}
+      {logAt !== null && tx && (
+        <QuickLog
+          sat={sat}
+          tx={tx}
+          setting={setting}
+          location={location}
+          station={station}
+          timeOn={logAt}
+          onClose={() => setLogAt(null)}
+          onSave={(q) => {
+            onLog(q);
+            setLogAt(null);
+            setLogged(q.call);
+            setTimeout(() => setLogged(null), 2500);
+          }}
+        />
+      )}
     </Overlay>
   );
 }
