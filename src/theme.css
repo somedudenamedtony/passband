@@ -667,7 +667,8 @@ button.row:active {
   flex-direction: column;
   gap: 4px;
 }
-.field + .field {
+.field + .field,
+.hint + .field {
   margin-top: 12px;
 }
 .field label {

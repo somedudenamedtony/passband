@@ -26,7 +26,7 @@ import { MapView } from './MapView';
 import { LocationSheet } from './LocationSheet';
 import { LocationSetup } from './LocationSetup';
 import { SettingsSheet } from './SettingsSheet';
-import { Tonight } from './Tonight';
+import { Tonight, type SatScope } from './Tonight';
 
 type Sheet = 'none' | 'locations' | 'settings';
 type Tab = 'tonight' | 'map' | 'log' | 'learn';
@@ -50,6 +50,7 @@ export function App() {
   const [live, setLive] = useState<Live | null>(null);
   const [tab, setTab] = useState<Tab>('tonight');
   const [selected, setSelected] = useState<Pass | null>(null);
+  const [scope, setScope] = useState<SatScope>('recommended');
   const [qsos, setQsos] = useState<QsoRecord[]>([]);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const refreshRecordings = useCallback(async () => setRecordings(await listRecordings()), []);
@@ -223,6 +224,8 @@ export function App() {
                     selected={selected}
                     onSelect={setSelected}
                     onStart={openLive}
+                    scope={scope}
+                    onScope={setScope}
                   />
                 </>
               ) : (

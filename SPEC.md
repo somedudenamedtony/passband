@@ -413,8 +413,11 @@ targets ≥ 48 px, primary actions in the bottom third. A **red night mode** for
 - Next good pass as a large card: satellite, countdown, max elevation, rise/set directions, the
   frequency to start on, tone. "Start" opens the live screen; "Remind me" exports `.ics` (D17).
 - Below: a 24 h timeline, one row per satellite, passes as bars whose height is max elevation,
-  dimmed where below the horizon mask. Inactive satellites hidden by default; Unknown shown with
-  a marker.
+  dimmed where below the horizon mask. Soonest first, eight rows, the rest one tap away. Unknown
+  shown with a marker.
+- One **Satellites** selector governs both the coming-up list and the timeline: *Recommended*
+  (the D19 default for the operator's experience), *All active*, or *+ Inactive*, each with its
+  count and a line saying what it includes.
 - Element-age banner when D5 says so.
 
 ### 5.2 Live pass

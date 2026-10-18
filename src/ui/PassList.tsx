@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { isGoodPass, samePass } from '../model/selection';
-import { Panel, SectionTitle } from './common';
+import { Button, Panel, SectionTitle } from './common';
 import { compassPoint, formatCountdown, formatLocalTime } from '../model/format';
 import { elementAgeLevel } from '../model/elementAge';
 import type { Pass, Satellite, Station } from '../model/types';
 
-const SHOWN = 8;
+/** Rows per page: enough to plan an evening without a long scroll. */
+export const PAGE = 8;
 
 /** The next few good passes as big tappable rows. */
 export function PassList({
@@ -22,7 +24,9 @@ export function PassList({
   selected: Pass | null;
   onSelect: (p: Pass) => void;
 }) {
-  const good = passes.filter((p) => isGoodPass(p, station.experience)).slice(0, SHOWN);
+  const [shown, setShown] = useState(PAGE);
+  const all = passes.filter((p) => isGoodPass(p, station.experience));
+  const good = all.slice(0, shown);
   if (!good.length) return null;
   return (
     <section aria-label="Upcoming passes">
@@ -55,6 +59,11 @@ export function PassList({
           })}
         </ul>
       </Panel>
+      {all.length > shown && (
+        <Button kind="ghost" onClick={() => setShown((n) => n + PAGE)}>
+          Show {Math.min(PAGE, all.length - shown)} more ({all.length} in all)
+        </Button>
+      )}
     </section>
   );
 }
