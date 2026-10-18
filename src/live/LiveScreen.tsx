@@ -11,7 +11,8 @@ import { exactAt, retuneSchedule, stepAt } from '../model/schedule';
 import { MINUTE } from '../model/time';
 import { sampleAt, type TrackPoint } from '../model/track';
 import { primaryTransmitter } from '../model/transmitters';
-import type { Location, Pass, QsoRecord, Satellite, Station } from '../model/types';
+import type { Location, Pass, QsoRecord, Recording, Satellite, Station } from '../model/types';
+import { usePassRecorder } from '../record/usePassRecorder';
 import { formatDistance } from '../model/units';
 import { passTrackFor } from '../predict/client';
 import { DisplayRig } from '../rig/rig';
@@ -37,6 +38,7 @@ export function LiveScreen({
   station,
   onClose,
   onLog,
+  onRecorded,
   practice,
 }: {
   pass: Pass;
@@ -46,6 +48,8 @@ export function LiveScreen({
   onClose: () => void;
   /** Save a contact from the quick log. */
   onLog: (q: QsoRecord) => void;
+  /** D13: a recording was saved. */
+  onRecorded: (r: Recording) => void;
   /** D16: present only in practice. Everything else on this screen is identical. */
   practice?: PracticeControls;
 }) {
@@ -111,6 +115,17 @@ export function LiveScreen({
   }, [rig, tx, current]);
   const setting = useSyncExternalStore(rig.subscribe, () => rig.get());
 
+  const rec = usePassRecorder({
+    pass,
+    sat,
+    locationId: location.id,
+    transmitterId: tx?.id ?? null,
+    station,
+    now,
+    disabled: !!practice,
+    onSaved: onRecorded,
+  });
+
   const stale = elementAgeLevel(pass.elementsEpoch, now) === 'stale';
   const phase = now < pass.aos ? 'before' : now <= pass.los ? 'during' : 'after';
   const here = track ? sampleAt(track, now) : null;
@@ -144,6 +159,19 @@ export function LiveScreen({
       <header className="flex items-center gap-3 py-2">
         <h1 className="text-3xl font-black">{sat.name}</h1>
         <span className="tabular text-lg font-bold">▲ {Math.round(pass.maxElDeg)}°</span>
+        <button
+          type="button"
+          className="min-h-12 min-w-12 rounded-full border border-line text-xl disabled:opacity-40"
+          disabled={!anyCueOutput}
+          aria-pressed={cuesOn}
+          aria-label={!anyCueOutput ? 'Cues are off in Settings' : cuesOn ? 'Cues on' : 'Cues off'}
+          onClick={() => {
+            if (!cuesOn) cue.unlock();
+            setCuesOn((c) => !c);
+          }}
+        >
+          {cuesOn && anyCueOutput ? '🔊' : '🔇'}
+        </button>
         <span className="tabular ml-auto text-lg font-bold" aria-live="off">
           {phase === 'before' && <>rises {formatCountdown(pass.aos - now)}</>}
           {phase === 'during' && <>⏱ {formatClock(pass.los - now)}</>}
@@ -151,6 +179,19 @@ export function LiveScreen({
         </span>
       </header>
 
+      {rec.state === 'recording' && (
+        <p role="status" className="font-bold text-danger-fg">
+          ● Recording{rec.interrupted && ' — it was interrupted, keep the screen on'}
+        </p>
+      )}
+      {rec.state === 'saved' && rec.last && (
+        <Banner tone={rec.last.interrupted ? 'warn' : 'info'}>
+          {rec.last.interrupted
+            ? `Recording was interrupted (the screen locked or the app went to the background). Kept ${formatClock(rec.last.durationMs)}.`
+            : `Recording saved: ${formatClock(rec.last.durationMs)}. Play it back from the Log.`}
+        </Banner>
+      )}
+      {rec.state === 'error' && <Banner tone="warn">Couldn’t record — microphone access may have been refused.</Banner>}
       {(wake === 'failed' || wake === 'unsupported') && (
         <Banner tone="warn">Keep the screen on — your phone may lock.</Banner>
       )}
@@ -277,16 +318,13 @@ export function LiveScreen({
 
       <div className="sticky bottom-0 mt-auto flex gap-3 bg-bg py-3">
         <Button
-          kind={cuesOn ? 'primary' : 'secondary'}
+          kind={rec.state === 'recording' ? 'primary' : 'secondary'}
           className="flex-1"
-          disabled={!anyCueOutput}
-          aria-label={!anyCueOutput ? 'Cues are off in Settings' : cuesOn ? 'Cues on' : 'Cues off'}
-          onClick={() => {
-            if (!cuesOn) cue.unlock();
-            setCuesOn((c) => !c);
-          }}
+          disabled={!!practice || rec.state === 'unsupported' || rec.state === 'saving'}
+          onClick={rec.toggle}
+          aria-label={practice ? 'Recording is off in practice' : rec.state === 'recording' ? 'Stop recording' : 'Record the pass'}
         >
-          {!anyCueOutput ? 'No cues' : cuesOn ? '🔊 Cues' : '🔇 Cues'}
+          {rec.state === 'recording' ? '■ STOP' : rec.state === 'saving' ? 'Saving…' : '● REC'}
         </Button>
         {tx?.uplinkHz != null && (
           <Button
@@ -296,7 +334,7 @@ export function LiveScreen({
             onClick={() => setLogAt(now)}
             aria-label={practice ? 'Logging is off in practice' : 'Log a contact'}
           >
-            {practice ? 'No log in practice' : '+ LOG'}
+            {practice ? 'No log' : '+ LOG'}
           </Button>
         )}
         <Button className="flex-1" onClick={onClose}>

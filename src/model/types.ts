@@ -64,6 +64,8 @@ export interface Station {
   radioStepHz: RadioStepHz;
   cues: { speech: boolean; tones: boolean; vibration: boolean };
   compassOffsetDeg: number;
+  /** D13: start recording automatically at AOS. */
+  recordPasses: boolean;
   /** When sun calibration last set the offset (D10); null = never. */
   compassCalibratedAt: number | null;
 }
@@ -118,4 +120,20 @@ export interface QsoRecord {
   recordingId: string | null;
   exportedAt: number | null;
   note: string | null;
+}
+
+/** D13: a pass recording. Blobs stay on the device (§7). */
+export interface Recording {
+  id: string;
+  noradId: number;
+  satDisplayName: string;
+  /** Where it was recorded and which transmitter, so a contact logged from playback is complete. */
+  locationId: string;
+  transmitterId: string | null;
+  startedAt: number;
+  durationMs: number;
+  /** iOS stops recording when the app is backgrounded or the screen locks. */
+  interrupted: boolean;
+  mimeType: string;
+  blob: Blob;
 }

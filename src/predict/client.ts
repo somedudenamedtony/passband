@@ -1,7 +1,7 @@
 import type { TrackPoint } from '../model/track';
 import type { Location, Pass, Satellite } from '../model/types';
 import type { PassSearch } from './passes';
-import type { WorkerRequest, WorkerResponse } from './worker';
+import type { GroundPoint, WorkerRequest, WorkerResponse } from './worker';
 
 type Pending = { resolve: (r: WorkerResponse) => void; reject: (e: Error) => void };
 
@@ -49,4 +49,9 @@ export async function rangeRateAt(sat: Satellite, location: Location, t: number)
 export async function passTrackFor(sat: Satellite, location: Location, pass: Pass): Promise<TrackPoint[]> {
   const r = await ask({ type: 'track', sat: toSearch(sat), location, aos: pass.aos, los: pass.los });
   return r.type === 'track' ? r.track : [];
+}
+
+export async function groundTrack(sat: Satellite, from: number, to: number, stepMs: number): Promise<GroundPoint[]> {
+  const r = await ask({ type: 'ground', sat: toSearch(sat), from, to, stepMs });
+  return r.type === 'ground' ? r.points : [];
 }

@@ -1,4 +1,5 @@
 import { cueSupport } from '../cue/cue';
+import { canRecord } from '../record/recorder';
 import type { LoadedCatalog } from '../data/catalog';
 import type { Theme } from '../data/theme';
 import { formatElementAge } from '../model/elementAge';
@@ -76,6 +77,21 @@ export function SettingsSheet({
           />
         </Field>
         <CueSettings station={station} onChange={onChange} />
+        <label className="flex min-h-12 items-center gap-3">
+          <input
+            type="checkbox"
+            className="size-6"
+            disabled={!canRecord()}
+            checked={station.recordPasses && canRecord()}
+            onChange={(e) => onChange({ ...station, recordPasses: e.target.checked })}
+          />
+          <span>
+            Record passes automatically from AOS
+            <span className="block text-sm text-muted">
+              {canRecord() ? 'Uses the microphone or a wired input. Recordings stay on this device.' : 'This browser can’t record audio.'}
+            </span>
+          </span>
+        </label>
         {location && (
           <Field label="Compass" hint={station.compassCalibratedAt === null ? 'Not calibrated yet.' : `Offset ${station.compassOffsetDeg.toFixed(0)}°.`}>
             <Button className="w-full" onClick={() => setCalibrating(true)}>
