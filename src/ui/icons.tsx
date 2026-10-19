@@ -24,6 +24,7 @@ const PATHS = {
   volumeOff: 'M3 7.5h3l4-3.5v12l-4-3.5H3zM13 7.5l5 5M18 7.5l-5 5',
   chevronDown: 'M5 7.5l5 5 5-5',
   chevronUp: 'M5 12.5l5-5 5 5',
+  chevronLeft: 'M12.5 5l-5 5 5 5',
 } as const;
 
 export type IconName = keyof typeof PATHS;

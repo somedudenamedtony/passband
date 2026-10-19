@@ -20,6 +20,8 @@ import { EXPORT_NUDGE, LogView, unexportedCount } from './LogView';
 import { ClockContext } from './clock';
 import { Banner, Button } from './common';
 import { TabBar, type TabSpec } from './TabBar';
+import { useBack } from './back';
+import { EdgeSwipe } from './EdgeSwipe';
 import { Icon } from './icons';
 import { Learn } from './Learn';
 import { MapView } from './MapView';
@@ -50,6 +52,22 @@ export function App() {
   const [sheet, setSheet] = useState<Sheet>('none');
   const [live, setLive] = useState<Live | null>(null);
   const [tab, setTab] = useState<Tab>('tonight');
+  // The tabs visited, so back (the edge swipe) can retrace them like a native app.
+  const [tabTrail, setTabTrail] = useState<Tab[]>([]);
+  const selectTab = useCallback(
+    (t: Tab) => {
+      if (t === tab) return;
+      setTabTrail((trail) => [...trail.slice(-9), tab]);
+      setTab(t);
+    },
+    [tab],
+  );
+  useBack(() => {
+    const prev = tabTrail[tabTrail.length - 1];
+    if (!prev) return;
+    setTab(prev);
+    setTabTrail(tabTrail.slice(0, -1));
+  }, tabTrail.length > 0);
   const [selected, setSelected] = useState<Pass | null>(null);
   const [scope, setScope] = useState<SatScope>('recommended');
   const [chosen, setChosen] = useState<ReadonlySet<Activity>>(() => new Set());
@@ -214,7 +232,7 @@ export function App() {
                   {unexportedCount(qsos) >= EXPORT_NUDGE && (
                     <Banner tone="warn">
                       {unexportedCount(qsos)} contacts aren’t exported yet.{' '}
-                      <a href="#log" onClick={(e) => { e.preventDefault(); setTab('log'); }}>
+                      <a href="#log" onClick={(e) => { e.preventDefault(); selectTab('log'); }}>
                         Export from the Log
                       </a>
                     </Banner>
@@ -240,7 +258,7 @@ export function App() {
                   station={station}
                   onPick={(p) => {
                     setSelected(p);
-                    setTab('tonight');
+                    selectTab('tonight');
                   }}
                   onPractice={openPractice}
                 />
@@ -255,7 +273,7 @@ export function App() {
           </div>
         </main>
 
-        {location && catalog && <TabBar tabs={tabs} selected={tab} onSelect={setTab} />}
+        {location && catalog && <TabBar tabs={tabs} selected={tab} onSelect={selectTab} />}
       </div>
 
       {live && location && (
@@ -304,6 +322,7 @@ export function App() {
           onClose={() => setSheet('none')}
         />
       )}
+      <EdgeSwipe />
     </>
   );
 }

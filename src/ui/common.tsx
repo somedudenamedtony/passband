@@ -3,6 +3,7 @@
 
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useBack } from './back';
 import { Icon } from './icons';
 
 export function Button({
@@ -73,6 +74,7 @@ function Overlay({ children }: { children: ReactNode }) {
 /** A sheet over the panel, with a title strip and Close. */
 export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   useEscape(onClose);
+  useBack(onClose);
   const id = useId();
   return (
     <Overlay>
@@ -103,6 +105,7 @@ export interface ConfirmSpec {
 /** A yes/no question. Returns the asker and the element to render while one is open. */
 export function useConfirm(): [(c: ConfirmSpec) => void, ReactNode] {
   const [spec, setSpec] = useState<ConfirmSpec | null>(null);
+  useBack(() => setSpec(null), spec !== null);
   const id = useId();
   const node = spec && (
     <Overlay>

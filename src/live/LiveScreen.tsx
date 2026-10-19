@@ -20,6 +20,7 @@ import { Banner, Button, Panel, Segmented, SectionTitle } from '../ui/common';
 import { Icon } from '../ui/icons';
 import { QuickLog } from '../ui/QuickLog';
 import { useNow } from '../ui/clock';
+import { useBack } from '../ui/back';
 import { CompassStatus } from '../compass/CompassStatus';
 import { useCompass } from '../compass/useCompass';
 import { ARView } from './ARView';
@@ -55,6 +56,7 @@ export function LiveScreen({
   practice?: PracticeControls;
 }) {
   const now = useNow(250);
+  useBack(onClose);
   const isNew = station.experience === 'new';
   const [track, setTrack] = useState<TrackPoint[] | null>(null);
   const [ackStale, setAckStale] = useState(false);
