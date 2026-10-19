@@ -6,10 +6,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { OmmElements } from '../src/model/types.ts';
 import {
+  AMSAT_WINDOW_HOURS,
   buildCatalog,
   inScopeTransmitter,
   tleToOmm,
   withRetry,
+  type AmsatReport,
   type OverlayEntry,
   type SatnogsSatellite,
   type SatnogsTransmitter,
@@ -21,6 +23,7 @@ const OVERLAY_DIR = join(root, 'data', 'overlay');
 
 const CELESTRAK = 'https://celestrak.org/NORAD/elements/gp.php';
 const SATNOGS = 'https://db.satnogs.org/api';
+const AMSAT_STATUS = 'https://www.amsat.org/status/api/v1/sat_info.php';
 const UA = 'passband-catalog/0.1 (+https://github.com/somedudenamedtony/passband)';
 
 const RETRY_DELAYS_MS = [5_000, 20_000];
@@ -51,6 +54,30 @@ async function satnogsTle(): Promise<OmmElements[]> {
   return rows.map((r) => tleToOmm(r.tle0, r.tle1, r.tle2));
 }
 
+/**
+ * Recent reports for every overlay satellite AMSAT tracks, one request per AMSAT name, one at a
+ * time to stay polite. A satellite whose fetch fails gets null: the app then says the reports are
+ * unavailable rather than claiming nobody heard it (D6). The build never fails over this.
+ */
+async function amsatReports(overlay: OverlayEntry[]): Promise<Map<number, AmsatReport[] | null>> {
+  const out = new Map<number, AmsatReport[] | null>();
+  for (const o of overlay) {
+    if (!o.amsatStatusNames?.length) continue;
+    try {
+      const rows: AmsatReport[] = [];
+      for (const name of o.amsatStatusNames) {
+        const q = new URLSearchParams({ name, hours: String(AMSAT_WINDOW_HOURS) });
+        rows.push(...(await getJson<AmsatReport[]>(`${AMSAT_STATUS}?${q}`)));
+      }
+      out.set(o.noradId, rows);
+    } catch (err) {
+      console.warn(`::warning::AMSAT status unavailable for ${o.name ?? o.noradId} (${(err as Error).message}).`);
+      out.set(o.noradId, null);
+    }
+  }
+  return out;
+}
+
 async function readOverlay(): Promise<OverlayEntry[]> {
   const files = (await readdir(OVERLAY_DIR)).filter((f) => f.endsWith('.json')).sort();
   const entries: OverlayEntry[] = [];
@@ -58,6 +85,7 @@ async function readOverlay(): Promise<OverlayEntry[]> {
     const entry = JSON.parse(await readFile(join(OVERLAY_DIR, f), 'utf8')) as OverlayEntry;
     if (!Number.isInteger(entry.noradId)) throw new Error(`${f}: noradId missing`);
     if (!('lotwName' in entry)) throw new Error(`${f}: lotwName is required (D12)`);
+    if (entry.amsatStatusNames?.length && !entry.amsatStatusSource) throw new Error(`${f}: amsatStatusNames has no source`);
     for (const o of entry.transmitterOverrides ?? []) {
       if (!o.source) throw new Error(`${f}: override of ${o.id} has no source (D6)`);
     }
@@ -96,6 +124,8 @@ async function main() {
     console.warn(`::warning::CelesTrak unavailable (${(err as Error).message}); using SatNOGS TLEs for all satellites.`);
   }
 
+  const reports = await amsatReports(overlay);
+
   const { catalog, report } = buildCatalog({
     generatedAt: Date.now(),
     elements,
@@ -103,6 +133,7 @@ async function main() {
     satnogsSatellites,
     satnogsTransmitters,
     overlay,
+    amsatReports: reports,
   });
 
   await mkdir(dirname(OUT), { recursive: true });

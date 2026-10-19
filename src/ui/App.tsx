@@ -230,6 +230,7 @@ export function App() {
                     onScope={setScope}
                     chosen={chosen}
                     onChosen={setChosen}
+                    qsos={qsos}
                   />
                 </>
               ) : (

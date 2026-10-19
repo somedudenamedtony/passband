@@ -5,5 +5,11 @@
   "difficulty": "intermediate",
   "receiveOnly": false,
   "note": "FM repeater in a near-equatorial orbit, so it is only reachable from low latitudes.",
-  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18",
+  "amsatStatusNames": [
+    "IO-86_[FM]",
+    "IO-86_[VHF_Digi]",
+    "IO-86_[SSDV]"
+  ],
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
 }

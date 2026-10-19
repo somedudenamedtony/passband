@@ -102,6 +102,11 @@ The app does **not** call CelesTrak or SatNOGS from the browser. A scheduled Git
 2. Fetches transmitter data (frequencies, modes, CTCSS, status) from the SatNOGS DB API.
 3. Merges them with our curated overlay (`data/overlay/*.json` — beginner notes, difficulty,
    LoTW `SAT_NAME`; see D6).
+3a. For overlay satellites that list `amsatStatusNames`, fetches the last 96 hours of "heard / not
+   heard" reports from the AMSAT status page and keeps a summary (counts, last heard, the 20 newest).
+   A failed fetch publishes the reports as unknown, never as "nobody heard it" (D6), and never fails
+   the build. This is the published, read-only side of community status; posting reports stays v2+
+   (D1).
 4. Publishes `catalog.json` with a `generated_at` timestamp alongside the app.
 
 Why: no CORS dependency, no hammering CelesTrak (they rate-limit and ask clients not to poll),
@@ -420,6 +425,10 @@ targets ≥ 48 px, primary actions in the bottom third. A **red night mode** for
   count and a line saying what it includes. Outside *Recommended*, activity keys narrow the lists
   by what you can do — Talk (FM), SSB / CW, Packet / APRS, Images, Telemetry — each with its count
   (most of the catalog is telemetry-only cubesats), and a search box narrows by name.
+- Picking a pass in either list swaps it into the card and brings the card back into view.
+- **Info** on the card opens the satellite sheet: what it's for, recent AMSAT reports (as of the
+  daily build), your own contacts through it, its next passes (tap one to show it), every
+  transmitter with status, the orbit (height, period, inclination), element age and LoTW name.
 - Element-age banner when D5 says so.
 
 ### 5.2 Live pass

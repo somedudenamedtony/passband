@@ -6,6 +6,7 @@ import {
   inScopeTransmitter,
   mapKind,
   parseCtcss,
+  summariseAmsat,
   satelliteStatus,
   tleToOmm,
   withRetry,
@@ -143,6 +144,56 @@ describe('buildCatalog', () => {
     const { catalog, report } = buildCatalog({ ...base, elements: [], overlay: [] });
     expect(catalog.satellites).toHaveLength(0);
     expect(report.missingElements).toEqual([{ noradId: 27607, name: 'SO-50' }]);
+  });
+});
+
+describe('AMSAT status reports', () => {
+  const row = (t: string, report: string, callsign = 'W7LIT', name = 'SO-50_[FM]') => ({
+    name,
+    reported_time: t,
+    callsign,
+    report,
+    grid_square: 'CN87',
+  });
+
+  it('counts heard and not heard, newest first, with the mode from the AMSAT name', () => {
+    const s = summariseAmsat(
+      [
+        row('2026-10-18T10:30:00Z', 'Heard'),
+        row('2026-10-18T12:00:00Z', 'Not Heard', 'k1abc'),
+        row('2026-10-18T11:00:00Z', 'Telemetry Only', 'W7LIT', 'ISS_[VHF_Digi]'),
+      ],
+      5,
+    );
+    expect(s).toMatchObject({ heard: 2, notHeard: 1, fetchedAt: 5, lastHeard: Date.parse('2026-10-18T11:00:00Z') });
+    expect(s.latest!.map((r) => [r.callsign, r.kind, r.mode])).toEqual([
+      ['K1ABC', 'not_heard', 'FM'],
+      ['W7LIT', 'telemetry_only', 'VHF_Digi'],
+      ['W7LIT', 'heard', 'FM'],
+    ]);
+  });
+
+  it('keeps a failed fetch unknown, not zero (D6)', () => {
+    expect(summariseAmsat(null, 5)).toMatchObject({ heard: null, notHeard: null, lastHeard: null, latest: null });
+  });
+
+  it('attaches reports only to satellites the build asked AMSAT about', () => {
+    const omm = tleToOmm(
+      'SO-50',
+      '1 27607U 02058C   26290.50000000  .00000100  00000-0  20000-4 0  9990',
+      '2 27607  64.5000 100.0000 0050000 100.0000 260.0000 14.80000000100000',
+    );
+    const base = {
+      generatedAt: 1,
+      elements: [omm],
+      fallbackElements: [],
+      satnogsSatellites: [{ norad_cat_id: 27607, name: 'SAUDISAT 1C', names: 'SO-50', status: 'in orbit' }],
+      satnogsTransmitters: [tx({})],
+      overlay: [],
+    };
+    expect(buildCatalog(base).catalog.satellites[0]!.reports).toBeUndefined();
+    const withReports = buildCatalog({ ...base, amsatReports: new Map([[27607, [row('2026-10-18T10:30:00Z', 'Heard')]]]) });
+    expect(withReports.catalog.satellites[0]!.reports?.heard).toBe(1);
   });
 });
 

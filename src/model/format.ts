@@ -61,3 +61,11 @@ export function formatDuration(seconds: number): string {
   const s = Math.round(seconds % 60);
   return m > 0 ? `${m} min ${s ? `${s} s` : ''}`.trim() : `${s} s`;
 }
+
+/** "just now", "25 min ago", "3 h ago", "2 days ago" — for reports and logs. */
+export function formatAgo(ms: number): string {
+  if (ms < MINUTE) return 'just now';
+  if (ms < HOUR) return `${Math.round(ms / MINUTE)} min ago`;
+  if (ms < 48 * HOUR) return `${Math.round(ms / HOUR)} h ago`;
+  return `${Math.floor(ms / (24 * HOUR))} days ago`;
+}

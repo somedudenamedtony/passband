@@ -34,6 +34,36 @@ export interface Satellite {
     note: string | null;
     receiveOnly: boolean;
   };
+  /**
+   * Recent "heard / not heard" reports from the AMSAT status page, collected by the daily build
+   * (D4). Absent when AMSAT doesn't track this satellite (or the catalog predates this field).
+   */
+  reports?: StatusReports;
+}
+
+export type StatusReportKind = 'heard' | 'not_heard' | 'telemetry_only' | 'crew_active' | 'other';
+
+export interface StatusReport {
+  /** UTC epoch ms; AMSAT records reports to the half hour. */
+  t: number;
+  callsign: string;
+  grid: string | null;
+  kind: StatusReportKind;
+  /** AMSAT's mode label for the transponder: "FM", "V/u", "VHF_Digi"… */
+  mode: string;
+}
+
+export interface StatusReports {
+  source: 'amsat';
+  fetchedAt: number;
+  /** How far back the build asked for. */
+  windowHours: number;
+  /** null when the build couldn't reach AMSAT: unknown, not "nobody heard it" (D6). */
+  heard: number | null;
+  notHeard: number | null;
+  lastHeard: number | null;
+  /** Newest first, capped. */
+  latest: StatusReport[] | null;
 }
 
 export type TransmitterKind = 'fm_repeater' | 'linear_transponder' | 'beacon' | 'digipeater' | 'other';

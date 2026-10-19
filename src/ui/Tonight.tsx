@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { LoadedCatalog } from '../data/catalog';
 import { elementAgeDays, elementAgeLevel } from '../model/elementAge';
 import { ACTIVITIES, activities, matchesActivities, type Activity } from '../model/activity';
 import { listedSatellites, nextGoodPass, samePass } from '../model/selection';
-import type { Location, Pass, Satellite, Station } from '../model/types';
+import type { Location, Pass, QsoRecord, Satellite, Station } from '../model/types';
 import { Banner, Field, Segmented, SectionTitle } from './common';
 import { useNow } from './clock';
 import { PassCard } from './PassCard';
+import { SatelliteInfo } from './SatelliteInfo';
 import { PassList } from './PassList';
 import { Timeline } from './Timeline';
 import { usePasses } from './usePasses';
@@ -22,6 +23,7 @@ export function Tonight({
   onScope,
   chosen,
   onChosen,
+  qsos,
 }: {
   catalog: LoadedCatalog;
   location: Location;
@@ -36,8 +38,28 @@ export function Tonight({
   /** Activity keys pressed under All active; none pressed = no filter. Also kept by App. */
   chosen: ReadonlySet<Activity>;
   onChosen: (a: ReadonlySet<Activity>) => void;
+  /** The log, for "your contacts" on the info sheet. */
+  qsos: QsoRecord[];
 }) {
   const now = useNow(1000);
+  const [info, setInfo] = useState<Satellite | null>(null);
+
+  // Picking a pass anywhere below swaps the card at the top; take the user to it, and move focus
+  // there too so a screen reader follows.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const pick = useCallback(
+    (p: Pass | null) => {
+      onSelect(p);
+      requestAnimationFrame(() => {
+        const el = cardRef.current;
+        if (!el) return;
+        const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+        el.focus({ preventScroll: true });
+      });
+    },
+    [onSelect],
+  );
 
   const counts = useMemo(
     () =>
@@ -92,16 +114,19 @@ export function Tonight({
           Working out passes…
         </p>
       ) : featured && featuredSat ? (
-        <PassCard
-          pass={featured}
-          sat={featuredSat}
-          location={location}
-          station={station}
-          now={now}
-          isNext={next !== null && samePass(featured, next)}
-          onBackToNext={selected ? () => onSelect(null) : undefined}
-          onStart={() => onStart(featured, featuredSat)}
-        />
+        <div ref={cardRef} tabIndex={-1} className="card-anchor" key={`${featured.noradId}-${featured.aos}`}>
+          <PassCard
+            pass={featured}
+            sat={featuredSat}
+            location={location}
+            station={station}
+            now={now}
+            isNext={next !== null && samePass(featured, next)}
+            onBackToNext={selected ? () => pick(null) : undefined}
+            onStart={() => onStart(featured, featuredSat)}
+            onInfo={() => setInfo(featuredSat)}
+          />
+        </div>
       ) : (
         <Banner tone="info">
           No good passes in the next 24 hours for these satellites from {location.name}.
@@ -193,7 +218,7 @@ export function Tonight({
 
       {passes && (
         <>
-          <PassList key={`list:${listKey}`} passes={shownPasses} sats={shownById} station={station} now={now} selected={featured} onSelect={onSelect} />
+          <PassList key={`list:${listKey}`} passes={shownPasses} sats={shownById} station={station} now={now} selected={featured} onSelect={pick} />
           <Timeline
             key={`timeline:${listKey}`}
             passes={shownPasses}
@@ -201,11 +226,26 @@ export function Tonight({
             station={station}
             now={now}
             selected={featured}
-            onSelect={onSelect}
+            onSelect={pick}
           />
         </>
       )}
 
+      {info && (
+        <SatelliteInfo
+          sat={info}
+          location={location}
+          station={station}
+          now={now}
+          passes={upcoming.filter((p) => p.noradId === info.noradId)}
+          qsos={qsos}
+          onPick={(p) => {
+            setInfo(null);
+            pick(p);
+          }}
+          onClose={() => setInfo(null)}
+        />
+      )}
     </div>
   );
 }

@@ -14,5 +14,10 @@
         "ctcssHz": 67
       }
     }
-  ]
+  ],
+  "amsatStatusNames": [
+    "AO-123_[FM]",
+    "AO-123_[SSDV]"
+  ],
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
 }

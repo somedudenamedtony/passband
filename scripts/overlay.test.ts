@@ -18,6 +18,12 @@ describe('overlay (D6, D12)', () => {
       expect(s!.ended, `${file}: ${entry.lotwName} has an end date in TQSL`).toBe(false);
     }
   });
+  it('AMSAT status names match the status page format and cite a source', () => {
+    for (const { file, entry } of entries) {
+      for (const n of entry.amsatStatusNames ?? []) expect(n, file).toMatch(/^[\w.-]+_\[[\w/.-]+\]$/);
+      if (entry.amsatStatusNames?.length) expect(entry.amsatStatusSource, file).toBeTruthy();
+    }
+  });
   it('every override cites a source', () => {
     for (const { file, entry } of entries) {
       for (const o of entry.transmitterOverrides ?? []) expect(o.source, file).toBeTruthy();

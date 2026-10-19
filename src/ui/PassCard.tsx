@@ -85,6 +85,7 @@ export function PassCard({
   isNext,
   onBackToNext,
   onStart,
+  onInfo,
 }: {
   pass: Pass;
   sat: Satellite;
@@ -94,6 +95,8 @@ export function PassCard({
   isNext: boolean;
   onBackToNext?: () => void;
   onStart: () => void;
+  /** Open the satellite's info sheet. */
+  onInfo?: () => void;
 }) {
   const tx = primaryTransmitter(sat);
   const doppler = useDoppler(pass, sat, tx, location, station, now);
@@ -120,6 +123,12 @@ export function PassCard({
           <h2 className="readout readout-l" style={{ fontWeight: 400 }}>
             {sat.name}
           </h2>
+          {onInfo && (
+            <Button expand="inline" size="small" onClick={onInfo} aria-label={`About ${sat.name}`}>
+              <Icon name="info" size={16} />
+              Info
+            </Button>
+          )}
         </div>
         <div className="readout readout-m" style={{ marginTop: 6 }}>
           {inProgress ? <>Up now · sets in {formatClock(pass.los - now)}</> : <>Rises {tilde}{formatCountdown(pass.aos - now)}</>}

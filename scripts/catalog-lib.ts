@@ -1,7 +1,18 @@
 // D4: turn CelesTrak OMM + SatNOGS transmitters + our overlay into catalog.json.
 // Pure functions only; build-catalog.ts does the fetching and writing.
 
-import type { Catalog, ElementsSource, OmmElements, Satellite, Status, Transmitter, TransmitterKind } from '../src/model/types.ts';
+import type {
+  Catalog,
+  ElementsSource,
+  OmmElements,
+  Satellite,
+  Status,
+  StatusReport,
+  StatusReportKind,
+  StatusReports,
+  Transmitter,
+  TransmitterKind,
+} from '../src/model/types.ts';
 
 // ---- Inputs ----
 
@@ -39,6 +50,9 @@ export interface OverlayEntry {
   noteSource?: string;
   receiveOnly: boolean;
   /** D6: overrides of SatNOGS fields, each with the source that justifies it. */
+  /** Names on the AMSAT status page (https://www.amsat.org/status/), one per mode it tracks. */
+  amsatStatusNames?: string[];
+  amsatStatusSource?: string;
   transmitterOverrides?: Array<{
     id: string;
     source: string;
@@ -186,6 +200,63 @@ export function tleToOmm(name: string, line1: string, line2: string): OmmElement
   };
 }
 
+// ---- AMSAT status reports ----
+
+/** One row of https://www.amsat.org/status/api/v1/sat_info.php. */
+export interface AmsatReport {
+  name: string;
+  reported_time: string;
+  callsign: string;
+  report: string;
+  grid_square: string | null;
+}
+
+/** How far back the build asks AMSAT, and how many reports each satellite keeps. */
+export const AMSAT_WINDOW_HOURS = 96;
+export const AMSAT_KEEP = 20;
+
+const REPORT_KIND: Record<string, StatusReportKind> = {
+  heard: 'heard',
+  'not heard': 'not_heard',
+  'telemetry only': 'telemetry_only',
+  'crew active': 'crew_active',
+};
+
+/** The mode label inside AMSAT's name: "ISS_[VHF_Digi]" → "VHF_Digi". */
+function amsatMode(name: string): string {
+  return /\[(.+)\]$/.exec(name)?.[1] ?? name;
+}
+
+/**
+ * Fold one satellite's AMSAT rows (all its modes) into the catalog summary. `rows` null means the
+ * build couldn't fetch them: the counts are then unknown, not zero (D6).
+ */
+export function summariseAmsat(rows: AmsatReport[] | null, fetchedAt: number): StatusReports {
+  if (rows === null) {
+    return { source: 'amsat', fetchedAt, windowHours: AMSAT_WINDOW_HOURS, heard: null, notHeard: null, lastHeard: null, latest: null };
+  }
+  const reports: StatusReport[] = rows
+    .map((r) => ({
+      t: Date.parse(r.reported_time),
+      callsign: r.callsign.trim().toUpperCase(),
+      grid: r.grid_square?.trim() || null,
+      kind: REPORT_KIND[r.report.trim().toLowerCase()] ?? 'other',
+      mode: amsatMode(r.name),
+    }))
+    .filter((r) => Number.isFinite(r.t) && r.callsign !== '')
+    .sort((a, b) => b.t - a.t || a.callsign.localeCompare(b.callsign));
+  const heard = reports.filter((r) => r.kind === 'heard' || r.kind === 'crew_active' || r.kind === 'telemetry_only');
+  return {
+    source: 'amsat',
+    fetchedAt,
+    windowHours: AMSAT_WINDOW_HOURS,
+    heard: heard.length,
+    notHeard: reports.filter((r) => r.kind === 'not_heard').length,
+    lastHeard: heard[0]?.t ?? null,
+    latest: reports.slice(0, AMSAT_KEEP),
+  };
+}
+
 // ---- Merge ----
 
 export interface BuildInputs {
@@ -197,6 +268,11 @@ export interface BuildInputs {
   satnogsSatellites: SatnogsSatellite[];
   satnogsTransmitters: SatnogsTransmitter[];
   overlay: OverlayEntry[];
+  /**
+   * AMSAT rows per NORAD id, for satellites the overlay maps to AMSAT names. A null entry means
+   * that satellite's fetch failed. Omitted entirely, no satellite carries reports.
+   */
+  amsatReports?: ReadonlyMap<number, AmsatReport[] | null>;
 }
 
 export interface BuildReport {
@@ -271,6 +347,7 @@ export function buildCatalog(inp: BuildInputs): { catalog: Catalog; report: Buil
         note: ov?.note ?? null,
         receiveOnly: ov?.receiveOnly ?? false,
       },
+      ...(inp.amsatReports?.has(noradId) ? { reports: summariseAmsat(inp.amsatReports.get(noradId) ?? null, inp.generatedAt) } : {}),
     });
   }
 
