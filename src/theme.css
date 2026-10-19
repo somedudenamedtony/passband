@@ -1098,3 +1098,46 @@ input[type='range'] {
   line-height: 1.2;
   margin: 12px 0 6px;
 }
+
+/* The pass card when a new pass is picked: it lights up once, the way a display does on a new
+   channel. Focus lands here too, so no outline. */
+.card-anchor {
+  scroll-margin-top: 8px;
+  outline: none;
+  animation: card-in 500ms ease-out;
+}
+@keyframes card-in {
+  from {
+    box-shadow: 0 0 0 2px var(--amber);
+    border-radius: 10px;
+  }
+  to {
+    box-shadow: 0 0 0 2px transparent;
+    border-radius: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-anchor {
+    animation: none;
+  }
+}
+
+/* Label / value pairs, two columns. */
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 0;
+}
+.facts dt {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  padding-top: 2px;
+}
+.facts dd {
+  margin: 0;
+  font-family: var(--mono);
+}

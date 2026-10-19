@@ -5,5 +5,9 @@
   "difficulty": "intermediate",
   "receiveOnly": false,
   "note": "APRS digipeater. Needs a radio or app that sends APRS packets.",
-  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18"
+  "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18",
+  "amsatStatusNames": [
+    "NO-44_[VHF_Digi]"
+  ],
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
 }

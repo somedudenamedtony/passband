@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { formatMHz, formatTone } from './freq';
 import { elementAgeLevel } from './elementAge';
 import { formatDistance, formatHeight } from './units';
-import { compassWord, formatCountdown } from './format';
-import { DAY, MINUTE } from './time';
+import { compassWord, formatAgo, formatCountdown } from './format';
+import { DAY, HOUR, MINUTE, SECOND } from './time';
 
 describe('frequency formatting (D7)', () => {
   it('formats integer Hz as MHz at the edge', () => {
@@ -44,5 +44,14 @@ describe('display', () => {
   it('counts down', () => {
     expect(formatCountdown(42_000)).toBe('in 0:42');
     expect(formatCountdown(75 * MINUTE)).toBe('in 1 h 15 min');
+  });
+});
+
+describe('formatAgo', () => {
+  it('reads like a person would say it', () => {
+    expect(formatAgo(20 * SECOND)).toBe('just now');
+    expect(formatAgo(25 * MINUTE)).toBe('25 min ago');
+    expect(formatAgo(3 * HOUR)).toBe('3 h ago');
+    expect(formatAgo(3 * DAY)).toBe('3 days ago');
   });
 });

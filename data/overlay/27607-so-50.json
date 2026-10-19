@@ -6,5 +6,9 @@
   "receiveOnly": false,
   "note": "A classic first FM contact. It has a 10-minute timer that has to be armed with a short carrier on a separate tone before use. Its signal is weak, so a handheld needs a directional antenna.",
   "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18",
-  "noteSource": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-18"
+  "noteSource": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-18",
+  "amsatStatusNames": [
+    "SO-50_[FM]"
+  ],
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
 }
