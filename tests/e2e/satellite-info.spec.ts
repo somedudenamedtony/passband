@@ -44,7 +44,7 @@ test.describe('on a phone', () => {
     // Not inside the scrolling page, where iOS mis-stacks it under the tab bar.
     expect(await sheet.evaluate((el) => el.closest('.page') === null)).toBe(true);
     await sheet.locator('.sheet-body').evaluate((el) => el.scrollTo(0, el.scrollHeight));
-    const last = sheet.getByRole('link', { name: 'SatNOGS' });
+    const last = sheet.getByRole('link', { name: /on SatNOGS$/ });
     await expect(last).toBeInViewport();
     const onTop = await last.evaluate((el) => {
       const r = el.getBoundingClientRect();
