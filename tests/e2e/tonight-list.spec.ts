@@ -16,7 +16,17 @@ test('satellite selector, search and paging keep the Tonight lists short', async
   await upcoming.getByRole('button', { name: /^Show \d+ more/ }).click();
   await expect(upcoming.getByRole('listitem')).toHaveCount(16);
 
+  // Activity keys: Talk (FM) narrows to the voice repeaters, and says how many of how many.
+  const talk = page.getByRole('group', { name: 'Activities' }).getByRole('button', { name: /^Talk \(FM\)/ });
+  await talk.click();
+  await expect(talk).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText(/^Showing \d+ of \d+ satellites/)).toBeVisible();
+  await expect(upcoming.getByRole('listitem').first()).toBeVisible();
+
   await page.getByLabel('Find a satellite').fill('iss');
-  await expect(page.getByText(/^\d+ match/)).toBeVisible();
   for (const row of await upcoming.getByRole('listitem').all()) await expect(row).toContainText('ISS');
+
+  await page.getByRole('button', { name: 'Clear filters' }).click();
+  await expect(talk).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByLabel('Find a satellite')).toHaveValue('');
 });
