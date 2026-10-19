@@ -28,3 +28,29 @@ test('info sheet shows a satellite, and picking a pass refocuses the card', asyn
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('region', { name: `Pass of ${name}` })).toBeInViewport();
 });
+
+// On a phone the sheet must scroll to its last line, above the tab bar, without dragging the page.
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 664 }, hasTouch: true });
+
+  test('the info sheet scrolls to the end and nothing covers it', async ({ page }) => {
+    await page.goto('./');
+    await page.getByPlaceholder('CN87uo').fill('CN87uo');
+    await page.getByRole('button', { name: 'Show my passes' }).click();
+    await page.getByRole('heading', { name: 'Next 24 hours' }).waitFor({ timeout: 30_000 });
+    await page.getByRole('button', { name: /^About / }).click();
+
+    const sheet = page.getByRole('dialog');
+    // Not inside the scrolling page, where iOS mis-stacks it under the tab bar.
+    expect(await sheet.evaluate((el) => el.closest('.page') === null)).toBe(true);
+    await sheet.locator('.sheet-body').evaluate((el) => el.scrollTo(0, el.scrollHeight));
+    const last = sheet.getByRole('link', { name: /on SatNOGS$/ });
+    await expect(last).toBeInViewport();
+    const onTop = await last.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return hit !== null && el.contains(hit);
+    });
+    expect(onTop).toBe(true);
+  });
+});

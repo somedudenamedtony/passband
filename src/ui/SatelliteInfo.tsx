@@ -217,15 +217,11 @@ export function SatelliteInfo({
         </section>
 
         <p className="hint">
-          More: <a href={`https://db.satnogs.org/search/?q=${sat.noradId}`} target="_blank" rel="noreferrer">SatNOGS</a>
-          {sat.reports && (
-            <>
-              {' · '}
-              <a href="https://www.amsat.org/status/" target="_blank" rel="noreferrer">
-                AMSAT status
-              </a>
-            </>
-          )}
+          {/* AMSAT's status site has no page per satellite, so it isn't linked: its reports are above. */}
+          Observations, telemetry and photos:{' '}
+          <a href={`https://db.satnogs.org/search/?q=${sat.noradId}`} target="_blank" rel="noopener noreferrer">
+            {sat.name} on SatNOGS
+          </a>
         </p>
       </div>
     </Sheet>

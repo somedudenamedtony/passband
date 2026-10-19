@@ -2,6 +2,7 @@
 // Plain elements and CSS (theme.css); no UI library.
 
 import { useEffect, useId, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from './icons';
 
 export function Button({
@@ -61,11 +62,20 @@ function useEscape(onClose: () => void) {
   }, [onClose]);
 }
 
+/**
+ * Overlays render at the top of the document, never inside the scrolling page that opened them:
+ * iOS Safari mis-stacks and mis-scrolls fixed layers nested in an overflow container.
+ */
+function Overlay({ children }: { children: ReactNode }) {
+  return createPortal(children, document.body);
+}
+
 /** A sheet over the panel, with a title strip and Close. */
 export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   useEscape(onClose);
   const id = useId();
   return (
+    <Overlay>
     <div className="sheet-scrim">
       <div role="dialog" aria-modal="true" aria-labelledby={id} className="sheet">
         <header className="sheet-head">
@@ -79,6 +89,7 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
         <div className="sheet-body">{children}</div>
       </div>
     </div>
+    </Overlay>
   );
 }
 
@@ -94,6 +105,7 @@ export function useConfirm(): [(c: ConfirmSpec) => void, ReactNode] {
   const [spec, setSpec] = useState<ConfirmSpec | null>(null);
   const id = useId();
   const node = spec && (
+    <Overlay>
     <div className="sheet-scrim sheet-scrim-center">
       <div role="alertdialog" aria-modal="true" aria-labelledby={id} className="confirm">
         <h2 id={id} className="sheet-title">
@@ -114,6 +126,7 @@ export function useConfirm(): [(c: ConfirmSpec) => void, ReactNode] {
         </div>
       </div>
     </div>
+    </Overlay>
   );
   return [setSpec, node];
 }

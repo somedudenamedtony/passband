@@ -146,6 +146,14 @@ body,
   height: 100%;
   margin: 0;
 }
+/* The real visible height on phones: 100% can be taller than the screen in iOS standalone mode,
+   which pushes the tab bar up and leaves a dead strip under it. */
+#root {
+  height: 100dvh;
+}
+body {
+  overflow: hidden;
+}
 body {
   background: var(--chassis);
   color: var(--ink);
@@ -241,7 +249,9 @@ select {
 }
 .page {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 4px 14px 24px;
 }
@@ -851,6 +861,7 @@ input[type='range'] {
   width: 100%;
   max-width: 600px;
   max-height: calc(100% - 24px - env(safe-area-inset-top));
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top));
   border-radius: 14px 14px 0 0;
   background: var(--chassis);
   border: 1px solid var(--chassis-hi);
@@ -872,7 +883,12 @@ input[type='range'] {
   text-transform: uppercase;
 }
 .sheet-body {
+  /* Shrinks to the sheet so its own scroll reaches the end, and keeps scrolling inside it. */
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 14px 14px calc(24px + env(safe-area-inset-bottom));
 }
 .confirm {
