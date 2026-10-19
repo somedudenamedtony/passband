@@ -1157,3 +1157,26 @@ input[type='range'] {
   margin: 0;
   font-family: var(--mono);
 }
+
+/* The edge-swipe back arrow: it slides in with the finger and lights when letting go will go back. */
+.edge-back {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--key-edge);
+  background: var(--key);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  color: var(--ink-dim);
+  pointer-events: none;
+}
+.edge-back.is-armed {
+  background: var(--amber);
+  border-color: var(--amber-edge);
+  color: var(--amber-ink);
+}
