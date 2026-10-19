@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { LoadedCatalog } from '../data/catalog';
 import { elementAgeDays, elementAgeLevel } from '../model/elementAge';
+import { ACTIVITIES, activities, matchesActivities, type Activity } from '../model/activity';
 import { listedSatellites, nextGoodPass, samePass } from '../model/selection';
 import type { Location, Pass, Satellite, Station } from '../model/types';
 import { Banner, Field, Segmented, SectionTitle } from './common';
@@ -19,6 +20,8 @@ export function Tonight({
   onStart,
   scope,
   onScope,
+  chosen,
+  onChosen,
 }: {
   catalog: LoadedCatalog;
   location: Location;
@@ -30,6 +33,9 @@ export function Tonight({
   /** Which satellites the lists cover. Kept by App so it survives switching tabs. */
   scope: SatScope;
   onScope: (s: SatScope) => void;
+  /** Activity keys pressed under All active; none pressed = no filter. Also kept by App. */
+  chosen: ReadonlySet<Activity>;
+  onChosen: (a: ReadonlySet<Activity>) => void;
 }) {
   const now = useNow(1000);
 
@@ -41,16 +47,28 @@ export function Tonight({
     [catalog, station.experience],
   );
   const [query, setQuery] = useState('');
-  const q = scope === 'recommended' ? '' : query.trim().toLowerCase();
+  const narrowing = scope !== 'recommended';
+  const q = narrowing ? query.trim().toLowerCase() : '';
+  const act = narrowing ? chosen : NO_ACTIVITIES;
   const sats = useMemo(() => listedSatellites(catalog.catalog, station.experience, SCOPE_OPTS[scope]), [catalog, station.experience, scope]);
   const satById = useMemo(() => new Map(sats.map((s) => [s.noradId, s])), [sats]);
   const { passes, error } = usePasses(sats, location);
 
   const upcoming = useMemo(() => (passes ?? []).filter((p) => p.los > now), [passes, now]);
-  // The search narrows the lists only; passes are predicted once for the whole selection.
-  const shownSats = useMemo(() => (q ? sats.filter((s) => s.name.toLowerCase().includes(q)) : sats), [sats, q]);
+  // Activity keys and search narrow the lists only; passes are predicted once for the whole selection.
+  const actCounts = useMemo(() => {
+    const m = new Map<Activity, number>();
+    for (const sat of sats) for (const a of activities(sat)) m.set(a, (m.get(a) ?? 0) + 1);
+    return m;
+  }, [sats]);
+  const filtered = q !== '' || act.size > 0;
+  const shownSats = useMemo(
+    () => (filtered ? sats.filter((s) => matchesActivities(s, act) && (!q || s.name.toLowerCase().includes(q))) : sats),
+    [sats, filtered, act, q],
+  );
   const shownById = useMemo(() => new Map(shownSats.map((s) => [s.noradId, s])), [shownSats]);
-  const shownPasses = useMemo(() => (q ? upcoming.filter((p) => shownById.has(p.noradId)) : upcoming), [q, upcoming, shownById]);
+  const shownPasses = useMemo(() => (filtered ? upcoming.filter((p) => shownById.has(p.noradId)) : upcoming), [filtered, upcoming, shownById]);
+  const listKey = `${scope}:${q}:${[...act].sort().join(',')}`;
   const next = useMemo(() => nextGoodPass(upcoming, satById, station.experience, now), [upcoming, satById, station.experience, now]);
   const featured = selected && selected.los > now && satById.has(selected.noradId) ? selected : next;
   const featuredSat = featured ? satById.get(featured.noradId) : undefined;
@@ -113,7 +131,38 @@ export function Tonight({
               : 'Everything in the catalog, including satellites reported inactive.'}{' '}
           The lists below follow this.
         </p>
-        {scope !== 'recommended' && (
+        {narrowing && (
+          <div className="stack" style={{ marginTop: 14 }}>
+            <p className="silk">What do you want to do?</p>
+            <div className="chips" role="group" aria-label="Activities">
+              {ACTIVITIES.filter((a) => actCounts.has(a.id)).map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  className="chip"
+                  aria-pressed={chosen.has(a.id)}
+                  title={a.hint}
+                  onClick={() => {
+                    const next = new Set(chosen);
+                    if (next.has(a.id)) next.delete(a.id);
+                    else next.add(a.id);
+                    onChosen(next);
+                  }}
+                >
+                  {a.label} <span className="chip-count">{actCounts.get(a.id)}</span>
+                </button>
+              ))}
+            </div>
+            <p className="hint">
+              {act.size === 0
+                ? 'Tap one or more to narrow the list. Most satellites only send telemetry.'
+                : ACTIVITIES.filter((a) => act.has(a.id))
+                    .map((a) => a.hint)
+                    .join(' ')}
+            </p>
+          </div>
+        )}
+        {narrowing && (
           <Field
             label="Find a satellite"
             type="search"
@@ -123,16 +172,30 @@ export function Tonight({
             autoCorrect="off"
             spellCheck={false}
             onChange={(e) => setQuery(e.target.value)}
-            hint={q ? `${shownSats.length} match${shownSats.length === 1 ? '' : 'es'}` : undefined}
           />
+        )}
+        {filtered && (
+          <p className="hint" role="status" style={{ marginTop: 8 }}>
+            Showing {shownSats.length} of {sats.length} satellites.{' '}
+            <button
+              type="button"
+              className="linkish"
+              onClick={() => {
+                setQuery('');
+                onChosen(NO_ACTIVITIES);
+              }}
+            >
+              Clear filters
+            </button>
+          </p>
         )}
       </section>
 
       {passes && (
         <>
-          <PassList key={`list:${scope}:${q}`} passes={shownPasses} sats={shownById} station={station} now={now} selected={featured} onSelect={onSelect} />
+          <PassList key={`list:${listKey}`} passes={shownPasses} sats={shownById} station={station} now={now} selected={featured} onSelect={onSelect} />
           <Timeline
-            key={`timeline:${scope}:${q}`}
+            key={`timeline:${listKey}`}
             passes={shownPasses}
             sats={shownSats}
             station={station}
@@ -148,6 +211,8 @@ export function Tonight({
 }
 
 export type SatScope = 'recommended' | 'all' | 'inactive';
+
+const NO_ACTIVITIES: ReadonlySet<Activity> = new Set();
 
 const SCOPE_OPTS: Record<SatScope, { showAll: boolean; showInactive: boolean }> = {
   recommended: { showAll: false, showInactive: false },

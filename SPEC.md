@@ -417,7 +417,9 @@ targets ≥ 48 px, primary actions in the bottom third. A **red night mode** for
   shown with a marker.
 - One **Satellites** selector governs both the coming-up list and the timeline: *Recommended*
   (the D19 default for the operator's experience), *All active*, or *+ Inactive*, each with its
-  count and a line saying what it includes.
+  count and a line saying what it includes. Outside *Recommended*, activity keys narrow the lists
+  by what you can do — Talk (FM), SSB / CW, Packet / APRS, Images, Telemetry — each with its count
+  (most of the catalog is telemetry-only cubesats), and a search box narrows by name.
 - Element-age banner when D5 says so.
 
 ### 5.2 Live pass
