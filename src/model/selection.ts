@@ -8,6 +8,10 @@ export interface ListOptions {
   /** Every in-scope satellite, not just the experience default. */
   showAll: boolean;
   showInactive: boolean;
+  /** The user's favorites (NORAD ids): always part of the default list. */
+  favorites?: ReadonlySet<number>;
+  /** Only the favorites, dead or alive: the user picked them. */
+  onlyFavorites?: boolean;
 }
 
 export function isDefaultListed(sat: Satellite, experience: Station['experience']): boolean {
@@ -16,9 +20,19 @@ export function isDefaultListed(sat: Satellite, experience: Station['experience'
 }
 
 export function listedSatellites(catalog: Catalog, experience: Station['experience'], opts: ListOptions): Satellite[] {
+  const fav = (s: Satellite) => opts.favorites?.has(s.noradId) ?? false;
+  if (opts.onlyFavorites) return catalog.satellites.filter(fav);
   return catalog.satellites.filter(
-    (s) => (opts.showInactive || s.status !== 'inactive') && (opts.showAll || isDefaultListed(s, experience)),
+    (s) => (opts.showInactive || s.status !== 'inactive') && (opts.showAll || isDefaultListed(s, experience) || fav(s)),
   );
+}
+
+/** Add or remove one favorite, returning a new set. */
+export function toggleFavorite(favorites: ReadonlySet<number>, noradId: number): Set<number> {
+  const next = new Set(favorites);
+  if (next.has(noradId)) next.delete(noradId);
+  else next.add(noradId);
+  return next;
 }
 
 /** "Should I bother?" A pass worth getting up for, judged on the part above the mask (D9). */

@@ -10,6 +10,8 @@ import {
 } from '../data/locations';
 import { DEFAULT_STATION, loadStation, saveStation } from '../data/station';
 import { applyTheme, loadTheme, saveTheme, type Theme } from '../data/theme';
+import { loadFavorites, saveFavorites } from '../data/favorites';
+import { toggleFavorite } from '../model/selection';
 import { LiveScreen } from '../live/LiveScreen';
 import { SECOND } from '../model/time';
 import type { PracticeRate } from '../model/practice';
@@ -71,6 +73,14 @@ export function App() {
   const [selected, setSelected] = useState<Pass | null>(null);
   const [scope, setScope] = useState<SatScope>('recommended');
   const [chosen, setChosen] = useState<ReadonlySet<Activity>>(() => new Set());
+  const [favorites, setFavorites] = useState<ReadonlySet<number>>(() => new Set());
+  const flipFavorite = useCallback((noradId: number) => {
+    setFavorites((f) => {
+      const next = toggleFavorite(f, noradId);
+      void saveFavorites(next);
+      return next;
+    });
+  }, []);
   const [qsos, setQsos] = useState<QsoRecord[]>([]);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const refreshRecordings = useCallback(async () => setRecordings(await listRecordings()), []);
@@ -109,7 +119,14 @@ export function App() {
 
   useEffect(() => {
     void (async () => {
-      const [s, t, locs, active] = await Promise.all([loadStation(), loadTheme(), listLocations(), getActiveLocationId()]);
+      const [s, t, locs, active, favs] = await Promise.all([
+        loadStation(),
+        loadTheme(),
+        listLocations(),
+        getActiveLocationId(),
+        loadFavorites(),
+      ]);
+      setFavorites(favs);
       setStation(s);
       setTheme(t);
       applyTheme(t);
@@ -249,6 +266,8 @@ export function App() {
                     chosen={chosen}
                     onChosen={setChosen}
                     qsos={qsos}
+                    favorites={favorites}
+                    onFavorite={flipFavorite}
                   />
                 </>
               ) : (

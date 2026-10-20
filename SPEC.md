@@ -420,7 +420,10 @@ targets ≥ 48 px, primary actions in the bottom third. A **red night mode** for
 - Below: a 24 h timeline, one row per satellite, passes as bars whose height is max elevation,
   dimmed where below the horizon mask. Soonest first, eight rows, the rest one tap away. Unknown
   shown with a marker.
-- One **Satellites** selector governs both the coming-up list and the timeline: *Recommended*
+- **Favorites:** a ★ key on the pass card and the info sheet stars a satellite. Favorites are
+  NORAD ids in IndexedDB on this device (D1, §7): no account. They always join *Recommended*, and
+  the *★ Favorites* option lists only them, inactive ones included.
+- One **Satellites** selector governs both the coming-up list and the timeline: *★ Favorites*, *Recommended*
   (the D19 default for the operator's experience), *All active*, or *+ Inactive*, each with its
   count and a line saying what it includes. Outside *Recommended*, activity keys narrow the lists
   by what you can do — Talk (FM), SSB / CW, Packet / APRS, Images, Telemetry — each with its count

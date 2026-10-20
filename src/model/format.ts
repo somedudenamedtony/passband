@@ -51,8 +51,10 @@ export function formatClock(ms: number): string {
 export function formatCountdown(ms: number): string {
   if (ms <= 0) return 'now';
   if (ms < 10 * MINUTE) return `in ${formatClock(ms)}`;
-  const h = Math.floor(ms / HOUR);
-  const m = Math.round((ms % HOUR) / MINUTE);
+  // Round the whole thing to the minute first, so 2 h 59.6 min reads "3 h 0 min", not "2 h 60 min".
+  const total = Math.round(ms / MINUTE);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
   return h > 0 ? `in ${h} h ${m} min` : `in ${m} min`;
 }
 
