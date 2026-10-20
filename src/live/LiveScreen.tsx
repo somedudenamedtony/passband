@@ -120,12 +120,14 @@ export function LiveScreen({
   const linearHear = linear?.hearHz ?? null;
   useEffect(() => {
     if (!tx) return;
+    // A linear transponder's nominal values are its passband edges, not something to set: show
+    // nothing until the track is in and the tuning can be worked out.
     rig.set({
-      uplinkHz: linearSend ?? current?.uplinkHz ?? tx.uplinkHz,
-      downlinkHz: linearHear ?? current?.downlinkHz ?? tx.downlinkHz,
+      uplinkHz: pb ? linearSend : (current?.uplinkHz ?? tx.uplinkHz),
+      downlinkHz: pb ? linearHear : (current?.downlinkHz ?? tx.downlinkHz),
       ctcssHz: tx.ctcssHz,
     });
-  }, [rig, tx, current, linearSend, linearHear]);
+  }, [rig, tx, pb, current, linearSend, linearHear]);
   const setting = useSyncExternalStore(rig.subscribe, () => rig.get());
 
   const rec = usePassRecorder({

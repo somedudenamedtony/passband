@@ -65,6 +65,26 @@ test('add a contact by hand and import an ADIF log', async ({ page }, info) => {
 
 // §5.2 linear transponders: the spot at the satellite stays put; TX and RX follow it.
 test('a linear transponder pass tunes by one true frequency', async ({ page }) => {
+  // Slow the worker's track reply, as on a busy CI runner: until the track is in, the screen must
+  // not show the passband edges as frequencies to set.
+  await page.addInitScript(() => {
+    const W = window.Worker;
+    window.Worker = class extends W {
+      constructor(u: string | URL, o?: WorkerOptions) {
+        super(u, o);
+        const add = this.addEventListener.bind(this);
+        let handler: ((e: MessageEvent) => void) | null = null;
+        Object.defineProperty(this, 'onmessage', {
+          set: (h) => { handler = h; },
+          get: () => handler,
+        });
+        add('message', (e: MessageEvent) => {
+          const d = e.data as { type?: string };
+          setTimeout(() => handler?.(e), d.type === 'track' ? 1500 : 0);
+        });
+      }
+    } as typeof Worker;
+  });
   await page.goto('./');
   await segment(page, 'I’ve made contacts').click();
   await page.getByPlaceholder('CN87uo').fill('CN87uo');
