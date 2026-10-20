@@ -181,7 +181,7 @@ export function Tonight({
               : 'Satellites with a working uplink, ones you can just listen to, and your favorites.'
             : scope === 'all'
               ? 'Every satellite not known to be dead, including hard and receive-only ones.'
-              : 'Everything in the catalog, including satellites reported inactive.'}{' '}
+              : 'Everything in the catalog, including satellites reported inactive and objects not yet identified.'}{' '}
           The lists below follow this.
         </p>
         {narrowing && (

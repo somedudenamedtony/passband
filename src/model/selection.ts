@@ -23,8 +23,18 @@ export function listedSatellites(catalog: Catalog, experience: Station['experien
   const fav = (s: Satellite) => opts.favorites?.has(s.noradId) ?? false;
   if (opts.onlyFavorites) return catalog.satellites.filter(fav);
   return catalog.satellites.filter(
-    (s) => (opts.showInactive || s.status !== 'inactive') && (opts.showAll || isDefaultListed(s, experience) || fav(s)),
+    (s) =>
+      (opts.showInactive || (s.status !== 'inactive' && !isUnidentified(s))) &&
+      (opts.showAll || isDefaultListed(s, experience) || fav(s)),
   );
+}
+
+/**
+ * Objects SatNOGS hasn't identified yet ("Unknown Satellite", "Unknown 2 - T16"): nobody can
+ * plan around them, so they only show under + Inactive (everything), or as a favorite.
+ */
+export function isUnidentified(sat: Satellite): boolean {
+  return !sat.overlay.curated && /^unknown\b/i.test(sat.name);
 }
 
 /** Add or remove one favorite, returning a new set. */

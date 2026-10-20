@@ -241,6 +241,13 @@ one `Cue` interface with three outputs, each feature-detected, never sniffed fro
 The user chooses which outputs are on. Speech is the default because it's the one that works
 everywhere and needs no eyes.
 
+**Speech stays out of the pass.** A phone talking mid-pass talks over the downlink, and into the
+microphone if it fires while you transmit. By default speech reads the rise warning, AOS (with the
+frequency to start on), the peak, "setting in one minute" and LOS; retunes play as a short double
+tone and the changed frequency blinks on screen. A **Speak during the pass** setting picks *Rise,
+peak, set* (default), *Everything* or *Nothing* (tones only between AOS and LOS). An unspoken cue
+still sounds a tone when speech is the user's only audio output.
+
 ### D15 — The live screen holds a wake lock.
 
 `navigator.wakeLock.request('screen')` from AOS − 2 min to LOS + 1 min, re-acquired on
@@ -281,6 +288,33 @@ Known constraints, recorded so nobody rediscovers them:
   the bridge, or a Capacitor wrapper.
 - An HTTPS page cannot open a plain `ws://` connection to a LAN address (mixed content). The bridge
   needs `wss://` with a certificate the device trusts.
+
+### D21 — "Will it be on?" decides the top pick, and is said out loud.
+
+A high pass on a satellite that is switched off is the worst recommendation the app can make: it
+looks exactly like a good one. Each pass gets an **outlook** — *should be on*, *might be on*,
+*probably off* — with a one-line reason, from three things:
+
+- **Operation**, an overlay field (D6, cited like any override): `continuous`, `scheduled`
+  (switched on for announced passes only) or `sunlit` (battery too weak to run in the Earth's
+  shadow). Unknown when absent.
+- **Sunlight**: the share of the pass with the satellite in sunlight, from a cylindrical Earth
+  shadow, computed with the pass (D3).
+- **AMSAT reports** (D4): for the mode the pass is worked in (FM for an FM bird; the ISS's APRS
+  says nothing about its repeater), *heard* means heard within 48 h of the catalog build and at
+  least as often as reported silent; *quiet* means mostly silent or not heard lately; *no reports*
+  and *unknown* are their own states (D6). Telemetry-only reports don't count as the transponder
+  being heard. Recency is measured from the build, not from now, so a catalog a few days old
+  offline doesn't turn everything quiet.
+
+Schedule-only, in-shadow-on-a-sunlight-only-bird, inactive and quiet passes are *probably off*:
+they never take the big card and are marked in the lists and dimmed on the timeline. *Should be
+on* beats *might be on*. The card always says which, and why. Learn's "pick a pass" uses the same
+rule, so the two screens agree.
+
+**Your hours.** A Settings preference, local wall-clock hours (default 6 AM–11 PM, or any time).
+The card prefers a pass that starts in them and says *outside your hours* when it has to fall back.
+It is a preference, not a stored time, so rule 4 (UTC) doesn't apply to it.
 
 ### D20 — Miles by default, metric by toggle. Stored in SI.
 
@@ -330,6 +364,7 @@ interface Satellite {
     difficulty: 'beginner' | 'intermediate' | 'advanced' | null;
     note: string | null;           // plain language, one or two sentences
     receiveOnly: boolean;          // listener targets (beacons, ISS APRS/SSTV)
+    operation: 'continuous' | 'scheduled' | 'sunlit' | null;   // D21; null = Unknown
   };
 }
 
@@ -355,7 +390,9 @@ interface Station {
   experience: 'new' | 'experienced';    // D19
   radioStepHz: 2500 | 5000 | 6250;      // D7
   cues: { speech: boolean; tones: boolean; vibration: boolean };   // D14
+  speakInPass: 'key' | 'all' | 'none';  // D14 — default 'key': rise, peak, set
   compassOffsetDeg: number;             // D10
+  hours: { fromMin: number; toMin: number } | null;   // D21 — local minutes; null = any time
 }
 
 interface Location {
@@ -376,6 +413,7 @@ interface Pass {                        // computed, cached, never edited
   aosAzDeg: number; losAzDeg: number;
   visibleSecondsAboveMask: number;      // D9
   elementsEpoch: number;                // D5
+  sunlitFraction: number | null;        // D21 — share of the pass in sunlight
 }
 
 interface QsoRecord {                   // maps 1:1 onto ADIF (D12)
@@ -412,11 +450,20 @@ interface Recording {
 Three tabs plus the live screen. Designed for sunlight, gloves, and one hand: high contrast, touch
 targets ≥ 48 px, primary actions in the bottom third. A **red night mode** for dark sites.
 
+### 5.0 First run
+
+One screen, three questions, every one with a default: *Have you made a satellite contact
+before?* (D19), *your callsign* (optional), and *where are you operating from?*. The phone's
+location is offered first, because many new licensees don't know their grid; a grid square is the
+fallback. Only the location is needed to go on.
+
 ### 5.1 Tonight (home)
 
 - Location chip at the top (tap to switch, D8).
 - Next good pass as a large card: satellite, countdown, max elevation, rise/set directions, the
-  frequency to start on, tone. "Start" opens the live screen; "Remind me" exports `.ics` (D17).
+  frequency to start on, tone, and the D21 outlook ("Should be on. Heard 3 h ago…"). It is the
+  soonest good pass that will probably be on, in the user's hours when one is. "Start" opens the
+  live screen; "Remind me" exports `.ics` (D17).
 - Below: a 24 h timeline, one row per satellite, passes as bars whose height is max elevation,
   dimmed where below the horizon mask. Soonest first, eight rows, the rest one tap away. Unknown
   shown with a marker.
@@ -446,8 +493,8 @@ The screen that matters most.
 │   W    ( you )     E      │
 │        S     AZ 214 EL 38 │  ← big, readable at arm's length
 ├───────────────────────────┤
+│ ↓ 436.800   next ▼ 0:42   │  ← downlink now (listen first), next retune
 │ ↑ 145.850   67.0 Hz       │  ← uplink, tone
-│ ↓ 436.800   next ▼ 0:42   │  ← downlink now, next retune
 ├───────────────────────────┤
 │  [ ● REC ]     [ + LOG ]  │  ← thumb zone
 └───────────────────────────┘
@@ -459,6 +506,11 @@ The screen that matters most.
   checklist (tone set, recorder on, antenna polarisation hint).
 - **Quick log:** callsign field with a large keypad-style entry, grid optional, time filled in.
   One tap to save; edit later.
+- **Linear transponders** (the first part of §8.1): pick a spot in the downlink passband *at the
+  satellite* (slider and ±100 Hz / ±1 kHz keys, starting mid-passband). The matching uplink spot
+  follows from the passband mapping (inverting or not), and Doppler (D7) turns both into the TX
+  and RX to set, to 10 Hz, updated live. The spot stays fixed all pass, which keeps you on the same
+  contact. Inverting transponders say "transmit LSB". Unknown passband edges or inversion say so.
 - Wake lock (D15), cues (D14), recording (D13).
 
 ### 5.3 Map
@@ -472,6 +524,12 @@ The screen that matters most.
 ### 5.4 Log
 
 - Contacts newest first, filter by satellite.
+- **Add contact:** pick the satellite, tap one of its passes from the last two days (sets the time
+  to its peak) or type the UTC time; frequencies are the nominal ones.
+- **Import ADIF** from LoTW, another logger or an earlier export: satellite contacts only
+  (`PROP_MODE=SAT` or a `SAT_NAME`), matched to the catalog by LoTW name, duplicates (same call,
+  minute and satellite) skipped. Imported contacts count as already exported. Their grids count
+  toward VUCC and fill the map.
 - Recordings, with "log at this moment" during playback (D13).
 - Export ADIF (D11, D12). Unexported count shown.
 - **Grids worked** counter, towards VUCC's 100.
@@ -481,7 +539,8 @@ The screen that matters most.
 - **Your first contact:** gear checklist, picking the pass (one tap selects the easiest coming
   one), what to say, etiquette (listen first, callsign and grid, keep it short, never transmit
   without hearing the downlink), what success sounds like.
-- **Listen tonight:** receive-only targets with what you'll hear.
+- **Listen tonight:** receive-only targets with what you'll hear. Voices, pictures, packets and
+  Morse come before telemetry only software can read; passes D21 calls probably off are left out.
 - **Practice a pass** (D16).
 
 ---
@@ -511,8 +570,8 @@ server arrives (§8), it receives the minimum a feature needs, and the feature i
 
 ## 8. Later (v2+), in rough order
 
-1. **Linear transponders:** passband view showing where your uplink lands in the downlink,
-   inverting/non-inverting Doppler, "one true frequency" tracking at the satellite.
+1. **Linear transponders:** a passband view showing where your uplink lands in the downlink. (The
+   "one true frequency" tuning with inverting/non-inverting Doppler is built; see §5.2.)
 2. **Rover alerts and mutual windows:** import rover activations (hams.at) and show passes you
    share with a rover or a named station.
 3. **Rig and rotator control** via the bridge (D18).

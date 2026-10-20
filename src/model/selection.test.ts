@@ -19,6 +19,15 @@ function sat(noradId: number, difficulty: Satellite['overlay']['difficulty'], st
 const catalog: Catalog = { generatedAt: 0, satellites: [sat(1, 'beginner'), sat(2, null), sat(3, null, 'inactive')] };
 const ids = (l: Satellite[]) => l.map((s) => s.noradId);
 
+describe('unidentified objects', () => {
+  it('stay out of All active but are listed under everything', () => {
+    const unknown = { ...sat(9, null), name: 'Unknown 2 - T16' };
+    const c: Catalog = { generatedAt: 0, satellites: [sat(2, null), unknown] };
+    expect(ids(listedSatellites(c, 'new', { showAll: true, showInactive: false }))).toEqual([2]);
+    expect(ids(listedSatellites(c, 'new', { showAll: true, showInactive: true }))).toEqual([2, 9]);
+  });
+});
+
 describe('favorites', () => {
   it('join the default list without an account or a server, just a set of ids', () => {
     const base = { showAll: false, showInactive: false };

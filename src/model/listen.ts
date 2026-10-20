@@ -29,3 +29,21 @@ export function listeningTransmitter(sat: Satellite): Transmitter | null {
     ({ fm_repeater: 0, beacon: 1, digipeater: 2, linear_transponder: 3, other: 4 } as const)[t.kind];
   return [...sat.transmitters].filter((t) => t.downlinkHz !== null && t.status !== 'inactive').sort((a, b) => rank(a) - rank(b))[0] ?? null;
 }
+
+/**
+ * How rewarding a transmitter is for someone with just a receiver, low first: people talking, then
+ * pictures and packets, then Morse, then SSB (needs the right radio), then data only software can
+ * read. Listen tonight leads with the first kinds instead of a wall of telemetry beacons.
+ */
+export function listenAppeal(tx: Transmitter): number {
+  const mode = tx.mode.toUpperCase();
+  if (tx.kind === 'fm_repeater') return 0;
+  if (mode === 'SSTV') return 1;
+  if (mode === 'APRS' || tx.kind === 'digipeater') return 2;
+  if (tx.kind === 'beacon' && (mode === 'CW' || mode === 'FM')) return 3;
+  if (tx.kind === 'linear_transponder') return 4;
+  return 9;
+}
+
+/** Telemetry-only: fine to list, but after anything a listener can make sense of by ear. */
+export const DATA_ONLY = 9;

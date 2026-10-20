@@ -106,7 +106,7 @@ export function SettingsSheet({
           Any time of day
         </Toggle>
         {station.hours && (
-          <div className="key-row">
+          <div>
             <Select<number>
               label="From"
               value={station.hours.fromMin}

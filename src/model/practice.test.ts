@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, SimulatedClock } from '../clock';
-import { whatYoullHear } from './listen';
+import { DATA_ONLY, listenAppeal, whatYoullHear } from './listen';
 import { toneMix, tuningVerdict } from './practice';
 import { easiestPass } from './selection';
 import { HOUR, MINUTE, SECOND } from './time';
@@ -97,6 +97,12 @@ describe('listen tonight', () => {
     expect(whatYoullHear(fm)).toMatch(/callsigns/);
     expect(whatYoullHear({ ...fm, kind: 'digipeater', mode: 'APRS' })).toMatch(/position reports/);
     expect(whatYoullHear({ ...fm, kind: 'beacon', mode: 'CW', uplinkHz: null })).toMatch(/Morse/);
+  });
+  it('puts voices, pictures and packets ahead of telemetry only software can read', () => {
+    const telemetry = listenAppeal({ ...fm, kind: 'beacon', mode: 'BPSK', uplinkHz: null });
+    expect(telemetry).toBeGreaterThanOrEqual(DATA_ONLY);
+    expect(listenAppeal(fm)).toBeLessThan(listenAppeal({ ...fm, kind: 'digipeater', mode: 'APRS' }));
+    expect(listenAppeal({ ...fm, kind: 'beacon', mode: 'CW', uplinkHz: null })).toBeLessThan(DATA_ONLY);
   });
 });
 

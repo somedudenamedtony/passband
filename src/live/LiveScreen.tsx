@@ -243,16 +243,16 @@ export function LiveScreen({
               {tx && setting && (
                 <section aria-label="Frequencies">
                   <hr className="lcd-rule" />
-                  {setting.uplinkHz !== null && (
-                    <div className="lcd-line">
-                      <span className="lcd-label">TX ▲</span>
-                      <span className={`readout readout-l${flash('uplink')}`}>{formatMHz(setting.uplinkHz)}</span>
-                    </div>
-                  )}
                   {setting.downlinkHz !== null && (
                     <div className="lcd-line">
                       <span className="lcd-label">RX ▼</span>
                       <span className={`readout readout-l${flash('downlink')}`}>{formatMHz(setting.downlinkHz)}</span>
+                    </div>
+                  )}
+                  {setting.uplinkHz !== null && (
+                    <div className="lcd-line">
+                      <span className="lcd-label">TX ▲</span>
+                      <span className={`readout readout-l${flash('uplink')}`}>{formatMHz(setting.uplinkHz)}</span>
                     </div>
                   )}
                   <div className="lcd-line" style={{ marginTop: 8 }}>

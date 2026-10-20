@@ -50,7 +50,8 @@ export function AddQso({
     let cancelled = false;
     setPasses(null);
     void predictPasses([sat], location, now - LOOKBACK, now).then((p) => {
-      if (!cancelled) setPasses(p.filter((x) => x.aos <= now).reverse());
+      // Below 5° nobody makes a contact; leave those out of the picker.
+      if (!cancelled) setPasses(p.filter((x) => x.aos <= now && x.maxElDeg >= 5).reverse());
     });
     return () => {
       cancelled = true;
