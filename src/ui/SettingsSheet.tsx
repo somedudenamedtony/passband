@@ -102,6 +102,23 @@ export function SettingsSheet({
             {r.label}
           </Toggle>
         ))}
+        <Select<Station['speakInPass']>
+          label="Speak during the pass"
+          value={station.speakInPass}
+          onChange={(speakInPass) => onChange({ ...station, speakInPass })}
+          options={[
+            { value: 'key', label: 'Rise, peak, set' },
+            { value: 'all', label: 'Everything' },
+            { value: 'none', label: 'Nothing' },
+          ]}
+        />
+        <p className="hint" style={{ marginBottom: 8 }}>
+          {station.speakInPass === 'all'
+            ? 'Retunes are read out. A voice cue that plays while you transmit goes out over the air.'
+            : station.speakInPass === 'key'
+              ? 'Retunes are a short double beep, so the phone doesn’t talk over the satellite. The screen shows the new frequency.'
+              : 'Only beeps once the satellite is up; rise and set are still announced.'}
+        </p>
         <Toggle
           checked={station.recordPasses && canRecord()}
           disabled={!canRecord()}

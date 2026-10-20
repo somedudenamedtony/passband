@@ -1223,3 +1223,20 @@ input[type='range'] {
   accent-color: var(--lcd);
   min-height: 32px;
 }
+
+/* A retune just happened (the cue may only have beeped): the changed frequency blinks. */
+.readout-flash {
+  animation: retune-flash 0.5s steps(1) 6;
+}
+@keyframes retune-flash {
+  50% {
+    color: var(--lcd-bg);
+    background: var(--lcd);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .readout-flash {
+    animation: none;
+    text-decoration: underline;
+  }
+}

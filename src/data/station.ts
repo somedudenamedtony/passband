@@ -10,6 +10,7 @@ export const DEFAULT_STATION: Station = {
   compassOffsetDeg: 0,
   compassCalibratedAt: null,
   recordPasses: false,
+  speakInPass: 'key', // retunes as a tone: speech over the downlink costs contacts
   hours: { fromMin: 6 * 60, toMin: 23 * 60 },
 };
 

@@ -91,8 +91,8 @@ export function LiveScreen({
     [track, tx, station.radioStepHz],
   );
   const cueEvents = useMemo(
-    () => (track ? passCues(sat.name, pass, track, schedule, formatMHz) : []),
-    [track, sat.name, pass, schedule],
+    () => (track ? passCues(sat.name, pass, track, schedule, formatMHz, station.speakInPass) : []),
+    [track, sat.name, pass, schedule, station.speakInPass],
   );
 
   // D14: fire cues as the clock crosses them.
@@ -171,6 +171,9 @@ export function LiveScreen({
     );
   }
 
+  // A retune just happened: light up the side that changed, since the cue may only have beeped.
+  const justRetuned = current !== null && current.t > pass.aos && now - current.t < 4000;
+  const flash = (side: 'uplink' | 'downlink') => (justRetuned && schedule?.tuneSide === side ? ' readout-flash' : '');
   const nextHz = next ? (schedule?.tuneSide === 'uplink' ? next.uplinkHz : next.downlinkHz) : null;
 
   const bars = here && phase === 'during' ? Math.max(0, Math.round(here.elDeg / 9)) : 0;
@@ -243,13 +246,13 @@ export function LiveScreen({
                   {setting.uplinkHz !== null && (
                     <div className="lcd-line">
                       <span className="lcd-label">TX ▲</span>
-                      <span className="readout readout-l">{formatMHz(setting.uplinkHz)}</span>
+                      <span className={`readout readout-l${flash('uplink')}`}>{formatMHz(setting.uplinkHz)}</span>
                     </div>
                   )}
                   {setting.downlinkHz !== null && (
                     <div className="lcd-line">
                       <span className="lcd-label">RX ▼</span>
-                      <span className="readout readout-l">{formatMHz(setting.downlinkHz)}</span>
+                      <span className={`readout readout-l${flash('downlink')}`}>{formatMHz(setting.downlinkHz)}</span>
                     </div>
                   )}
                   <div className="lcd-line" style={{ marginTop: 8 }}>

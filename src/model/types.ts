@@ -118,6 +118,8 @@ export interface Station {
   recordPasses: boolean;
   /** When sun calibration last set the offset (D10); null = never. */
   compassCalibratedAt: number | null;
+  /** What speech reads between AOS and LOS (D14): rise/peak/set only, everything, or nothing. */
+  speakInPass: 'key' | 'all' | 'none';
   /** The top pick prefers passes in these hours; null = any time. */
   hours: Hours | null;
 }

@@ -102,6 +102,20 @@ describe('cues (D14)', () => {
     expect(events[events.length - 1]!.text).toMatch(/Pass over/);
     expect(events.some((e) => e.kind === 'retune')).toBe(true);
   });
+  it('by default speaks rise, peak and set, and plays retunes as a tone', () => {
+    const key = passCues('SO-50', best, track, sched, formatMHz, 'key');
+    const retunes = key.filter((e) => e.kind === 'retune');
+    expect(retunes.length).toBeGreaterThan(0);
+    expect(retunes.every((e) => !e.speak)).toBe(true);
+    expect(key.filter((e) => e.speak).every((e) => !/Retune/.test(e.text))).toBe(true);
+    expect(key.find((e) => e.t === best.aos)!.speak).toBe(true);
+    expect(key.find((e) => /Peak/.test(e.text))!.speak).toBe(true);
+  });
+  it('"none" speaks nothing between AOS and LOS, but still announces both', () => {
+    const none = passCues('SO-50', best, track, sched, formatMHz, 'none');
+    for (const e of none) expect(e.speak).toBe(e.t <= best.aos || e.t >= best.los);
+    expect(none.find((e) => /Pass over/.test(e.text))!.speak).toBe(true);
+  });
   it('fires what the clock crosses, and nothing on a jump', () => {
     const e = events[1]!;
     expect(dueCues(events, e.t - 500, e.t + 500)).toContain(e);

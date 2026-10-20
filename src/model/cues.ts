@@ -4,12 +4,17 @@ import { compassWord } from './format';
 import type { RetuneSchedule } from './schedule';
 import { SECOND } from './time';
 import type { TrackPoint } from './track';
-import type { Pass } from './types';
+import type { Pass, Station } from './types';
 
 export interface CueEvent {
   t: number;
   kind: 'info' | 'retune' | 'alert';
   text: string;
+  /**
+   * Whether speech may read it. A phone talking during the pass talks over the downlink, and into
+   * the microphone if it fires while you transmit; unspoken cues play as a tone instead.
+   */
+  speak: boolean;
 }
 
 /** "436.800" → "4 3 6 point 8 0 0", so speech engines read digits, not "four hundred…". */
@@ -25,8 +30,9 @@ export function passCues(
   track: readonly TrackPoint[],
   schedule: RetuneSchedule | null,
   formatMHz: (hz: number) => string,
+  voice: Station['speakInPass'] = 'all',
 ): CueEvent[] {
-  const out: CueEvent[] = [];
+  const out: Array<Omit<CueEvent, 'speak'>> = [];
   const rise = compassWord(pass.aosAzDeg);
   const set = compassWord(pass.losAzDeg);
   out.push({ t: pass.aos - 120 * SECOND, kind: 'info', text: `${satName} rises in two minutes, in the ${rise}.` });
@@ -58,15 +64,22 @@ export function passCues(
   }
   out.push({ t: pass.los, kind: 'alert', text: `${satName} has set. Pass over.` });
 
-  // A retune that lands on top of another cue gets merged into it rather than talked over.
+  // 'key': rise, peak and set are spoken; retunes are a tone. 'none': nothing spoken between AOS
+  // and LOS. The announcements at AOS and LOS themselves are spoken in every mode.
+  const speak = (e: Omit<CueEvent, 'speak'>) =>
+    voice === 'all' || (voice === 'key' ? e.kind !== 'retune' : e.t <= pass.aos || e.t >= pass.los);
+
+  // A cue that lands on top of another gets merged into it rather than talked over, when both are
+  // spoken the same way.
   out.sort((a, b) => a.t - b.t);
   const merged: CueEvent[] = [];
-  for (const e of out) {
+  for (const raw of out) {
+    const e = { ...raw, speak: speak(raw) };
     const prev = merged[merged.length - 1];
-    if (prev && e.t - prev.t < 3 * SECOND) {
+    if (prev && e.t - prev.t < 3 * SECOND && prev.speak === e.speak) {
       prev.text = `${prev.text} ${e.text}`;
       if (e.kind === 'alert') prev.kind = 'alert';
-    } else merged.push({ ...e });
+    } else merged.push(e);
   }
   return merged;
 }
