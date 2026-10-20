@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DEFAULT_STATION } from '../data/station';
 import { cueSupport } from '../cue/cue';
 import { canRecord } from '../record/recorder';
 import type { LoadedCatalog } from '../data/catalog';
@@ -10,6 +11,12 @@ import { Button, Field, Panel, SectionTitle, Segmented, Select, Sheet, Toggle } 
 import { useNow } from './clock';
 
 const STEPS: RadioStepHz[] = [2500, 5000, 6250];
+
+/** Whole hours, labelled the way a clock on the wall reads. */
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => ({
+  value: h * 60,
+  label: h === 0 ? 'Midnight' : h === 12 ? 'Noon' : `${h % 12} ${h < 12 ? 'AM' : 'PM'}`,
+}));
 
 export function SettingsSheet({
   station,
@@ -87,6 +94,33 @@ export function SettingsSheet({
             />
           </div>
         </div>
+      </Panel>
+
+      <SectionTitle>Your hours</SectionTitle>
+      <Panel className="stack">
+        <Toggle
+          checked={station.hours === null}
+          onChange={(any) => onChange({ ...station, hours: any ? null : DEFAULT_STATION.hours })}
+          hint="When off, the big card picks a pass in the hours below if one is coming up. Other passes stay in the lists."
+        >
+          Any time of day
+        </Toggle>
+        {station.hours && (
+          <div className="key-row">
+            <Select<number>
+              label="From"
+              value={station.hours.fromMin}
+              onChange={(fromMin) => onChange({ ...station, hours: { ...station.hours!, fromMin } })}
+              options={HOUR_OPTIONS}
+            />
+            <Select<number>
+              label="Until"
+              value={station.hours.toMin}
+              onChange={(toMin) => onChange({ ...station, hours: { ...station.hours!, toMin } })}
+              options={HOUR_OPTIONS}
+            />
+          </div>
+        )}
       </Panel>
 
       <SectionTitle>Live pass</SectionTitle>

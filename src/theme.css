@@ -1144,6 +1144,25 @@ input[type='range'] {
   line-height: 1.2;
   margin: 12px 0 6px;
 }
+.setup-step {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 14px;
+}
+/* "or enter your grid square" between the two ways to give a location. */
+.or-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+.or-rule::before,
+.or-rule::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--chassis-hi);
+}
 
 /* The pass card when a new pass is picked: it lights up once, the way a display does on a new
    channel. Focus lands here too, so no outline. */

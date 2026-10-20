@@ -228,7 +228,7 @@ export function App() {
               </Banner>
             )}
             {!location ? (
-              <LocationSetup onSave={addLocation} />
+              <LocationSetup onSave={addLocation} station={station} onStation={updateStation} />
             ) : catalog ? (
               tab === 'map' ? (
                 <MapView catalog={catalog} location={location} station={station} qsos={qsos} />
