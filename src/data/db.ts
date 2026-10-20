@@ -8,7 +8,7 @@ interface PassbandDB extends DBSchema {
   /** Last good catalog (D4). Single row, key 'current'. */
   catalog: { key: string; value: Catalog };
   locations: { key: string; value: Location };
-  /** Key-value settings: 'station', 'activeLocationId'. */
+  /** Key-value settings: 'station', 'activeLocationId', 'theme', 'favorites'. */
   settings: { key: string; value: unknown };
   /** D12: the log. */
   qsos: { key: string; value: QsoRecord; indexes: { timeOn: number } };

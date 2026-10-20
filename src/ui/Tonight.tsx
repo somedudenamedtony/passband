@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import type { LoadedCatalog } from '../data/catalog';
 import { elementAgeDays, elementAgeLevel } from '../model/elementAge';
 import { ACTIVITIES, activities, matchesActivities, type Activity } from '../model/activity';
-import { listedSatellites, nextGoodPass, samePass } from '../model/selection';
+import { listedSatellites, nextGoodPass, samePass, type ListOptions } from '../model/selection';
 import type { Location, Pass, QsoRecord, Satellite, Station } from '../model/types';
 import { Banner, Field, Segmented, SectionTitle } from './common';
 import { useNow } from './clock';
@@ -24,6 +24,8 @@ export function Tonight({
   chosen,
   onChosen,
   qsos,
+  favorites,
+  onFavorite,
 }: {
   catalog: LoadedCatalog;
   location: Location;
@@ -40,6 +42,9 @@ export function Tonight({
   onChosen: (a: ReadonlySet<Activity>) => void;
   /** The log, for "your contacts" on the info sheet. */
   qsos: QsoRecord[];
+  /** Favorite satellites (NORAD ids), kept on this device. */
+  favorites: ReadonlySet<number>;
+  onFavorite: (noradId: number) => void;
 }) {
   const now = useNow(1000);
   const [info, setInfo] = useState<Satellite | null>(null);
@@ -64,15 +69,21 @@ export function Tonight({
   const counts = useMemo(
     () =>
       Object.fromEntries(
-        (Object.keys(SCOPE_OPTS) as SatScope[]).map((k) => [k, listedSatellites(catalog.catalog, station.experience, SCOPE_OPTS[k]).length]),
+        (Object.keys(SCOPE_OPTS) as SatScope[]).map((k) => [
+          k,
+          listedSatellites(catalog.catalog, station.experience, { ...SCOPE_OPTS[k], favorites }).length,
+        ]),
       ) as Record<SatScope, number>,
-    [catalog, station.experience],
+    [catalog, station.experience, favorites],
   );
   const [query, setQuery] = useState('');
-  const narrowing = scope !== 'recommended';
+  const narrowing = scope === 'all' || scope === 'inactive';
   const q = narrowing ? query.trim().toLowerCase() : '';
   const act = narrowing ? chosen : NO_ACTIVITIES;
-  const sats = useMemo(() => listedSatellites(catalog.catalog, station.experience, SCOPE_OPTS[scope]), [catalog, station.experience, scope]);
+  const sats = useMemo(
+    () => listedSatellites(catalog.catalog, station.experience, { ...SCOPE_OPTS[scope], favorites }),
+    [catalog, station.experience, scope, favorites],
+  );
   const satById = useMemo(() => new Map(sats.map((s) => [s.noradId, s])), [sats]);
   const { passes, error } = usePasses(sats, location);
 
@@ -125,12 +136,20 @@ export function Tonight({
             onBackToNext={selected ? () => pick(null) : undefined}
             onStart={() => onStart(featured, featuredSat)}
             onInfo={() => setInfo(featuredSat)}
+            favorite={favorites.has(featuredSat.noradId)}
+            onFavorite={() => onFavorite(featuredSat.noradId)}
           />
         </div>
       ) : (
         <Banner tone="info">
-          No good passes in the next 24 hours for these satellites from {location.name}.
-          {scope === 'recommended' && ' Try All active below.'}
+          {scope === 'favorites' && sats.length === 0 ? (
+            <>No favorites yet. Tap ★ on a satellite’s card or info sheet to add it.</>
+          ) : (
+            <>
+              No good passes in the next 24 hours for these satellites from {location.name}.
+              {scope === 'recommended' && ' Try All active below.'}
+            </>
+          )}
         </Banner>
       )}
 
@@ -141,16 +160,19 @@ export function Tonight({
           value={scope}
           onChange={onScope}
           options={[
+            { value: 'favorites', label: `★ Favorites ${counts.favorites}` },
             { value: 'recommended', label: `Recommended ${counts.recommended}` },
             { value: 'all', label: `All active ${counts.all}` },
             { value: 'inactive', label: `+ Inactive ${counts.inactive}` },
           ]}
         />
         <p className="hint" style={{ marginTop: 6 }}>
-          {scope === 'recommended'
+          {scope === 'favorites'
+            ? 'Satellites you starred. They\u2019re saved on this device only; no account needed.'
+            : scope === 'recommended'
             ? station.experience === 'new'
-              ? 'Easy FM satellites, and ones you can just listen to.'
-              : 'Satellites with a working uplink, and ones you can just listen to.'
+              ? 'Easy FM satellites, ones you can just listen to, and your favorites.'
+              : 'Satellites with a working uplink, ones you can just listen to, and your favorites.'
             : scope === 'all'
               ? 'Every satellite not known to be dead, including hard and receive-only ones.'
               : 'Everything in the catalog, including satellites reported inactive.'}{' '}
@@ -218,7 +240,7 @@ export function Tonight({
 
       {passes && (
         <>
-          <PassList key={`list:${listKey}`} passes={shownPasses} sats={shownById} station={station} now={now} selected={featured} onSelect={pick} />
+          <PassList key={`list:${listKey}`} passes={shownPasses} sats={shownById} station={station} now={now} selected={featured} onSelect={pick} favorites={favorites} />
           <Timeline
             key={`timeline:${listKey}`}
             passes={shownPasses}
@@ -244,17 +266,20 @@ export function Tonight({
             pick(p);
           }}
           onClose={() => setInfo(null)}
+          favorite={favorites.has(info.noradId)}
+          onFavorite={() => onFavorite(info.noradId)}
         />
       )}
     </div>
   );
 }
 
-export type SatScope = 'recommended' | 'all' | 'inactive';
+export type SatScope = 'favorites' | 'recommended' | 'all' | 'inactive';
 
 const NO_ACTIVITIES: ReadonlySet<Activity> = new Set();
 
-const SCOPE_OPTS: Record<SatScope, { showAll: boolean; showInactive: boolean }> = {
+const SCOPE_OPTS: Record<SatScope, ListOptions> = {
+  favorites: { showAll: false, showInactive: true, onlyFavorites: true },
   recommended: { showAll: false, showInactive: false },
   all: { showAll: true, showInactive: false },
   inactive: { showAll: true, showInactive: true },

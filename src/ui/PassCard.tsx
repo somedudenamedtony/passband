@@ -21,6 +21,7 @@ import { exportPassesToCalendar } from './calendar';
 import { createCue } from '../cue/cue';
 import { Banner, Button, Panel } from './common';
 import { Icon } from './icons';
+import { FavoriteKey } from './FavoriteKey';
 import { DifficultyBadge, StatusBadge } from './badges';
 
 interface Doppler {
@@ -86,6 +87,8 @@ export function PassCard({
   onBackToNext,
   onStart,
   onInfo,
+  favorite = false,
+  onFavorite,
 }: {
   pass: Pass;
   sat: Satellite;
@@ -97,6 +100,8 @@ export function PassCard({
   onStart: () => void;
   /** Open the satellite's info sheet. */
   onInfo?: () => void;
+  favorite?: boolean;
+  onFavorite?: () => void;
 }) {
   const tx = primaryTransmitter(sat);
   const doppler = useDoppler(pass, sat, tx, location, station, now);
@@ -123,12 +128,15 @@ export function PassCard({
           <h2 className="readout readout-l" style={{ fontWeight: 400 }}>
             {sat.name}
           </h2>
-          {onInfo && (
-            <Button expand="inline" size="small" onClick={onInfo} aria-label={`About ${sat.name}`}>
-              <Icon name="info" size={16} />
-              Info
-            </Button>
-          )}
+          <span style={{ display: 'flex', gap: 8 }}>
+            {onFavorite && <FavoriteKey name={sat.name} on={favorite} onToggle={onFavorite} />}
+            {onInfo && (
+              <Button expand="inline" size="small" onClick={onInfo} aria-label={`About ${sat.name}`}>
+                <Icon name="info" size={16} />
+                Info
+              </Button>
+            )}
+          </span>
         </div>
         <div className="readout readout-m" style={{ marginTop: 6 }}>
           {inProgress ? <>Up now · sets in {formatClock(pass.los - now)}</> : <>Rises {tilde}{formatCountdown(pass.aos - now)}</>}

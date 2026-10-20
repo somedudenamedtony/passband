@@ -16,6 +16,7 @@ export function PassList({
   now,
   selected,
   onSelect,
+  favorites,
 }: {
   passes: Pass[];
   sats: ReadonlyMap<number, Satellite>;
@@ -23,6 +24,7 @@ export function PassList({
   now: number;
   selected: Pass | null;
   onSelect: (p: Pass) => void;
+  favorites?: ReadonlySet<number>;
 }) {
   const [shown, setShown] = useState(PAGE);
   const all = passes.filter((p) => isGoodPass(p, station.experience));
@@ -43,6 +45,7 @@ export function PassList({
                 <button type="button" className="row" onClick={() => onSelect(p)} aria-pressed={sel}>
                   <span className="row-main tabular">
                     <span className="row-title row-mem">
+                      {favorites?.has(sat.noradId) && <span aria-label="Favorite">★ </span>}
                       {sat.name}
                       {sat.status === 'unknown' && <span title="Status unknown"> ?</span>}
                     </span>

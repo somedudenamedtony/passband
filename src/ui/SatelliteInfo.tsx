@@ -12,6 +12,7 @@ import type { Location, Pass, QsoRecord, Satellite, Station, StatusReport, Trans
 import { formatDistance } from '../model/units';
 import { DifficultyBadge, StatusBadge } from './badges';
 import { Button, Panel, SectionTitle, Sheet, Tag } from './common';
+import { FavoriteKey } from './FavoriteKey';
 
 const KIND: Record<Transmitter['kind'], string> = {
   fm_repeater: 'FM repeater',
@@ -42,6 +43,8 @@ export function SatelliteInfo({
   qsos,
   onPick,
   onClose,
+  favorite,
+  onFavorite,
 }: {
   sat: Satellite;
   location: Location;
@@ -52,6 +55,8 @@ export function SatelliteInfo({
   qsos: QsoRecord[];
   onPick: (p: Pass) => void;
   onClose: () => void;
+  favorite: boolean;
+  onFavorite: () => void;
 }) {
   const acts = activities(sat);
   const orbit = orbitSummary(sat.elements);
@@ -69,9 +74,10 @@ export function SatelliteInfo({
                 <StatusBadge status={sat.status} /> <DifficultyBadge sat={sat} />
               </span>
             </div>
-            <h2 className="readout readout-l" style={{ marginTop: 6 }}>
-              {sat.name}
-            </h2>
+            <div className="lcd-line" style={{ marginTop: 6 }}>
+              <h2 className="readout readout-l">{sat.name}</h2>
+              <FavoriteKey name={sat.name} on={favorite} onToggle={onFavorite} />
+            </div>
             <p className="lcd-note" style={{ fontSize: 15 }}>
               {ACTIVITIES.filter((a) => acts.has(a.id))
                 .map((a) => a.label)

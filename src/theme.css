@@ -593,6 +593,13 @@ button.row:active {
   text-transform: uppercase;
   cursor: pointer;
 }
+/* Four or more keys wrap two to a row rather than squeeze their labels. */
+.segmented:has(> .segment:nth-child(4)) {
+  flex-wrap: wrap;
+}
+.segmented:has(> .segment:nth-child(4)) > .segment {
+  flex: 1 1 40%;
+}
 .segment[aria-selected='true'] {
   color: var(--amber);
   box-shadow:
@@ -1179,4 +1186,9 @@ input[type='range'] {
   background: var(--amber);
   border-color: var(--amber-edge);
   color: var(--amber-ink);
+}
+
+/* The favorite star: amber and filled when on. */
+.fav-key[aria-pressed='true'] {
+  color: var(--amber);
 }

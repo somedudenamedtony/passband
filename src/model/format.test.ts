@@ -55,3 +55,11 @@ describe('formatAgo', () => {
     expect(formatAgo(3 * DAY)).toBe('3 days ago');
   });
 });
+
+describe('formatCountdown', () => {
+  it('carries a rounded-up minute into the hour', () => {
+    expect(formatCountdown(2 * HOUR + 59 * MINUTE + 40 * SECOND)).toBe('in 3 h 0 min');
+    expect(formatCountdown(59 * MINUTE + 50 * SECOND)).toBe('in 1 h 0 min');
+    expect(formatCountdown(10 * HOUR + 4 * MINUTE)).toBe('in 10 h 4 min');
+  });
+});
