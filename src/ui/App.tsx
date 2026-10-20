@@ -16,7 +16,7 @@ import { LiveScreen } from '../live/LiveScreen';
 import { SECOND } from '../model/time';
 import type { PracticeRate } from '../model/practice';
 import type { Location, Pass, QsoRecord, Recording, Satellite, Station } from '../model/types';
-import { deleteQso, listQsos, markExported, saveQso } from '../data/log';
+import { deleteQso, listQsos, markExported, saveQso, saveQsos } from '../data/log';
 import { deleteRecording, listRecordings } from '../data/recordings';
 import { EXPORT_NUDGE, LogView, unexportedCount } from './LogView';
 import { ClockContext } from './clock';
@@ -243,6 +243,8 @@ export function App() {
                   onDeleteRecording={(id) => void deleteRecording(id).then(refreshRecordings)}
                   catalog={catalog}
                   locations={locations}
+                  location={location}
+                  onImport={(qs) => saveQsos(qs).then(refreshLog)}
                 />
               ) : tab === 'tonight' ? (
                 <>
