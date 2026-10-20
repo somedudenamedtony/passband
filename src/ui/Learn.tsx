@@ -6,7 +6,8 @@ import type { LoadedCatalog } from '../data/catalog';
 import { formatMHz, formatTone } from '../model/freq';
 import { compassWord, formatCountdown, formatLocalDay, formatLocalTime } from '../model/format';
 import { grid4 } from '../model/grid';
-import { listeningTransmitter, whatYoullHear } from '../model/listen';
+import { listeningTransmitter, whatYoullHear, listenAppeal, DATA_ONLY } from '../model/listen';
+import { passOutlook } from '../model/outlook';
 import { easiestPass, isDefaultListed } from '../model/selection';
 import { HOUR } from '../model/time';
 import { primaryTransmitter } from '../model/transmitters';
@@ -41,7 +42,7 @@ export function Learn({
   );
   const byId = useMemo(() => new Map(sats.map((s) => [s.noradId, s])), [sats]);
   const { passes } = usePasses(sats, location, LOOKBACK);
-  const easiest = passes ? easiestPass(passes, byId, now) : null;
+  const easiest = passes ? easiestPass(passes, byId, now, station.hours) : null;
   const easiestSat = easiest ? byId.get(easiest.noradId) : undefined;
 
   // D19: the guide starts open for new operators and folded away for experienced ones.
@@ -152,7 +153,9 @@ function ListenList({ sats, passes, now }: { sats: Satellite[]; passes: Pass[] |
   const rows = sats
     .map((s) => ({ sat: s, tx: listeningTransmitter(s), next: passes.find((p) => p.noradId === s.noradId && p.los > now && p.maxElDeg >= 15) }))
     .filter((r): r is { sat: Satellite; tx: NonNullable<typeof r.tx>; next: Pass } => r.tx !== null && r.next !== undefined)
-    .sort((a, b) => a.next.aos - b.next.aos)
+    // Probably off (schedule only, in shadow, quiet lately): nothing to hear.
+    .filter((r) => passOutlook(r.next, r.sat, now).level !== 'unlikely')
+    .sort((a, b) => Number(listenAppeal(a.tx) >= DATA_ONLY) - Number(listenAppeal(b.tx) >= DATA_ONLY) || a.next.aos - b.next.aos)
     .slice(0, 8);
   if (!rows.length) return <p className="hint">Nothing high enough to hear in the next 24 hours.</p>;
   return (

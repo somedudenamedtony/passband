@@ -21,6 +21,14 @@ export async function saveQso(q: QsoRecord): Promise<void> {
   void askPersist();
 }
 
+/** Many at once, in one transaction (ADIF import). */
+export async function saveQsos(qs: readonly QsoRecord[]): Promise<void> {
+  const tx = (await db()).transaction('qsos', 'readwrite');
+  for (const q of qs) await tx.store.put(q);
+  await tx.done;
+  void askPersist();
+}
+
 export async function deleteQso(id: string): Promise<void> {
   await (await db()).delete('qsos', id);
 }

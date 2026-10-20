@@ -16,6 +16,7 @@ import { primaryTransmitter } from '../model/transmitters';
 import type { Location, Pass, Satellite, Station, Transmitter } from '../model/types';
 import { predictPasses, rangeRateAt } from '../predict/client';
 import { isGoodPass } from '../model/selection';
+import { passOutlook } from '../model/outlook';
 import { DAY } from '../model/time';
 import { exportPassesToCalendar } from './calendar';
 import { createCue } from '../cue/cue';
@@ -62,6 +63,8 @@ function useDoppler(pass: Pass, sat: Satellite, tx: Transmitter | null, location
   return d;
 }
 
+const OUTLOOK_WORD = { likely: 'Should be on.', uncertain: 'Might be on.', unlikely: 'Probably off.' } as const;
+
 function gearHint(tx: Transmitter): string {
   switch (tx.kind) {
     case 'fm_repeater':
@@ -84,6 +87,7 @@ export function PassCard({
   station,
   now,
   isNext,
+  outsideHours = false,
   onBackToNext,
   onStart,
   onInfo,
@@ -96,6 +100,8 @@ export function PassCard({
   station: Station;
   now: number;
   isNext: boolean;
+  /** The pass starts outside the user's hours (Settings). */
+  outsideHours?: boolean;
   onBackToNext?: () => void;
   onStart: () => void;
   /** Open the satellite's info sheet. */
@@ -114,12 +120,16 @@ export function PassCard({
   const tilde = approx ? '~' : '';
 
   const bars = Math.max(1, Math.round(pass.maxElDeg / 9));
+  const outlook = passOutlook(pass, sat, now);
 
   return (
     <Panel label={`Pass of ${sat.name}`}>
       <div className="lcd">
         <div className="lcd-line lcd-label">
-          <span>{isNext ? 'Next good pass' : 'Selected pass'}</span>
+          <span>
+            {isNext ? 'Next good pass' : 'Selected pass'}
+            {outsideHours && ' · outside your hours'}
+          </span>
           <span>
             <StatusBadge status={sat.status} /> <DifficultyBadge sat={sat} />
           </span>
@@ -199,6 +209,9 @@ export function PassCard({
       </div>
 
       <div className="stack" style={{ marginTop: 12 }}>
+        <p className={`outlook outlook-${outlook.level}`} role={outlook.level === 'unlikely' ? 'alert' : undefined}>
+          <b>{OUTLOOK_WORD[outlook.level]}</b> {outlook.reason}
+        </p>
         {!isNew && (
           <p className="silk" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             <span>

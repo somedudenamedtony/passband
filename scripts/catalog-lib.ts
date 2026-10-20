@@ -5,6 +5,7 @@ import type {
   Catalog,
   ElementsSource,
   OmmElements,
+  Operation,
   Satellite,
   Status,
   StatusReport,
@@ -53,6 +54,9 @@ export interface OverlayEntry {
   /** Names on the AMSAT status page (https://www.amsat.org/status/), one per mode it tracks. */
   amsatStatusNames?: string[];
   amsatStatusSource?: string;
+  /** When the transponder is on (see Operation). Needs operationSource. */
+  operation?: Operation;
+  operationSource?: string;
   transmitterOverrides?: Array<{
     id: string;
     source: string;
@@ -346,6 +350,7 @@ export function buildCatalog(inp: BuildInputs): { catalog: Catalog; report: Buil
         difficulty: ov?.difficulty ?? null,
         note: ov?.note ?? null,
         receiveOnly: ov?.receiveOnly ?? false,
+        operation: ov?.operation ?? null,
       },
       ...(inp.amsatReports?.has(noradId) ? { reports: summariseAmsat(inp.amsatReports.get(noradId) ?? null, inp.generatedAt) } : {}),
     });

@@ -16,6 +16,7 @@ import {
 import type { Location, OmmElements, Pass } from '../model/types';
 import { SECOND } from '../model/time';
 import type { TrackPoint } from '../model/track';
+import { inEarthShadow } from '../model/sun';
 
 const COARSE_STEP = 30 * SECOND;
 const MASK_STEP = 5 * SECOND;
@@ -139,6 +140,19 @@ function secondsAboveMask(satrec: SatRec, obs: Observer, mask: readonly number[]
   return Math.round(ms / SECOND);
 }
 
+/** Share of [aos, los] with the satellite in sunlight, sampled every 30 s; null if SGP4 fails. */
+export function sunlitFraction(satrec: SatRec, aos: number, los: number): number | null {
+  let lit = 0;
+  let n = 0;
+  for (let t = aos; t <= los; t += COARSE_STEP) {
+    const pv = propagate(satrec, new Date(t));
+    if (!pv) return null;
+    n++;
+    if (!inEarthShadow(pv.position, t)) lit++;
+  }
+  return n === 0 ? null : lit / n;
+}
+
 export interface PassSearch {
   noradId: number;
   elements: OmmElements;
@@ -193,6 +207,7 @@ export function findPasses(sat: PassSearch, loc: Location, from: number, to: num
           losAzDeg: losLook.azDeg,
           visibleSecondsAboveMask: secondsAboveMask(satrec, obs, loc.horizonMask, aos, los),
           elementsEpoch: sat.elementsEpoch,
+          sunlitFraction: sunlitFraction(satrec, aos, los),
         });
       }
       aos = null;

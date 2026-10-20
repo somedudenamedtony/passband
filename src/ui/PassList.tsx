@@ -3,6 +3,7 @@ import { isGoodPass, samePass } from '../model/selection';
 import { Button, Panel, SectionTitle } from './common';
 import { compassPoint, formatCountdown, formatLocalTime } from '../model/format';
 import { elementAgeLevel } from '../model/elementAge';
+import { passOutlook } from '../model/outlook';
 import type { Pass, Satellite, Station } from '../model/types';
 
 /** Rows per page: enough to plan an evening without a long scroll. */
@@ -40,9 +41,15 @@ export function PassList({
             if (!sat) return null;
             const approx = elementAgeLevel(p.elementsEpoch, now) === 'stale';
             const sel = samePass(p, selected);
+            const outlook = passOutlook(p, sat, now);
             return (
               <li key={`${p.noradId}-${p.aos}`}>
-                <button type="button" className="row" onClick={() => onSelect(p)} aria-pressed={sel}>
+                <button
+                  type="button"
+                  className={outlook.level === 'unlikely' ? 'row row-unlikely' : 'row'}
+                  onClick={() => onSelect(p)}
+                  aria-pressed={sel}
+                >
                   <span className="row-main tabular">
                     <span className="row-title row-mem">
                       {favorites?.has(sat.noradId) && <span aria-label="Favorite">★ </span>}
@@ -53,6 +60,7 @@ export function PassList({
                       {approx && '~'}
                       {formatLocalTime(p.aos)} · {Math.round(p.maxElDeg)}°
                       {station.experience === 'experienced' && ` · ${compassPoint(p.aosAzDeg)}→${compassPoint(p.losAzDeg)}`}
+                      {outlook.level !== 'likely' && outlook.short && <span className="row-flag"> · {outlook.short}</span>}
                     </span>
                   </span>
                   <span className="row-end">{now >= p.aos ? 'up now' : formatCountdown(p.aos - now).replace('in ', '')}</span>

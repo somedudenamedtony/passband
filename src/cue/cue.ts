@@ -64,9 +64,10 @@ export function createCue(enabled: Station['cues']): Cue {
   const support = cueSupport();
   return {
     emit(e) {
-      if (enabled.tones && support.tones) beep(e.kind);
+      // An unspoken cue still needs a sound when speech is the user's only audio cue.
+      if (support.tones && (enabled.tones || (enabled.speech && !e.speak))) beep(e.kind);
       if (enabled.vibration && support.vibration) navigator.vibrate(VIBRATE[e.kind]);
-      if (enabled.speech && support.speech) {
+      if (enabled.speech && support.speech && e.speak) {
         // Retunes are time-critical: drop anything still queued rather than fall behind.
         if (e.kind !== 'info') speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(e.text);

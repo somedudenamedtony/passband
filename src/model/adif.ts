@@ -108,3 +108,27 @@ export function lotwProblems(q: QsoRecord): string[] {
   if (!q.stationCallsign) p.push('Your callsign is missing');
   return p;
 }
+
+/** "436.795" (MHz text, ADIF FREQ) → 436795000 Hz, without a float on the way (D7). */
+export function parseAdifFreq(text: string | undefined): number | null {
+  const m = /^\s*(\d+)(?:\.(\d{0,6})\d*)?\s*$/.exec(text ?? '');
+  if (!m) return null;
+  return Number(m[1]) * 1_000_000 + Number((m[2] ?? '').padEnd(6, '0'));
+}
+
+/** QSO_DATE "20261018" + TIME_ON "1405" or "140509" → UTC ms. */
+export function parseAdifTime(date: string | undefined, time: string | undefined): number | null {
+  const d = /^(\d{4})(\d{2})(\d{2})$/.exec(date?.trim() ?? '');
+  const t = /^(\d{2})(\d{2})(\d{2})?$/.exec(time?.trim() ?? '');
+  if (!d || !t) return null;
+  const ms = Date.UTC(+d[1]!, +d[2]! - 1, +d[3]!, +t[1]!, +t[2]!, +(t[3] ?? 0));
+  return Number.isNaN(ms) ? null : ms;
+}
+
+/** ADIF MODE/SUBMODE → our stored mode (the reverse of adifMode). */
+export function modeFromAdif(mode: string | undefined, submode: string | undefined): string {
+  const m = (mode ?? '').toUpperCase();
+  const s = (submode ?? '').toUpperCase();
+  if (m === 'SSB') return s === 'LSB' ? 'LSB' : 'USB';
+  return m || 'Unknown';
+}

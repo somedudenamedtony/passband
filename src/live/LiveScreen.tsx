@@ -7,7 +7,8 @@ import { dueCues, passCues } from '../model/cues';
 import { elementAgeLevel, formatElementAge } from '../model/elementAge';
 import { formatMHz, formatOffsetKHz, formatTone } from '../model/freq';
 import { compassPoint, compassWord, formatClock, formatCountdown } from '../model/format';
-import { exactAt, retuneSchedule, stepAt } from '../model/schedule';
+import { retuneSchedule, stepAt } from '../model/schedule';
+import { linearTuning, passband, passbandCentre } from '../model/linear';
 import { MINUTE } from '../model/time';
 import { sampleAt, type TrackPoint } from '../model/track';
 import { primaryTransmitter } from '../model/transmitters';
@@ -24,6 +25,7 @@ import { useBack } from '../ui/back';
 import { CompassStatus } from '../compass/CompassStatus';
 import { useCompass } from '../compass/useCompass';
 import { ARView } from './ARView';
+import { LinearTuner } from './LinearTuner';
 import { Checklist } from './Checklist';
 import { PointingGuide } from './PointingGuide';
 import { PracticePanel, type PracticeControls } from './PracticePanel';
@@ -70,6 +72,9 @@ export function LiveScreen({
   const effectiveView = view !== 'sky' && compass.status === 'unsupported' ? 'sky' : view;
   const [logged, setLogged] = useState<string | null>(null);
   const tx = primaryTransmitter(sat);
+  const pb = useMemo(() => (tx ? passband(tx) : null), [tx]);
+  // §8.1: the spot in a linear passband, at the satellite. Starts mid-passband.
+  const [spotHz, setSpotHz] = useState(() => (pb ? passbandCentre(pb) : 0));
 
   useEffect(() => {
     let cancelled = false;
@@ -86,8 +91,8 @@ export function LiveScreen({
     [track, tx, station.radioStepHz],
   );
   const cueEvents = useMemo(
-    () => (track ? passCues(sat.name, pass, track, schedule, formatMHz) : []),
-    [track, sat.name, pass, schedule],
+    () => (track ? passCues(sat.name, pass, track, schedule, formatMHz, station.speakInPass) : []),
+    [track, sat.name, pass, schedule, station.speakInPass],
   );
 
   // D14: fire cues as the clock crosses them.
@@ -108,14 +113,21 @@ export function LiveScreen({
   // D18: frequencies go through the rig; v1's rig is this screen.
   const rig = useMemo(() => new DisplayRig(), []);
   const { current, next } = schedule ? stepAt(schedule, now) : { current: null, next: null };
+  // Range rate now; sampleAt holds the first point before AOS and the last after LOS.
+  const sample = track ? sampleAt(track, now) : null;
+  const linear = pb && sample ? linearTuning(pb, spotHz, sample.rangeRateMps) : null;
+  const linearSend = linear?.sendHz ?? null;
+  const linearHear = linear?.hearHz ?? null;
   useEffect(() => {
     if (!tx) return;
+    // A linear transponder's nominal values are its passband edges, not something to set: show
+    // nothing until the track is in and the tuning can be worked out.
     rig.set({
-      uplinkHz: current?.uplinkHz ?? tx.uplinkHz,
-      downlinkHz: current?.downlinkHz ?? tx.downlinkHz,
+      uplinkHz: pb ? linearSend : (current?.uplinkHz ?? tx.uplinkHz),
+      downlinkHz: pb ? linearHear : (current?.downlinkHz ?? tx.downlinkHz),
       ctcssHz: tx.ctcssHz,
     });
-  }, [rig, tx, current]);
+  }, [rig, tx, pb, current, linearSend, linearHear]);
   const setting = useSyncExternalStore(rig.subscribe, () => rig.get());
 
   const rec = usePassRecorder({
@@ -161,6 +173,9 @@ export function LiveScreen({
     );
   }
 
+  // A retune just happened: light up the side that changed, since the cue may only have beeped.
+  const justRetuned = current !== null && current.t > pass.aos && now - current.t < 4000;
+  const flash = (side: 'uplink' | 'downlink') => (justRetuned && schedule?.tuneSide === side ? ' readout-flash' : '');
   const nextHz = next ? (schedule?.tuneSide === 'uplink' ? next.uplinkHz : next.downlinkHz) : null;
 
   const bars = here && phase === 'during' ? Math.max(0, Math.round(here.elDeg / 9)) : 0;
@@ -230,16 +245,16 @@ export function LiveScreen({
               {tx && setting && (
                 <section aria-label="Frequencies">
                   <hr className="lcd-rule" />
-                  {setting.uplinkHz !== null && (
-                    <div className="lcd-line">
-                      <span className="lcd-label">TX ▲</span>
-                      <span className="readout readout-l">{formatMHz(setting.uplinkHz)}</span>
-                    </div>
-                  )}
                   {setting.downlinkHz !== null && (
                     <div className="lcd-line">
                       <span className="lcd-label">RX ▼</span>
-                      <span className="readout readout-l">{formatMHz(setting.downlinkHz)}</span>
+                      <span className={`readout readout-l${flash('downlink')}`}>{formatMHz(setting.downlinkHz)}</span>
+                    </div>
+                  )}
+                  {setting.uplinkHz !== null && (
+                    <div className="lcd-line">
+                      <span className="lcd-label">TX ▲</span>
+                      <span className={`readout readout-l${flash('uplink')}`}>{formatMHz(setting.uplinkHz)}</span>
                     </div>
                   )}
                   <div className="lcd-line" style={{ marginTop: 8 }}>
@@ -259,16 +274,21 @@ export function LiveScreen({
                       Then {formatMHz(nextHz)}.{isNew && ` Retune the ${schedule?.tuneSide === 'uplink' ? 'transmit' : 'listen'} side only.`}
                     </p>
                   )}
-                  {tx.kind !== 'fm_repeater' && here && (
+                  {linear && (
                     <p className="lcd-note">
-                      {tx.mode}. Doppler now: downlink{' '}
-                      {tx.downlinkHz !== null && formatOffsetKHz((exactAt(tx, here.rangeRateMps).downlinkHz ?? 0) - tx.downlinkHz)}
+                      {linear.sendSideband} up, USB down · Doppler now {formatOffsetKHz(linear.hearHz - linear.downAtSatHz)} on the
+                      downlink
                     </p>
+                  )}
+                  {tx.kind === 'linear_transponder' && !pb && (
+                    <p className="lcd-note">Passband edges or inversion Unknown for this transponder, so no tuning help.</p>
                   )}
                 </section>
               )}
             </div>
           </Panel>
+
+          {pb && <LinearTuner pb={pb} tuning={linear} spotHz={spotHz} onSpot={setSpotHz} isNew={isNew} />}
 
           {rec.state === 'recording' && (
             <p role="status" className="recording-dot">

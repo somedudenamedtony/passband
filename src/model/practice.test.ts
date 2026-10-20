@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FixedClock, SimulatedClock } from '../clock';
-import { whatYoullHear } from './listen';
+import { DATA_ONLY, listenAppeal, whatYoullHear } from './listen';
 import { toneMix, tuningVerdict } from './practice';
 import { easiestPass } from './selection';
 import { HOUR, MINUTE, SECOND } from './time';
@@ -73,16 +73,17 @@ function pass(noradId: number, aos: number, maxElDeg: number): Pass {
     losAzDeg: 180,
     visibleSecondsAboveMask: 600,
     elementsEpoch: 0,
+    sunlitFraction: 1,
   };
 }
 
 describe('easiest pass (§5.5)', () => {
   const sats = new Map([1, 2, 3, 4].map((n) => [n, sat(n, n === 3 ? 'advanced' : 'beginner', n === 4 ? 'inactive' : 'active')]));
-  it('picks the highest beginner FM pass in the next 12 hours', () => {
-    const passes = [pass(1, 1 * HOUR, 40), pass(2, 3 * HOUR, 70), pass(3, 2 * HOUR, 85), pass(4, 2 * HOUR, 88), pass(1, 14 * HOUR, 89)];
-    expect(easiestPass(passes, sats, 0)).toEqual(passes[1]);
+  it('is the soonest good beginner FM pass, the same rule as the Tonight card', () => {
+    const passes = [pass(3, 30 * MINUTE, 85), pass(4, 40 * MINUTE, 88), pass(1, 1 * HOUR, 20), pass(2, 3 * HOUR, 70)];
+    expect(easiestPass(passes, sats, 0)).toEqual(passes[3]);
   });
-  it('falls back to the next 24 hours, and skips passes already started', () => {
+  it('skips passes already started', () => {
     const passes = [pass(1, -1 * MINUTE, 80), pass(2, 15 * HOUR, 50)];
     expect(easiestPass(passes, sats, 0)).toEqual(passes[1]);
   });
@@ -96,6 +97,12 @@ describe('listen tonight', () => {
     expect(whatYoullHear(fm)).toMatch(/callsigns/);
     expect(whatYoullHear({ ...fm, kind: 'digipeater', mode: 'APRS' })).toMatch(/position reports/);
     expect(whatYoullHear({ ...fm, kind: 'beacon', mode: 'CW', uplinkHz: null })).toMatch(/Morse/);
+  });
+  it('puts voices, pictures and packets ahead of telemetry only software can read', () => {
+    const telemetry = listenAppeal({ ...fm, kind: 'beacon', mode: 'BPSK', uplinkHz: null });
+    expect(telemetry).toBeGreaterThanOrEqual(DATA_ONLY);
+    expect(listenAppeal(fm)).toBeLessThan(listenAppeal({ ...fm, kind: 'digipeater', mode: 'APRS' }));
+    expect(listenAppeal({ ...fm, kind: 'beacon', mode: 'CW', uplinkHz: null })).toBeLessThan(DATA_ONLY);
   });
 });
 

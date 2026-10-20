@@ -568,6 +568,29 @@ button.row:active {
   color: var(--amber);
   font-family: var(--mono);
 }
+/* A pass that will probably be silent (outlook.ts): still listed, plainly marked. */
+.row-unlikely .row-title,
+.row-unlikely .row-end {
+  opacity: 0.55;
+}
+.row-flag {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* "Will it be on?" under the pass card. */
+.outlook {
+  padding: 8px 10px;
+  border-left: 4px solid var(--ink-dim);
+  background: var(--well);
+  border-radius: 4px;
+}
+.outlook-likely {
+  border-left-color: var(--ok);
+}
+.outlook-unlikely {
+  border-left-color: var(--red);
+}
 .row-current {
   box-shadow: inset 3px 0 0 var(--amber);
   padding-left: 10px;
@@ -1121,6 +1144,25 @@ input[type='range'] {
   line-height: 1.2;
   margin: 12px 0 6px;
 }
+.setup-step {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 14px;
+}
+/* "or enter your grid square" between the two ways to give a location. */
+.or-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+.or-rule::before,
+.or-rule::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--chassis-hi);
+}
 
 /* The pass card when a new pass is picked: it lights up once, the way a display does on a new
    channel. Focus lands here too, so no outline. */
@@ -1191,4 +1233,29 @@ input[type='range'] {
 /* The favorite star: amber and filled when on. */
 .fav-key[aria-pressed='true'] {
   color: var(--amber);
+}
+
+/* §8.1: the linear passband spot. */
+.passband-slider {
+  width: 100%;
+  margin: 12px 0 4px;
+  accent-color: var(--lcd);
+  min-height: 32px;
+}
+
+/* A retune just happened (the cue may only have beeped): the changed frequency blinks. */
+.readout-flash {
+  animation: retune-flash 0.5s steps(1) 6;
+}
+@keyframes retune-flash {
+  50% {
+    color: var(--lcd-bg);
+    background: var(--lcd);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .readout-flash {
+    animation: none;
+    text-decoration: underline;
+  }
 }

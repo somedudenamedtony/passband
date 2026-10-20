@@ -1,6 +1,8 @@
 // §5.4: the log. Newest first, filter by satellite, ADIF export (D11, D12), grids toward VUCC.
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { importAdif, type ImportResult } from '../model/adifImport';
+import { AddQso } from './AddQso';
 import { lotwProblems, toAdif } from '../model/adif';
 import { formatMHz } from '../model/freq';
 import { formatLocalDay, formatLocalTime, formatUtc } from '../model/format';
@@ -37,6 +39,8 @@ export function LogView({
   onDeleteRecording,
   catalog,
   locations,
+  location,
+  onImport,
 }: {
   qsos: QsoRecord[];
   station: Station;
@@ -47,16 +51,33 @@ export function LogView({
   onDeleteRecording: (id: string) => void;
   catalog: Catalog;
   locations: Location[];
+  /** The active location: where a contact added by hand was made from. */
+  location: Location;
+  /** Save many contacts at once (ADIF import). */
+  onImport: (qsos: QsoRecord[]) => Promise<void>;
 }) {
   const clock = useClock();
-  const [filter, setFilter] = useState<number | 'all'>('all');
+  // By display name: imported contacts on satellites the catalog doesn't carry have no NORAD id.
+  const [filter, setFilter] = useState<string>('all');
   const [editing, setEditing] = useState<QsoRecord | null>(null);
-  const sats = useMemo(() => {
-    const m = new Map<number, string>();
-    for (const q of qsos) m.set(q.satNoradId, q.satDisplayName);
-    return [...m].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [qsos]);
-  const shown = filter === 'all' ? qsos : qsos.filter((q) => q.satNoradId === filter);
+  const [adding, setAdding] = useState(false);
+  const [imported, setImported] = useState<ImportResult | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function importFile(file: File) {
+    setImportError(null);
+    setImported(null);
+    try {
+      const r = importAdif(await file.text(), catalog.catalog.satellites, qsos, station, location, clock.now());
+      if (r.qsos.length) await onImport(r.qsos);
+      setImported(r);
+    } catch (e) {
+      setImportError(`Couldn’t read ${file.name}: ${(e as Error).message}`);
+    }
+  }
+  const sats = useMemo(() => [...new Set(qsos.map((q) => q.satDisplayName))].sort((a, b) => a.localeCompare(b)), [qsos]);
+  const shown = filter === 'all' ? qsos : qsos.filter((q) => q.satDisplayName === filter);
   const unexported = unexportedCount(qsos);
   const grids = gridsWorked(qsos);
 
@@ -99,18 +120,40 @@ export function LogView({
         )}
       </div>
 
+      <div className="key-row">
+        <Button onClick={() => setAdding(true)}>
+          <Icon name="add" />
+          Add contact
+        </Button>
+        <Button onClick={() => fileRef.current?.click()}>Import ADIF</Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".adi,.adif,.txt,text/plain"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (f) void importFile(f);
+          }}
+        />
+      </div>
+      {imported && <Banner tone="info">{importSummary(imported)}</Banner>}
+      {importError && <Banner tone="danger">{importError}</Banner>}
+
       {qsos.length === 0 ? (
         <p className="center muted" style={{ padding: '24px 0' }}>
-          No contacts yet. Use Log on the live screen during a pass.
+          No contacts yet. Use Log on the live screen during a pass, add one by hand, or import your existing log
+          (from LoTW or another logger) so your grids count toward VUCC.
         </p>
       ) : (
         <div className="stack">
           {sats.length > 1 && (
             <Select<string>
               label="Satellite"
-              value={String(filter)}
-              onChange={(v) => setFilter(v === 'all' ? 'all' : Number(v))}
-              options={[{ value: 'all', label: 'All satellites' }, ...sats.map(([id, name]) => ({ value: String(id), label: name }))]}
+              value={filter}
+              onChange={setFilter}
+              options={[{ value: 'all', label: 'All satellites' }, ...sats.map((name) => ({ value: name, label: name }))]}
             />
           )}
           <Panel>
@@ -153,6 +196,20 @@ export function LogView({
         onDelete={onDeleteRecording}
       />
 
+      {adding && (
+        <AddQso
+          sats={catalog.catalog.satellites}
+          location={location}
+          station={station}
+          now={clock.now()}
+          onClose={() => setAdding(false)}
+          onSave={(q) => {
+            onSave(q);
+            setAdding(false);
+          }}
+        />
+      )}
+
       {editing && (
         <EditQso
           qso={editing}
@@ -169,6 +226,15 @@ export function LogView({
       )}
     </div>
   );
+}
+
+function importSummary(r: ImportResult): string {
+  const parts = [`Imported ${r.qsos.length} satellite contact${r.qsos.length === 1 ? '' : 's'}.`];
+  if (r.duplicates) parts.push(`${r.duplicates} already in the log.`);
+  if (r.notSatellite) parts.push(`${r.notSatellite} non-satellite contact${r.notSatellite === 1 ? '' : 's'} left out.`);
+  if (r.unreadable) parts.push(`${r.unreadable} without a callsign or time left out.`);
+  if (r.qsos.length) parts.push('They count as exported, since they came from your logbook.');
+  return parts.join(' ');
 }
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {

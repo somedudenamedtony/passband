@@ -1,4 +1,5 @@
 import { isGoodPass, samePass } from '../model/selection';
+import { passOutlook } from '../model/outlook';
 import { useState } from 'react';
 import { Button, SectionTitle } from './common';
 import { PAGE } from './PassList';
@@ -77,7 +78,8 @@ export function Timeline({
                 const x0 = Math.max(0, x(p.aos));
                 const w = Math.max(5, x(p.los) - x0);
                 const visibleFrac = p.visibleSecondsAboveMask / Math.max(1, (p.los - p.aos) / 1000);
-                const dim = visibleFrac < 0.5 || !isGoodPass(p, station.experience);
+                const outlook = passOutlook(p, s, now);
+                const dim = visibleFrac < 0.5 || !isGoodPass(p, station.experience) || outlook.level === 'unlikely';
                 const sel = samePass(p, selected);
                 return (
                   <rect
@@ -93,7 +95,7 @@ export function Timeline({
                     onClick={() => onSelect(p)}
                   >
                     <title>
-                      {`${s.name} ${formatLocalTime(p.aos)}, max ${Math.round(p.maxElDeg)}°`}
+                      {`${s.name} ${formatLocalTime(p.aos)}, max ${Math.round(p.maxElDeg)}°${outlook.level === 'unlikely' ? ` (${outlook.short})` : ''}`}
                     </title>
                   </rect>
                 );
