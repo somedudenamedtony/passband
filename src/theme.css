@@ -568,6 +568,29 @@ button.row:active {
   color: var(--amber);
   font-family: var(--mono);
 }
+/* A pass that will probably be silent (outlook.ts): still listed, plainly marked. */
+.row-unlikely .row-title,
+.row-unlikely .row-end {
+  opacity: 0.55;
+}
+.row-flag {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* "Will it be on?" under the pass card. */
+.outlook {
+  padding: 8px 10px;
+  border-left: 4px solid var(--ink-dim);
+  background: var(--well);
+  border-radius: 4px;
+}
+.outlook-likely {
+  border-left-color: var(--ok);
+}
+.outlook-unlikely {
+  border-left-color: var(--red);
+}
 .row-current {
   box-shadow: inset 3px 0 0 var(--amber);
   padding-left: 10px;

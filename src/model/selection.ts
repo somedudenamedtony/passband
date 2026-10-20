@@ -1,8 +1,8 @@
-import { HOUR } from './time';
 // D19: experience changes defaults only. Nothing here hides a satellite the user asks for.
 
 import { hasWorkingUplink } from './transmitters';
-import type { Catalog, Pass, Satellite, Station } from './types';
+import { passOutlook } from './outlook';
+import type { Catalog, Hours, Pass, Satellite, Station } from './types';
 
 export interface ListOptions {
   /** Every in-scope satellite, not just the experience default. */
@@ -41,17 +41,30 @@ export function isGoodPass(pass: Pass, experience: Station['experience']): boole
   return pass.maxElDeg >= minEl && pass.visibleSecondsAboveMask >= 120;
 }
 
+/**
+ * The pass for the big card: the soonest good pass that will probably be on (outlook.ts), during
+ * the user's hours if one falls in them. Passes judged unlikely (schedule only, in shadow, quiet
+ * lately) never take the card; they stay in the lists, marked. Likely beats uncertain.
+ */
 export function nextGoodPass(
   passes: readonly Pass[],
   sats: ReadonlyMap<number, Satellite>,
   experience: Station['experience'],
   now: number,
+  hours: Hours | null = null,
 ): Pass | null {
+  const good = passes.filter((p) => {
+    const s = sats.get(p.noradId);
+    return p.los > now && s !== undefined && s.status !== 'inactive' && isGoodPass(p, experience);
+  });
+  const level = (p: Pass) => passOutlook(p, sats.get(p.noradId)!, now).level;
+  const awake = (p: Pass) => inHours(p.aos, hours) || (p.aos <= now && p.los > now);
   return (
-    passes.find((p) => {
-      const s = sats.get(p.noradId);
-      return p.los > now && s !== undefined && s.status !== 'inactive' && isGoodPass(p, experience);
-    }) ?? null
+    good.find((p) => awake(p) && level(p) === 'likely') ??
+    good.find((p) => awake(p) && level(p) === 'uncertain') ??
+    good.find((p) => level(p) === 'likely') ??
+    good.find((p) => level(p) === 'uncertain') ??
+    null
   );
 }
 
@@ -60,22 +73,33 @@ export function samePass(a: Pass | null, b: Pass | null): boolean {
 }
 
 /**
- * §5.5 "picking the pass": the easiest coming pass for a first contact. Beginner FM satellites
- * only; the highest pass in the next 12 hours (a high pass is longer, stronger and easier to
- * point at), falling back to the next 24 if nothing good comes sooner.
+ * §5.5 "picking the pass" for a first contact: the same rule as the Tonight card (nextGoodPass,
+ * judged as a beginner), over beginner FM satellites only, so Learn and Tonight agree.
  */
-export function easiestPass(passes: readonly Pass[], sats: ReadonlyMap<number, Satellite>, now: number): Pass | null {
-  const candidates = passes.filter((p) => {
-    const s = sats.get(p.noradId);
-    return (
-      s !== undefined &&
-      p.aos > now &&
-      s.status !== 'inactive' &&
-      s.overlay.difficulty === 'beginner' &&
-      s.transmitters.some((t) => t.kind === 'fm_repeater' && t.status !== 'inactive') &&
-      isGoodPass(p, 'new')
-    );
-  });
-  const best = (list: Pass[]) => list.reduce<Pass | null>((b, p) => (!b || p.maxElDeg > b.maxElDeg ? p : b), null);
-  return best(candidates.filter((p) => p.aos < now + 12 * HOUR)) ?? best(candidates);
+export function easiestPass(
+  passes: readonly Pass[],
+  sats: ReadonlyMap<number, Satellite>,
+  now: number,
+  hours: Hours | null = null,
+): Pass | null {
+  const fm = new Map(
+    [...sats].filter(
+      ([, s]) => s.overlay.difficulty === 'beginner' && s.transmitters.some((t) => t.kind === 'fm_repeater' && t.status !== 'inactive'),
+    ),
+  );
+  return nextGoodPass(
+    passes.filter((p) => p.aos > now),
+    fm,
+    'new',
+    now,
+    hours,
+  );
+}
+
+/** True when t (UTC ms) falls in the user's hours, read in local time. null hours = any time. */
+export function inHours(t: number, hours: Hours | null): boolean {
+  if (!hours) return true;
+  const d = new Date(t);
+  const m = d.getHours() * 60 + d.getMinutes();
+  return hours.fromMin <= hours.toMin ? m >= hours.fromMin && m < hours.toMin : m >= hours.fromMin || m < hours.toMin;
 }

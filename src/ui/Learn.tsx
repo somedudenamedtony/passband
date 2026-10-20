@@ -41,7 +41,7 @@ export function Learn({
   );
   const byId = useMemo(() => new Map(sats.map((s) => [s.noradId, s])), [sats]);
   const { passes } = usePasses(sats, location, LOOKBACK);
-  const easiest = passes ? easiestPass(passes, byId, now) : null;
+  const easiest = passes ? easiestPass(passes, byId, now, station.hours) : null;
   const easiestSat = easiest ? byId.get(easiest.noradId) : undefined;
 
   // D19: the guide starts open for new operators and folded away for experienced ones.

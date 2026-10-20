@@ -18,5 +18,7 @@
   "amsatStatusNames": [
     "PO-101_[FM]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "operation": "scheduled",
+  "operationSource": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-20: \"FM transponder activated by schedule\"; \"Seems to be dying\""
 }

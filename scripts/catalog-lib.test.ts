@@ -114,6 +114,8 @@ describe('buildCatalog', () => {
           difficulty: 'beginner',
           note: null,
           receiveOnly: false,
+          operation: 'sunlit',
+          operationSource: 'test',
           transmitterOverrides: [{ id: 'u1', source: 'test', set: { ctcssHz: 67 } }],
         },
       ],
@@ -123,6 +125,7 @@ describe('buildCatalog', () => {
     expect(s.transmitters[0]!.ctcssHz).toBe(67);
     expect(s.lotwName).toBe('SO-50');
     expect(s.overlay.curated).toBe(true);
+    expect(s.overlay.operation).toBe('sunlit');
     expect(s.elementsSource).toBe('celestrak-omm');
     expect(Number.isInteger(s.transmitters[0]!.uplinkHz)).toBe(true);
   });
@@ -130,7 +133,7 @@ describe('buildCatalog', () => {
   it('publishes uncurated satellites with Unknown overlay fields', () => {
     const { catalog, report } = buildCatalog({ ...base, overlay: [] });
     const s = catalog.satellites[0]!;
-    expect(s.overlay).toEqual({ curated: false, difficulty: null, note: null, receiveOnly: false });
+    expect(s.overlay).toEqual({ curated: false, difficulty: null, note: null, receiveOnly: false, operation: null });
     expect(s.transmitters[0]!.ctcssHz).toBe('unknown');
     expect(report.uncuratedWithUplink).toEqual(['SO-50']);
   });

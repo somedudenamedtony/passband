@@ -17,3 +17,21 @@ export function sunPosition(t: number, latDeg: number, lonDeg: number): Pointing
   );
   return { azDeg: (radiansToDegrees(la.azimuth) + 360) % 360, elDeg: radiansToDegrees(la.elevation) };
 }
+
+const EARTH_RADIUS_KM = 6378.137;
+
+/**
+ * True when a satellite at this ECI position (km) is in the Earth's shadow. A cylindrical shadow
+ * is plenty for "is a battery-starved bird on?": the penumbra lasts seconds at LEO.
+ */
+export function inEarthShadow(posEciKm: { x: number; y: number; z: number }, t: number): boolean {
+  const { rsun } = sunPos(t / MS_PER_DAY + JD_UNIX_EPOCH);
+  const n = Math.hypot(rsun.x, rsun.y, rsun.z);
+  const s = { x: rsun.x / n, y: rsun.y / n, z: rsun.z / n };
+  const along = posEciKm.x * s.x + posEciKm.y * s.y + posEciKm.z * s.z;
+  if (along >= 0) return false;
+  const px = posEciKm.x - along * s.x;
+  const py = posEciKm.y - along * s.y;
+  const pz = posEciKm.z - along * s.z;
+  return Math.hypot(px, py, pz) < EARTH_RADIUS_KM;
+}

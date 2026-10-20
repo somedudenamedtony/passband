@@ -9,5 +9,7 @@
   "amsatStatusNames": [
     "AO-91_[FM]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "operation": "sunlit",
+  "operationSource": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-20: \"Due to battery status, please do not attempt to access while in eclipse\""
 }

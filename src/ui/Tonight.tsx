@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import type { LoadedCatalog } from '../data/catalog';
 import { elementAgeDays, elementAgeLevel } from '../model/elementAge';
 import { ACTIVITIES, activities, matchesActivities, type Activity } from '../model/activity';
-import { listedSatellites, nextGoodPass, samePass, type ListOptions } from '../model/selection';
+import { inHours, isGoodPass, listedSatellites, nextGoodPass, samePass, type ListOptions } from '../model/selection';
 import type { Location, Pass, QsoRecord, Satellite, Station } from '../model/types';
 import { Banner, Field, Segmented, SectionTitle } from './common';
 import { useNow } from './clock';
@@ -102,7 +102,10 @@ export function Tonight({
   const shownById = useMemo(() => new Map(shownSats.map((s) => [s.noradId, s])), [shownSats]);
   const shownPasses = useMemo(() => (filtered ? upcoming.filter((p) => shownById.has(p.noradId)) : upcoming), [filtered, upcoming, shownById]);
   const listKey = `${scope}:${q}:${[...act].sort().join(',')}`;
-  const next = useMemo(() => nextGoodPass(upcoming, satById, station.experience, now), [upcoming, satById, station.experience, now]);
+  const next = useMemo(
+    () => nextGoodPass(upcoming, satById, station.experience, now, station.hours),
+    [upcoming, satById, station.experience, now, station.hours],
+  );
   const featured = selected && selected.los > now && satById.has(selected.noradId) ? selected : next;
   const featuredSat = featured ? satById.get(featured.noradId) : undefined;
 
@@ -133,6 +136,7 @@ export function Tonight({
             station={station}
             now={now}
             isNext={next !== null && samePass(featured, next)}
+            outsideHours={featured.aos > now && !inHours(featured.aos, station.hours)}
             onBackToNext={selected ? () => pick(null) : undefined}
             onStart={() => onStart(featured, featuredSat)}
             onInfo={() => setInfo(featuredSat)}
@@ -146,7 +150,9 @@ export function Tonight({
             <>No favorites yet. Tap ★ on a satellite’s card or info sheet to add it.</>
           ) : (
             <>
-              No good passes in the next 24 hours for these satellites from {location.name}.
+              {upcoming.some((p) => satById.has(p.noradId) && isGoodPass(p, station.experience))
+                ? `The good passes in the next 24 hours from ${location.name} are on satellites that are probably off. They’re marked in the list below.`
+                : `No good passes in the next 24 hours for these satellites from ${location.name}.`}
               {scope === 'recommended' && ' Try All active below.'}
             </>
           )}

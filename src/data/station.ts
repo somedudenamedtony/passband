@@ -10,6 +10,7 @@ export const DEFAULT_STATION: Station = {
   compassOffsetDeg: 0,
   compassCalibratedAt: null,
   recordPasses: false,
+  hours: { fromMin: 6 * 60, toMin: 23 * 60 },
 };
 
 export async function loadStation(): Promise<Station> {

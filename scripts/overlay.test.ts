@@ -24,6 +24,13 @@ describe('overlay (D6, D12)', () => {
       if (entry.amsatStatusNames?.length) expect(entry.amsatStatusSource, file).toBeTruthy();
     }
   });
+  it('an operation is a known value and cites a source', () => {
+    for (const { file, entry } of entries) {
+      if (entry.operation === undefined) continue;
+      expect(['continuous', 'scheduled', 'sunlit'], file).toContain(entry.operation);
+      expect(entry.operationSource, file).toBeTruthy();
+    }
+  });
   it('every override cites a source', () => {
     for (const { file, entry } of entries) {
       for (const o of entry.transmitterOverrides ?? []) expect(o.source, file).toBeTruthy();

@@ -33,6 +33,11 @@ export interface Satellite {
     difficulty: 'beginner' | 'intermediate' | 'advanced' | null;
     note: string | null;
     receiveOnly: boolean;
+    /**
+     * When the satellite's transponder is on, from the overlay (D6). null = we don't know.
+     * Absent in catalogs built before this field; read it as null.
+     */
+    operation?: Operation | null;
   };
   /**
    * Recent "heard / not heard" reports from the AMSAT status page, collected by the daily build
@@ -40,6 +45,12 @@ export interface Satellite {
    */
   reports?: StatusReports;
 }
+
+/**
+ * continuous: on whenever it is up. scheduled: switched on for announced passes only.
+ * sunlit: battery too weak to run in the Earth's shadow.
+ */
+export type Operation = 'continuous' | 'scheduled' | 'sunlit';
 
 export type StatusReportKind = 'heard' | 'not_heard' | 'telemetry_only' | 'crew_active' | 'other';
 
@@ -87,6 +98,15 @@ export interface Transmitter {
 
 export type RadioStepHz = 2500 | 5000 | 6250;
 
+/**
+ * When the user can get out, as local minutes after midnight. A preference about the wall clock,
+ * not a stored time (rule 4 is about timestamps). from > to wraps past midnight.
+ */
+export interface Hours {
+  fromMin: number;
+  toMin: number;
+}
+
 export interface Station {
   callsign: string;
   units: 'imperial' | 'metric';
@@ -98,6 +118,8 @@ export interface Station {
   recordPasses: boolean;
   /** When sun calibration last set the offset (D10); null = never. */
   compassCalibratedAt: number | null;
+  /** The top pick prefers passes in these hours; null = any time. */
+  hours: Hours | null;
 }
 
 export interface Location {
@@ -122,6 +144,8 @@ export interface Pass {
   losAzDeg: number;
   visibleSecondsAboveMask: number;
   elementsEpoch: number;
+  /** Share of the pass (0–1) with the satellite in sunlight; null if it couldn't be worked out. */
+  sunlitFraction: number | null;
 }
 
 /** Maps 1:1 onto ADIF (D12). */

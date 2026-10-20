@@ -62,7 +62,7 @@ export function MapView({
   const byId = useMemo(() => new Map(sats.map((s) => [s.noradId, s])), [sats]);
   const { passes } = usePasses(sats, location);
   const [choice, setChoice] = useState<number | null>(null);
-  const next = passes ? nextGoodPass(passes, byId, station.experience, now) : null;
+  const next = passes ? nextGoodPass(passes, byId, station.experience, now, station.hours) : null;
   const satId = choice ?? next?.noradId ?? sats[0]?.noradId ?? null;
   const sat = satId === null ? undefined : byId.get(satId);
 
