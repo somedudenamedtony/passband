@@ -1215,3 +1215,11 @@ input[type='range'] {
 .fav-key[aria-pressed='true'] {
   color: var(--amber);
 }
+
+/* §8.1: the linear passband spot. */
+.passband-slider {
+  width: 100%;
+  margin: 12px 0 4px;
+  accent-color: var(--lcd);
+  min-height: 32px;
+}
