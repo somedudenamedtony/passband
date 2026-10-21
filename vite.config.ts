@@ -32,7 +32,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         // D4: the catalog changes daily and is cached in IndexedDB by the app itself.
-        globIgnores: ['**/catalog.json'],
+        globIgnores: ['**/catalog.json', '**/sat-images/**'],
         navigateFallback: `${base}index.html`,
       },
     }),

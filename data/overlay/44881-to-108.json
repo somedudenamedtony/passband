@@ -9,5 +9,11 @@
   "amsatStatusNames": [
     "TO-108_[U/v]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "CAMSAT, China, as a payload on the TianQin-1 test satellite",
+    "launch": "Long March 4B from Taiyuan, December 2019",
+    "story": "CAS-6 is CAMSAT’s amateur payload riding on a technology test satellite. Its linear transponder works, but a computer fault knocked out the CW beacon and telemetry, and the transponder switches on and off every few seconds, so expect a choppy downlink.",
+    "source": "AMSAT (https://www.amsat.org/two-way-satellites/to-108/), Gunter's Space Page (https://space.skyrocket.de/doc_sdat/tianqin-1-cas-6.htm), checked 2026-10-21"
+  }
 }

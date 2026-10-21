@@ -9,5 +9,11 @@
   "amsatStatusNames": [
     "JO-97_[U/v]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "A Jordanian student and engineering team, on the FUNcube design",
+    "launch": "Falcon 9 from Vandenberg (SSO-A), December 2018",
+    "story": "JY1Sat is Jordan’s first satellite, named for the late King Hussein, whose callsign was JY1. Built on the FUNcube design, it carries a linear transponder for SSB and CW and sends down small pictures as SSDV.",
+    "source": "AMSAT-UK (https://amsat-uk.org/2018/12/14/update-jy1sat-and-eseo-missions/), SatNOGS DB, checked 2026-10-21"
+  }
 }

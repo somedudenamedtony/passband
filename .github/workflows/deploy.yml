@@ -29,7 +29,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - run: npm run catalog
+      # PREVIOUS_CATALOG_URL carries the AMSAT activity history forward (AMSAT only serves 96 hours).
+      # Built from GITHUB_REPOSITORY, which every trigger has, including the daily schedule.
+      - run: PREVIOUS_CATALOG_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/catalog.json" npm run catalog
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

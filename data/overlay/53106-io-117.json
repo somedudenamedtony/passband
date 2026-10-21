@@ -7,5 +7,11 @@
   "note": "Packet digipeater in a much higher orbit than most, with long passes. Needs a directional antenna and a digital setup.",
   "lotwNameSource": "TQSL configuration (https://lotw.arrl.org/lotw/config.tq6), satellite list, checked 2026-10-18",
   "amsatStatusNames": [],
-  "amsatStatusSource": "Not on the AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "Not on the AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "Sapienza University of Rome (S5Lab) with ENEA and the University of Naples; now co-owned by AMSAT Italia",
+    "launch": "Vega-C maiden flight from Kourou, July 2022",
+    "story": "GreenCube was built to grow microgreens in orbit. Its rocket left it unusually high, about 6,000 km up, which made it the first ham radio satellite in a medium Earth orbit: its digipeater can link stations thousands of kilometres apart for long stretches.",
+    "source": "AMSAT (https://www.amsat.org/greencube-designated-italy-oscar-117-io-117/), S5Lab (https://www.s5lab.space/), checked 2026-10-21"
+  }
 }

@@ -9,5 +9,11 @@
   "amsatStatusNames": [
     "RS-44_[V/u]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "DOSAAF, Russia (built as DOSAAF-85)",
+    "launch": "Rokot from Plesetsk, December 2019",
+    "story": "RS-44 flies far higher than most amateur satellites, so it stays in view for longer and covers a much wider area at once. That makes its linear transponder a favorite for long-distance SSB and CW contacts.",
+    "source": "AMSAT (https://www.amsat.org/two-way-satellites/rs-44/), SatNOGS DB, checked 2026-10-21"
+  }
 }

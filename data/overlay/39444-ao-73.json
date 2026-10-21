@@ -9,5 +9,11 @@
   "amsatStatusNames": [
     "AO-73_[U/v]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "AMSAT-UK and AMSAT-NL",
+    "launch": "Dnepr from Yasny, Russia, November 2013",
+    "story": "FUNcube-1 was built for schools: its telemetry beacon is easy to decode with the free FUNcube Dashboard and a cheap SDR dongle, so students can see live data from space. It also carries a small linear transponder for SSB and CW.",
+    "source": "FUNcube (https://funcube.org.uk/), SatNOGS DB, checked 2026-10-21"
+  }
 }

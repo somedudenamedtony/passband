@@ -4,9 +4,9 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { OmmElements } from '../src/model/types.ts';
+import type { Catalog, OmmElements } from '../src/model/types.ts';
 import {
-  AMSAT_WINDOW_HOURS,
+  AMSAT_HISTORY_DAYS,
   buildCatalog,
   inScopeTransmitter,
   tleToOmm,
@@ -20,6 +20,10 @@ import {
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(root, 'public', 'catalog.json');
 const OVERLAY_DIR = join(root, 'data', 'overlay');
+const IMAGE_DIR = join(root, 'public', 'sat-images');
+const SATNOGS_MEDIA = 'https://db-satnogs.freetls.fastly.net/media/';
+/** Photos bigger than this are skipped: the app shouldn't ship a poster for a thumbnail. */
+const MAX_IMAGE_BYTES = 400_000;
 
 const CELESTRAK = 'https://celestrak.org/NORAD/elements/gp.php';
 const SATNOGS = 'https://db.satnogs.org/api';
@@ -66,7 +70,7 @@ async function amsatReports(overlay: OverlayEntry[]): Promise<Map<number, AmsatR
     try {
       const rows: AmsatReport[] = [];
       for (const name of o.amsatStatusNames) {
-        const q = new URLSearchParams({ name, hours: String(AMSAT_WINDOW_HOURS) });
+        const q = new URLSearchParams({ name, hours: String(AMSAT_HISTORY_DAYS * 24) });
         rows.push(...(await getJson<AmsatReport[]>(`${AMSAT_STATUS}?${q}`)));
       }
       out.set(o.noradId, rows);
@@ -78,6 +82,53 @@ async function amsatReports(overlay: OverlayEntry[]): Promise<Map<number, AmsatR
   return out;
 }
 
+/**
+ * Photos of the curated satellites, from SatNOGS, saved next to the app so the info sheet never
+ * calls out from the browser (D4). Not precached; a missing one just isn't shown.
+ */
+async function satelliteImages(overlay: OverlayEntry[], sats: SatnogsSatellite[]): Promise<Map<number, string>> {
+  await mkdir(IMAGE_DIR, { recursive: true });
+  const out = new Map<number, string>();
+  for (const o of overlay) {
+    const img = sats.find((s) => s.norad_cat_id === o.noradId)?.image;
+    const ext = img ? /\.(jpe?g|png|gif|webp)$/i.exec(img)?.[1]?.toLowerCase() : undefined;
+    if (!img || !ext) continue;
+    try {
+      const res = await fetch(SATNOGS_MEDIA + img.split('/').map(encodeURIComponent).join('/'), {
+        headers: { 'User-Agent': UA },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      if (bytes.byteLength > MAX_IMAGE_BYTES) {
+        console.log(`Skipping ${o.name ?? o.noradId} photo: ${bytes.byteLength} bytes`);
+        continue;
+      }
+      const file = `${o.noradId}.${ext === 'jpeg' ? 'jpg' : ext}`;
+      await writeFile(join(IMAGE_DIR, file), bytes);
+      out.set(o.noradId, `sat-images/${file}`);
+    } catch (err) {
+      console.warn(`No photo for ${o.name ?? o.noradId} (${(err as Error).message}).`);
+    }
+  }
+  return out;
+}
+
+/**
+ * The catalog currently published, for the activity history (AMSAT only serves 96 hours). From
+ * PREVIOUS_CATALOG_URL, set by the deploy workflow; without it the history starts fresh.
+ */
+async function previousCatalog(): Promise<Catalog | null> {
+  const url = process.env.PREVIOUS_CATALOG_URL;
+  if (!url) return null;
+  try {
+    return await getJson<Catalog>(url);
+  } catch (err) {
+    console.warn(`::warning::No previous catalog (${(err as Error).message}); activity history starts fresh.`);
+    return null;
+  }
+}
+
 async function readOverlay(): Promise<OverlayEntry[]> {
   const files = (await readdir(OVERLAY_DIR)).filter((f) => f.endsWith('.json')).sort();
   const entries: OverlayEntry[] = [];
@@ -85,6 +136,7 @@ async function readOverlay(): Promise<OverlayEntry[]> {
     const entry = JSON.parse(await readFile(join(OVERLAY_DIR, f), 'utf8')) as OverlayEntry;
     if (!Number.isInteger(entry.noradId)) throw new Error(`${f}: noradId missing`);
     if (!('lotwName' in entry)) throw new Error(`${f}: lotwName is required (D12)`);
+    if (entry.profile && !entry.profile.source) throw new Error(`${f}: profile has no source (D6)`);
     if (entry.amsatStatusNames?.length && !entry.amsatStatusSource) throw new Error(`${f}: amsatStatusNames has no source`);
     for (const o of entry.transmitterOverrides ?? []) {
       if (!o.source) throw new Error(`${f}: override of ${o.id} has no source (D6)`);
@@ -125,6 +177,8 @@ async function main() {
   }
 
   const reports = await amsatReports(overlay);
+  const images = await satelliteImages(overlay, satnogsSatellites);
+  const previous = await previousCatalog();
 
   const { catalog, report } = buildCatalog({
     generatedAt: Date.now(),
@@ -134,6 +188,8 @@ async function main() {
     satnogsTransmitters,
     overlay,
     amsatReports: reports,
+    images,
+    previous,
   });
 
   await mkdir(dirname(OUT), { recursive: true });

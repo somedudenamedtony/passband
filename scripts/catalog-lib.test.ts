@@ -7,6 +7,8 @@ import {
   mapKind,
   parseCtcss,
   summariseAmsat,
+  aboutSatellite,
+  AMSAT_HISTORY_DAYS,
   satelliteStatus,
   tleToOmm,
   withRetry,
@@ -133,7 +135,7 @@ describe('buildCatalog', () => {
   it('publishes uncurated satellites with Unknown overlay fields', () => {
     const { catalog, report } = buildCatalog({ ...base, overlay: [] });
     const s = catalog.satellites[0]!;
-    expect(s.overlay).toEqual({ curated: false, difficulty: null, note: null, receiveOnly: false, operation: null });
+    expect(s.overlay).toEqual({ curated: false, difficulty: null, note: null, receiveOnly: false, operation: null, profile: null });
     expect(s.transmitters[0]!.ctcssHz).toBe('unknown');
     expect(report.uncuratedWithUplink).toEqual(['SO-50']);
   });
@@ -197,6 +199,52 @@ describe('AMSAT status reports', () => {
     expect(buildCatalog(base).catalog.satellites[0]!.reports).toBeUndefined();
     const withReports = buildCatalog({ ...base, amsatReports: new Map([[27607, [row('2026-10-18T10:30:00Z', 'Heard')]]]) });
     expect(withReports.catalog.satellites[0]!.reports?.heard).toBe(1);
+  });
+});
+
+describe('satellite background', () => {
+  const so50 = { norad_cat_id: 27607, name: 'SAUDISAT 1C', names: 'SO-50', status: 'in orbit', launched: '2002-12-20T00:00:00Z', countries: 'SA', website: '', image: 'satellites/so50.jpg' };
+
+  it('takes launch, countries and other names from SatNOGS', () => {
+    expect(aboutSatellite(so50, 'SO-50', undefined, 'sat-images/27607.jpg')).toEqual({
+      launched: Date.parse('2002-12-20T00:00:00Z'),
+      countries: ['SA'],
+      alsoKnownAs: ['SAUDISAT 1C'],
+      website: null,
+      image: 'sat-images/27607.jpg',
+    });
+  });
+
+  it('fills a missing launch date from the overlay profile', () => {
+    const ov = { noradId: 27607, lotwName: null, difficulty: null, note: null, receiveOnly: false, profile: { builtBy: 'x', launch: null, story: 'y', source: 'z', launched: '2018-10-29' } };
+    expect(aboutSatellite({ ...so50, launched: null }, 'SO-50', ov, null).launched).toBe(Date.parse('2018-10-29T00:00:00Z'));
+  });
+
+  const day = 86_400_000;
+  const now = Date.parse('2026-10-20T12:00:00Z');
+  const today = Date.parse('2026-10-20T00:00:00Z');
+  const row = (t: number, report: string) => ({ name: 'SO-50_[FM]', reported_time: new Date(t).toISOString(), callsign: 'W7LIT', report, grid_square: null });
+
+  it('graphs only the days the fetch fully covers, and leaves older days out rather than zero', () => {
+    const s = summariseAmsat([row(now - 3600_000, 'Heard'), row(now - 2 * day, 'Not Heard')], now);
+    expect(s.heard).toBe(1);
+    expect(s.daily!.map((d) => (d.day - today) / day)).toEqual([-3, -2, -1, 0]);
+    expect(s.daily!.at(-1)).toMatchObject({ heard: 1, notHeard: 0 });
+    expect(s.daily![1]).toMatchObject({ heard: 0, notHeard: 1 });
+  });
+
+  it('carries older days forward from the previous catalog, up to the history length', () => {
+    const previous = Array.from({ length: 20 }, (_, i) => ({ day: today - (20 - i) * day, heard: i, notHeard: 0 }));
+    const s = summariseAmsat([row(now - 3600_000, 'Heard')], now, previous);
+    expect(s.daily).toHaveLength(AMSAT_HISTORY_DAYS);
+    expect(s.daily![0]!.day).toBe(today - (AMSAT_HISTORY_DAYS - 1) * day);
+    expect(s.daily![0]!.heard).toBe(20 - (AMSAT_HISTORY_DAYS - 1));
+    expect(s.daily!.at(-1)).toMatchObject({ heard: 1 });
+  });
+
+  it('keeps the history when the fetch fails', () => {
+    const previous = [{ day: today - day, heard: 5, notHeard: 1 }];
+    expect(summariseAmsat(null, now, previous).daily).toEqual(previous);
   });
 });
 

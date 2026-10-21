@@ -11,5 +11,11 @@
     "IO-86_[VHF_Digi]",
     "IO-86_[SSDV]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "LAPAN, Indonesia’s space agency, with ORARI, Indonesia’s amateur radio society",
+    "launch": "PSLV from Sriharikota, India, September 2015",
+    "story": "LAPAN-A2 flies in a near-equatorial orbit, so it only passes over places in or near the tropics. Where it does reach, it offers an FM repeater, an APRS digipeater and occasional pictures.",
+    "source": "AMSAT-UK (https://amsat-uk.org/tag/lapan-a2/), SatNOGS DB, checked 2026-10-21"
+  }
 }

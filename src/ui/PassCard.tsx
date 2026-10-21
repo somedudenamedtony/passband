@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { downlinkHeardHz, fmTuning, type FmTuning } from '../model/doppler';
 import { elementAgeLevel, formatElementAge } from '../model/elementAge';
-import { formatMHz, formatOffsetKHz, formatTone } from '../model/freq';
+import { formatOffsetKHz } from '../model/freq';
 import {
   compassPoint,
   compassWord,
@@ -23,6 +23,7 @@ import { createCue } from '../cue/cue';
 import { Banner, Button, Panel } from './common';
 import { Icon } from './icons';
 import { FavoriteKey } from './FavoriteKey';
+import { RadioSetup } from './RadioSetup';
 import { DifficultyBadge, StatusBadge } from './badges';
 
 interface Doppler {
@@ -64,21 +65,6 @@ function useDoppler(pass: Pass, sat: Satellite, tx: Transmitter | null, location
 }
 
 const OUTLOOK_WORD = { likely: 'Should be on.', uncertain: 'Might be on.', unlikely: 'Probably off.' } as const;
-
-function gearHint(tx: Transmitter): string {
-  switch (tx.kind) {
-    case 'fm_repeater':
-      return 'An FM handheld or mobile radio that covers both bands. A hand-held directional antenna makes a big difference.';
-    case 'linear_transponder':
-      return 'An SSB/CW radio (or two) able to transmit and receive at the same time, and a directional antenna.';
-    case 'digipeater':
-      return 'A radio that can send packets, or a radio plus a phone app or TNC.';
-    case 'beacon':
-      return 'Receive only: any radio or SDR that covers the downlink.';
-    default:
-      return 'Check the transmitter details before the pass.';
-  }
-}
 
 export function PassCard({
   pass,
@@ -159,7 +145,15 @@ export function PassCard({
         {tx && (
           <>
             <hr className="lcd-rule" />
-            <Frequencies tx={tx} doppler={doppler} inProgress={inProgress} isNew={isNew} />
+            <RadioSetup
+              tx={tx}
+              isNew={isNew}
+              tuning={
+                doppler?.tuning
+                  ? { ...doppler.tuning, when: inProgress ? 'now' : 'at rise' }
+                  : null
+              }
+            />
           </>
         )}
 
@@ -230,12 +224,6 @@ export function PassCard({
 
         {masked && <p style={{ fontWeight: 700 }}>Only {formatDuration(pass.visibleSecondsAboveMask)} above your horizon mask.</p>}
 
-        {isNew && sat.overlay.note && <p>{sat.overlay.note}</p>}
-        {isNew && tx && (
-          <p className="muted">
-            <b style={{ color: 'var(--ink)' }}>You’ll need:</b> {gearHint(tx)}
-          </p>
-        )}
 
         <p className={age === 'fresh' ? 'hint' : undefined} style={{ fontWeight: age === 'fresh' ? undefined : 700 }}>
           Elements {formatElementAge(pass.elementsEpoch, now)}
@@ -264,66 +252,6 @@ export function PassCard({
         )}
       </div>
     </Panel>
-  );
-}
-
-function Frequencies({ tx, doppler, inProgress, isNew }: { tx: Transmitter; doppler: Doppler | null; inProgress: boolean; isNew: boolean }) {
-  const t = doppler?.tuning;
-  const when = inProgress ? 'now' : 'at rise';
-  if (tx.kind === 'fm_repeater') {
-    const down = t?.downlinkHz ?? tx.downlinkHz;
-    const up = t?.uplinkHz ?? tx.uplinkHz;
-    return (
-      <div>
-        {down !== null && (
-          <div className="lcd-line">
-            <span className="lcd-label">↓ Listen {t?.tuneSide === 'downlink' ? when : ''}</span>
-            <span className="readout readout-l">{formatMHz(down)}</span>
-          </div>
-        )}
-        {up !== null && (
-          <div className="lcd-line">
-            <span className="lcd-label">↑ Transmit {t?.tuneSide === 'uplink' ? when : ''}</span>
-            <span className="readout readout-l">{formatMHz(up)}</span>
-          </div>
-        )}
-        <div className="lcd-line" style={{ marginTop: 6 }}>
-          <span className="lcd-label">Tone</span>
-          <span className="readout readout-s" style={{ fontStyle: tx.ctcssHz === 'unknown' ? 'italic' : undefined }}>
-            {formatTone(tx.ctcssHz)}
-          </span>
-        </div>
-        {isNew && t?.tuneSide && (
-          <p className="lcd-note">
-            Leave the {t.tuneSide === 'downlink' ? 'transmit' : 'listen'} frequency alone and retune the{' '}
-            {t.tuneSide === 'downlink' ? 'listen' : 'transmit'} side as the satellite passes.
-          </p>
-        )}
-      </div>
-    );
-  }
-  const range = (lo: number | null, hi: number | null) =>
-    lo === null ? null : hi !== null && hi !== lo ? `${formatMHz(lo)}–${formatMHz(hi)}` : formatMHz(lo);
-  const down = range(tx.downlinkHz, tx.downlinkHighHz);
-  const up = range(tx.uplinkHz, tx.uplinkHighHz);
-  return (
-    <div>
-      <p className="lcd-label">
-        {tx.mode} {tx.kind === 'linear_transponder' && (tx.inverting ? '· inverting' : tx.inverting === false ? '· non-inverting' : '')}
-      </p>
-      {down && (
-        <div className="lcd-line">
-          <span className="lcd-label">↓</span>
-          <span className="readout readout-s">{down}</span>
-        </div>
-      )}
-      {up && (
-        <div className="lcd-line">
-          <span className="lcd-label">↑</span>
-          <span className="readout readout-s">{up}</span>
-        </div>
-      )}
-    </div>
   );
 }
 

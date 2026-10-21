@@ -18,10 +18,10 @@ test('info sheet shows a satellite, and picking a pass refocuses the card', asyn
 
   await card.getByRole('button', { name: `About ${name}` }).click();
   const sheet = page.getByRole('dialog', { name });
-  await expect(sheet.getByRole('region', { name: 'Transmitters' })).toBeVisible();
-  await expect(sheet.getByRole('region', { name: 'Orbit' })).toContainText(/min/);
+  await expect(sheet.getByRole('region', { name: 'On board' })).toBeVisible();
+  await expect(sheet.getByRole('region', { name: 'At a glance' })).toContainText(/min/);
   await expect(sheet.getByRole('region', { name: 'Your contacts' })).toContainText('yet');
-  await expect(sheet.getByRole('region', { name: 'Recent reports' })).toBeVisible();
+  await expect(sheet.getByRole('region', { name: 'Activity' })).toBeVisible();
 
   // A pass from the sheet closes it and lands on the card.
   await sheet.getByRole('region', { name: 'Next passes' }).getByRole('button').first().click();

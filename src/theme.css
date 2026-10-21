@@ -1259,3 +1259,120 @@ input[type='range'] {
     text-decoration: underline;
   }
 }
+
+/* ---- Radio setup: a transmitter as a memory channel ---- */
+
+.radio-setup .freq-line {
+  margin-top: 4px;
+}
+.radio-setup .band {
+  display: block;
+  font-size: 11px;
+  color: var(--lcd-dim);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+/* The mode, as a key you can press for what it means. */
+.mode-key {
+  flex: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid var(--lcd);
+  background: transparent;
+  color: var(--lcd);
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.mode-key[aria-expanded='true'] {
+  background: var(--lcd);
+  color: var(--lcd-bg);
+}
+.mode-guide {
+  margin: 8px 0 4px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--lcd-rule);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.mode-guide p + p {
+  margin-top: 6px;
+}
+
+/* ---- Satellite profile ---- */
+
+.profile-hero {
+  padding: 0;
+  overflow: hidden;
+}
+.profile-hero .lcd {
+  margin: 12px;
+}
+.profile-photo {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  background: #fff;
+}
+:root[data-finish='night'] .profile-photo {
+  /* Keep night vision: no white photo, just a dim red silhouette of it. */
+  filter: grayscale(1) brightness(0.35) sepia(1) hue-rotate(-50deg) saturate(6);
+  background: #000;
+}
+.profile-story {
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+.facts-sub {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+
+.activity {
+  margin: 0;
+}
+.activity-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 6px 0 2px;
+}
+.activity-svg g:not(.is-picked) rect[fill='var(--lcd)'] {
+  opacity: 0.75;
+}
+.activity-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+}
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.swatch-heard {
+  background: var(--lcd);
+}
+.swatch-not {
+  border: 1.5px solid var(--lcd);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

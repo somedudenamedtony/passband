@@ -10,5 +10,11 @@
     "AO-7_[U/v]",
     "AO-7_[V/a]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "AMSAT, with radio amateurs in the US, West Germany, Canada and Australia",
+    "launch": "Delta from Vandenberg, November 1974",
+    "story": "AMSAT-OSCAR 7 is the oldest amateur satellite still working. It fell silent in 1981 when its batteries failed, then came back in 2002 when a shorted battery cell went open. With no battery it runs straight off its solar panels: it works in sunlight and restarts, sometimes in a different mode, each time it comes out of eclipse.",
+    "source": "AMSAT (https://www.amsat.org/two-way-satellites/ao-7/), SatNOGS DB, checked 2026-10-21"
+  }
 }

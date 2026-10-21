@@ -26,12 +26,20 @@ import { CompassStatus } from '../compass/CompassStatus';
 import { useCompass } from '../compass/useCompass';
 import { ARView } from './ARView';
 import { LinearTuner } from './LinearTuner';
+import { modeGuide } from '../model/modes';
+import { adifBand } from '../model/bands';
+
 import { Checklist } from './Checklist';
 import { PointingGuide } from './PointingGuide';
 import { PracticePanel, type PracticeControls } from './PracticePanel';
 import { ScheduleList } from './ScheduleList';
 import { SkyPlot } from './SkyPlot';
 import { useWakeLock } from './useWakeLock';
+
+/** "70 cm", for the frequency labels; empty outside the amateur bands. */
+function bandName(hz: number): string {
+  return adifBand(hz)?.replace(/(\d)(c?m)$/, '$1 $2') ?? '';
+}
 
 const PRE_PASS = 5 * MINUTE;
 
@@ -245,15 +253,18 @@ export function LiveScreen({
               {tx && setting && (
                 <section aria-label="Frequencies">
                   <hr className="lcd-rule" />
+                  <p className="lcd-label" style={{ marginBottom: 4 }}>
+                    {modeGuide(tx).label} · {modeGuide(tx).what}
+                  </p>
                   {setting.downlinkHz !== null && (
                     <div className="lcd-line">
-                      <span className="lcd-label">RX ▼</span>
+                      <span className="lcd-label">↓ Listen {bandName(setting.downlinkHz)}</span>
                       <span className={`readout readout-l${flash('downlink')}`}>{formatMHz(setting.downlinkHz)}</span>
                     </div>
                   )}
                   {setting.uplinkHz !== null && (
                     <div className="lcd-line">
-                      <span className="lcd-label">TX ▲</span>
+                      <span className="lcd-label">↑ Transmit {bandName(setting.uplinkHz)}</span>
                       <span className={`readout readout-l${flash('uplink')}`}>{formatMHz(setting.uplinkHz)}</span>
                     </div>
                   )}
@@ -264,7 +275,7 @@ export function LiveScreen({
                     </span>
                     {next && phase !== 'after' && (
                       <span className="tabular">
-                        <span className="lcd-label">Next {schedule?.tuneSide === 'uplink' ? '▲' : '▼'} </span>
+                        <span className="lcd-label">Next {schedule?.tuneSide === 'uplink' ? '↑' : '↓'} </span>
                         {formatClock(next.t - Math.max(now, pass.aos))}
                       </span>
                     )}
