@@ -19,5 +19,11 @@
     "AO-123_[FM]",
     "AO-123_[SSDV]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "Harbin Institute of Technology (LilacSat team) and Amur State University, for the Association of Sino-Russian Technical Universities",
+    "launch": "Soyuz from Vostochny, November 2024",
+    "story": "ASRTU-1 is a student satellite from a Chinese–Russian university partnership. Besides its FM repeater it sends down pictures as SSDV, and it carries a 10 GHz image downlink.",
+    "source": "AMSAT ANS-329 (https://www.amsat.org/?p=59363), SatNOGS DB, checked 2026-10-21"
+  }
 }

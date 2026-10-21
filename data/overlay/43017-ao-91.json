@@ -11,5 +11,11 @@
   ],
   "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
   "operation": "sunlit",
-  "operationSource": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-20: \"Due to battery status, please do not attempt to access while in eclipse\""
+  "operationSource": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-20: \"Due to battery status, please do not attempt to access while in eclipse\"",
+  "profile": {
+    "builtBy": "AMSAT-NA (Fox-1B), with a radiation experiment from Vanderbilt University",
+    "launch": "Delta II from Vandenberg, November 2017, sharing the ride with JPSS-1",
+    "story": "Fox-1B, also called RadFxSat, is a small 1U CubeSat from AMSAT’s Fox program. Alongside its FM repeater it carries Vanderbilt University’s experiment on how radiation wears out electronics in orbit. Its batteries have aged, so the repeater works while the satellite is in sunlight.",
+    "source": "AMSAT (https://www.amsat.org/two-way-satellites/ao-91/), SatNOGS DB, checked 2026-10-21"
+  }
 }

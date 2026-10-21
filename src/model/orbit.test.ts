@@ -12,6 +12,10 @@ describe('orbitSummary', () => {
     expect(o.perigeeM).toBeGreaterThan(350_000);
     expect(o.apogeeM).toBeLessThan(450_000);
     expect(o.apogeeM).toBeGreaterThanOrEqual(o.perigeeM);
+    // About 7.7 km/s, nearly 16 laps a day.
+    expect(o.speedMps).toBeGreaterThan(7500);
+    expect(o.speedMps).toBeLessThan(7800);
+    expect(o.revsPerDay).toBeGreaterThan(15);
   });
 
   it('refuses elements without a mean motion', () => {

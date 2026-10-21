@@ -13,6 +13,12 @@ export function formatDistance(metres: number, units: Units): string {
   return `${Math.round(metres / METRES_PER_MILE).toLocaleString()} mi`;
 }
 
+/** Speeds: a satellite in orbit. Rounded to the hundred; nobody needs 17,143 mph. */
+export function formatSpeed(mps: number, units: Units): string {
+  const perHour = units === 'metric' ? (mps * 3600) / 1000 : (mps * 3600) / METRES_PER_MILE;
+  return `${(Math.round(perHour / 100) * 100).toLocaleString()} ${units === 'metric' ? 'km/h' : 'mph'}`;
+}
+
 /** Heights: station altitude, antenna height. */
 export function formatHeight(metres: number, units: Units): string {
   if (units === 'metric') return `${Math.round(metres).toLocaleString()} m`;

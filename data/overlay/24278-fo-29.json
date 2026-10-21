@@ -9,5 +9,11 @@
   "amsatStatusNames": [
     "FO-29_[V/u]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "JARL, the Japan Amateur Radio League",
+    "launch": "H-II from Tanegashima, Japan, August 1996",
+    "story": "Fuji-OSCAR 29 (JAS-2) carries a linear transponder: instead of one shared channel, it relays a whole slice of spectrum, so several SSB and CW contacts can share it at once, each on its own frequency.",
+    "source": "JARL, AMSAT (https://www.amsat.org/two-way-satellites/fo-29/), SatNOGS DB, checked 2026-10-21"
+  }
 }

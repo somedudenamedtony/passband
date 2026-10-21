@@ -20,5 +20,12 @@
   ],
   "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
   "operation": "scheduled",
-  "operationSource": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-20: \"FM transponder activated by schedule\"; \"Seems to be dying\""
+  "operationSource": "AMSAT live FM satellites table (https://www.amsat.org/live-fm-satellites/), checked 2026-10-20: \"FM transponder activated by schedule\"; \"Seems to be dying\"",
+  "profile": {
+    "builtBy": "The Philippines’ DOST and University of the Philippines, with Tohoku and Hokkaido Universities in Japan",
+    "launch": "H-IIA from Tanegashima, Japan, October 2018",
+    "launched": "2018-10-29",
+    "story": "Diwata-2 is a Philippine Earth-observation microsatellite. Its amateur radio unit, PO-101, can run as an FM repeater or an APRS digipeater, and it is switched on for scheduled passes that the team announces in advance, so check the schedule before you count on it.",
+    "source": "Wikipedia (https://en.wikipedia.org/wiki/Diwata-2), AMSAT ANS-101 (https://amsat.org/?p=26065), checked 2026-10-21"
+  }
 }

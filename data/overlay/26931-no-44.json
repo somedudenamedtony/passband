@@ -9,5 +9,11 @@
   "amsatStatusNames": [
     "NO-44_[VHF_Digi]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "Midshipmen at the US Naval Academy (PCSat)",
+    "launch": "Athena I from Kodiak, Alaska, September 2001",
+    "story": "PCSat was built at the US Naval Academy as an APRS relay for mobile and portable stations. Its batteries gave out long ago, so it only works in sunlight, and only when not too many stations are using it at once.",
+    "source": "APRS.org (http://www.aprs.org/pcsat.html), SatNOGS DB, checked 2026-10-21"
+  }
 }

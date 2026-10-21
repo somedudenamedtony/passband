@@ -7,6 +7,8 @@ import type {
   OmmElements,
   Operation,
   Satellite,
+  SatelliteAbout,
+  SatelliteProfile,
   Status,
   StatusReport,
   StatusReportKind,
@@ -37,6 +39,11 @@ export interface SatnogsSatellite {
   name: string;
   names: string;
   status: 'in orbit' | 're-entered' | 'future' | string;
+  launched?: string | null;
+  countries?: string | null;
+  website?: string | null;
+  /** Path under SatNOGS' media root, e.g. "satellites/ISS.jpg". */
+  image?: string | null;
 }
 
 /** One file per satellite in data/overlay/ (D6). */
@@ -51,6 +58,9 @@ export interface OverlayEntry {
   noteSource?: string;
   receiveOnly: boolean;
   /** D6: overrides of SatNOGS fields, each with the source that justifies it. */
+  /** Who built it, how it got up there, its story (D6: with a source). `launched` (YYYY-MM-DD)
+   *  fills in when SatNOGS lacks a launch date. */
+  profile?: SatelliteProfile & { launched?: string };
   /** Names on the AMSAT status page (https://www.amsat.org/status/), one per mode it tracks. */
   amsatStatusNames?: string[];
   amsatStatusSource?: string;
@@ -217,6 +227,8 @@ export interface AmsatReport {
 
 /** How far back the build asks AMSAT, and how many reports each satellite keeps. */
 export const AMSAT_WINDOW_HOURS = 96;
+/** The activity graph's span: the build fetches this much, the counts above use the last 96 h. */
+export const AMSAT_HISTORY_DAYS = 14;
 export const AMSAT_KEEP = 20;
 
 const REPORT_KIND: Record<string, StatusReportKind> = {
@@ -235,11 +247,16 @@ function amsatMode(name: string): string {
  * Fold one satellite's AMSAT rows (all its modes) into the catalog summary. `rows` null means the
  * build couldn't fetch them: the counts are then unknown, not zero (D6).
  */
-export function summariseAmsat(rows: AmsatReport[] | null, fetchedAt: number): StatusReports {
+export function summariseAmsat(
+  rows: AmsatReport[] | null,
+  fetchedAt: number,
+  previousDaily: StatusReports['daily'] = null,
+): StatusReports {
   if (rows === null) {
-    return { source: 'amsat', fetchedAt, windowHours: AMSAT_WINDOW_HOURS, heard: null, notHeard: null, lastHeard: null, latest: null };
+    // Keep the history we had; today's fetch adds nothing to it.
+    return { source: 'amsat', fetchedAt, windowHours: AMSAT_WINDOW_HOURS, heard: null, notHeard: null, lastHeard: null, latest: null, daily: previousDaily };
   }
-  const reports: StatusReport[] = rows
+  const all: StatusReport[] = rows
     .map((r) => ({
       t: Date.parse(r.reported_time),
       callsign: r.callsign.trim().toUpperCase(),
@@ -249,6 +266,7 @@ export function summariseAmsat(rows: AmsatReport[] | null, fetchedAt: number): S
     }))
     .filter((r) => Number.isFinite(r.t) && r.callsign !== '')
     .sort((a, b) => b.t - a.t || a.callsign.localeCompare(b.callsign));
+  const reports = all.filter((r) => r.t >= fetchedAt - AMSAT_WINDOW_HOURS * HOUR_MS);
   const heard = reports.filter((r) => r.kind === 'heard' || r.kind === 'crew_active' || r.kind === 'telemetry_only');
   return {
     source: 'amsat',
@@ -258,6 +276,49 @@ export function summariseAmsat(rows: AmsatReport[] | null, fetchedAt: number): S
     notHeard: reports.filter((r) => r.kind === 'not_heard').length,
     lastHeard: heard[0]?.t ?? null,
     latest: reports.slice(0, AMSAT_KEEP),
+    daily: dailyActivity(all, fetchedAt, previousDaily),
+  };
+}
+
+const HOUR_MS = 3_600_000;
+const DAY_MS = 24 * HOUR_MS;
+
+/**
+ * Reports per UTC day, oldest first. AMSAT's API only reaches back 96 hours, so the
+ * history is carried forward: days this fetch fully covers come from it, older days from the
+ * previous published catalog. Days neither saw are left out rather than shown as zero (D6).
+ */
+export function dailyActivity(
+  reports: readonly StatusReport[],
+  fetchedAt: number,
+  previous: StatusReports['daily'] = null,
+): NonNullable<StatusReports['daily']> {
+  const today = Math.floor(fetchedAt / DAY_MS) * DAY_MS;
+  const firstKept = today - (AMSAT_HISTORY_DAYS - 1) * DAY_MS;
+  // The first whole day inside the fetch window; the partial day before it isn't fully covered.
+  const covered = Math.ceil((fetchedAt - AMSAT_WINDOW_HOURS * HOUR_MS) / DAY_MS) * DAY_MS;
+  const byDay = new Map<number, { day: number; heard: number; notHeard: number }>();
+  for (const d of previous ?? []) if (d.day >= firstKept && d.day < covered) byDay.set(d.day, { ...d });
+  for (let day = covered; day <= today; day += DAY_MS) byDay.set(day, { day, heard: 0, notHeard: 0 });
+  for (const r of reports) {
+    const d = byDay.get(Math.floor(r.t / DAY_MS) * DAY_MS);
+    if (!d || d.day < covered) continue;
+    if (r.kind === 'not_heard') d.notHeard++;
+    else if (r.kind !== 'other') d.heard++;
+  }
+  return [...byDay.values()].sort((a, b) => a.day - b.day);
+}
+
+/** SatNOGS' background on a satellite, with the overlay filling a missing launch date. */
+export function aboutSatellite(s: SatnogsSatellite, displayed: string, ov: OverlayEntry | undefined, image: string | null): SatelliteAbout {
+  const launched = s.launched ? Date.parse(s.launched) : ov?.profile?.launched ? Date.parse(`${ov.profile.launched}T00:00:00Z`) : NaN;
+  const names = [s.name, ...s.names.split(/[,;]/)].map((n) => n.trim()).filter((n) => n && n !== displayed);
+  return {
+    launched: Number.isFinite(launched) ? launched : null,
+    countries: (s.countries ?? '').split(',').map((c) => c.trim().toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)),
+    alsoKnownAs: [...new Set(names)],
+    website: s.website?.trim() || null,
+    image,
   };
 }
 
@@ -277,6 +338,10 @@ export interface BuildInputs {
    * that satellite's fetch failed. Omitted entirely, no satellite carries reports.
    */
   amsatReports?: ReadonlyMap<number, AmsatReport[] | null>;
+  /** The published catalog before this build, to carry the activity history forward. */
+  previous?: Catalog | null;
+  /** Photos the build saved alongside the app, by NORAD id (relative paths). */
+  images?: ReadonlyMap<number, string>;
 }
 
 export interface BuildReport {
@@ -351,8 +416,18 @@ export function buildCatalog(inp: BuildInputs): { catalog: Catalog; report: Buil
         note: ov?.note ?? null,
         receiveOnly: ov?.receiveOnly ?? false,
         operation: ov?.operation ?? null,
+        profile: ov?.profile ? { builtBy: ov.profile.builtBy, launch: ov.profile.launch, story: ov.profile.story, source: ov.profile.source } : null,
       },
-      ...(inp.amsatReports?.has(noradId) ? { reports: summariseAmsat(inp.amsatReports.get(noradId) ?? null, inp.generatedAt) } : {}),
+      about: aboutSatellite(s, name, ov, inp.images?.get(noradId) ?? null),
+      ...(inp.amsatReports?.has(noradId)
+        ? {
+            reports: summariseAmsat(
+              inp.amsatReports.get(noradId) ?? null,
+              inp.generatedAt,
+              inp.previous?.satellites.find((p) => p.noradId === noradId)?.reports?.daily ?? null,
+            ),
+          }
+        : {}),
     });
   }
 

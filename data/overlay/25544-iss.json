@@ -13,5 +13,11 @@
     "ISS_[SSTV]",
     "ISS_[Crew]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "NASA, Roscosmos, ESA, JAXA and CSA; the radio station is run by ARISS volunteers",
+    "launch": "First module (Zarya) on a Proton from Baikonur, 1998",
+    "story": "The International Space Station has carried an amateur radio station since 2000, run by ARISS (Amateur Radio on the International Space Station). Crews use it to talk with school groups; between those contacts it runs an FM voice repeater and an APRS digipeater, and now and then it sends pictures as SSTV events. It is low and fast, so passes are short but loud.",
+    "source": "ARISS (https://www.ariss.org/), SatNOGS DB, checked 2026-10-21"
+  }
 }

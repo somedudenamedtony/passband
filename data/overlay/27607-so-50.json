@@ -10,5 +10,11 @@
   "amsatStatusNames": [
     "SO-50_[FM]"
   ],
-  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19"
+  "amsatStatusSource": "AMSAT status page satellite list (https://www.amsat.org/status/), checked 2026-10-19",
+  "profile": {
+    "builtBy": "King Abdulaziz City for Science and Technology (KACST), Saudi Arabia",
+    "launch": "Dnepr from Baikonur, December 2002",
+    "story": "SaudiSat-1C has been relaying FM contacts for more than two decades and is many operators’ first satellite. Its repeater sleeps behind a 10-minute timer that you wake with a short transmission on a separate tone, then it repeats on the normal tone until the timer runs out.",
+    "source": "AMSAT (https://www.amsat.org/two-way-satellites/so-50/), SatNOGS DB, checked 2026-10-21"
+  }
 }

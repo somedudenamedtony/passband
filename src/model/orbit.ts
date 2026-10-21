@@ -10,6 +10,9 @@ export interface OrbitSummary {
   inclinationDeg: number;
   perigeeM: number;
   apogeeM: number;
+  /** Mean orbital speed, m/s. */
+  speedMps: number;
+  revsPerDay: number;
 }
 
 export function orbitSummary(el: OmmElements): OrbitSummary | null {
@@ -20,5 +23,12 @@ export function orbitSummary(el: OmmElements): OrbitSummary | null {
   const periodS = 86_400 / revsPerDay;
   const n = (2 * Math.PI) / periodS; // rad/s
   const a = Math.cbrt(MU / (n * n));
-  return { periodS, inclinationDeg, perigeeM: a * (1 - e) - EARTH_RADIUS_M, apogeeM: a * (1 + e) - EARTH_RADIUS_M };
+  return {
+    periodS,
+    inclinationDeg,
+    perigeeM: a * (1 - e) - EARTH_RADIUS_M,
+    apogeeM: a * (1 + e) - EARTH_RADIUS_M,
+    speedMps: Math.sqrt(MU / a),
+    revsPerDay,
+  };
 }

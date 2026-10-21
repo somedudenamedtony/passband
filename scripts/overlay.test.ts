@@ -31,6 +31,14 @@ describe('overlay (D6, D12)', () => {
       expect(entry.operationSource, file).toBeTruthy();
     }
   });
+  it('every profile has a builder, a story and a source', () => {
+    for (const { file, entry } of entries) {
+      if (!entry.profile) continue;
+      expect(entry.profile.builtBy, file).toBeTruthy();
+      expect(entry.profile.story, file).toBeTruthy();
+      expect(entry.profile.source, file).toMatch(/https?:\/\//);
+    }
+  });
   it('every override cites a source', () => {
     for (const { file, entry } of entries) {
       for (const o of entry.transmitterOverrides ?? []) expect(o.source, file).toBeTruthy();

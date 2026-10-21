@@ -106,7 +106,12 @@ The app does **not** call CelesTrak or SatNOGS from the browser. A scheduled Git
    heard" reports from the AMSAT status page and keeps a summary (counts, last heard, the 20 newest).
    A failed fetch publishes the reports as unknown, never as "nobody heard it" (D6), and never fails
    the build. This is the published, read-only side of community status; posting reports stays v2+
-   (D1).
+   (D1). AMSAT only serves 96 hours, so the per-day counts behind the 14-day activity graph are
+   carried forward from the previously published catalog (`PREVIOUS_CATALOG_URL`); days nobody
+   fetched are left out, not shown as zero.
+3b. Takes each satellite's background from SatNOGS DB (launch date, countries, other names,
+   website) and saves the curated satellites' photos next to the app (`sat-images/`, under 400 kB
+   each, not precached), so the profile never calls a third party from the browser.
 4. Publishes `catalog.json` with a `generated_at` timestamp alongside the app.
 
 Why: no CORS dependency, no hammering CelesTrak (they rate-limit and ask clients not to poll),
@@ -476,9 +481,17 @@ fallback. Only the location is needed to go on.
   by what you can do — Talk (FM), SSB / CW, Packet / APRS, Images, Telemetry — each with its count
   (most of the catalog is telemetry-only cubesats), and a search box narrows by name.
 - Picking a pass in either list swaps it into the card and brings the card back into view.
-- **Info** on the card opens the satellite sheet: what it's for, recent AMSAT reports (as of the
-  daily build), your own contacts through it, its next passes (tap one to show it), every
-  transmitter with status, the orbit (height, period, inclination), element age and LoTW name.
+- The card says what to set, not just numbers: every frequency is shown as a **radio setup** — the
+  mode as a key (tap it for what to set the radio to and how working it goes), ↓ Listen and
+  ↑ Transmit with the band each is in, and the tone. The same component, in the same words, on the
+  card, the live screen and the satellite profile. The card carries the pass; the satellite's story
+  and gear advice live on its profile.
+- **Info** on the card opens the satellite **profile**: photo, flags and other names; a short
+  curated story (overlay `profile`, cited); *at a glance* — who built it, launched when and how,
+  years in orbit, height, speed, laps a day and since launch, how far it sees; *on board* — each
+  working transmitter as a radio setup, two-way ones first; *activity* — a 14-day graph of AMSAT
+  heard / not-heard reports and the latest few; next passes (tap one to show it); your contacts
+  through it; and where every fact came from.
 - Element-age banner when D5 says so.
 
 ### 5.2 Live pass

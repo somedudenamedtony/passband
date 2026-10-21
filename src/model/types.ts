@@ -38,7 +38,11 @@ export interface Satellite {
      * Absent in catalogs built before this field; read it as null.
      */
     operation?: Operation | null;
+    /** The curated story: who built it, how it got up there, what's notable (D6, cited). */
+    profile?: SatelliteProfile | null;
   };
+  /** Background from SatNOGS DB (D4). Absent in catalogs built before this field. */
+  about?: SatelliteAbout;
   /**
    * Recent "heard / not heard" reports from the AMSAT status page, collected by the daily build
    * (D4). Absent when AMSAT doesn't track this satellite (or the catalog predates this field).
@@ -75,6 +79,33 @@ export interface StatusReports {
   lastHeard: number | null;
   /** Newest first, capped. */
   latest: StatusReport[] | null;
+  /**
+   * Reports per UTC day, oldest first, over a longer window than the counts above: the activity
+   * graph. Absent in older catalogs; null when the build couldn't reach AMSAT.
+   */
+  daily?: Array<{ day: number; heard: number; notHeard: number }> | null;
+}
+
+export interface SatelliteAbout {
+  /** UTC epoch ms of launch; null when SatNOGS doesn't know. */
+  launched: number | null;
+  /** ISO 3166 alpha-2 codes, as SatNOGS lists them. */
+  countries: string[];
+  /** Other names it goes by: OSCAR number, callsigns, the builder's name. */
+  alsoKnownAs: string[];
+  website: string | null;
+  /** A photo published with the app (relative to its base), or null. */
+  image: string | null;
+}
+
+export interface SatelliteProfile {
+  /** Who built and runs it, in a few words. */
+  builtBy: string;
+  /** "Delta II from Vandenberg" — how it got up there. */
+  launch: string | null;
+  /** Two or three sentences: what it is and what's worth knowing. */
+  story: string;
+  source: string;
 }
 
 export type TransmitterKind = 'fm_repeater' | 'linear_transponder' | 'beacon' | 'digipeater' | 'other';
