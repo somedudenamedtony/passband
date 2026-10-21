@@ -7,9 +7,9 @@ test('satellite selector, search and paging keep the Tonight lists short', async
   await page.getByRole('button', { name: 'Show my passes' }).click();
   await page.getByRole('heading', { name: 'Next 24 hours' }).waitFor({ timeout: 30_000 });
   await expect(page.getByRole('tab', { name: /^Recommended/ })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByLabel('Find a satellite')).toHaveCount(0);
+  await expect(page.getByLabel('Find a satellite')).toBeVisible();
 
-  await page.getByRole('tab', { name: /^All active/ }).click();
+  await page.getByRole('tab', { name: /^Available/ }).click();
   await page.getByRole('heading', { name: 'Next 24 hours' }).waitFor({ timeout: 30_000 });
   const upcoming = page.getByRole('region', { name: 'Upcoming passes' });
   await expect(upcoming.getByRole('listitem')).toHaveCount(8);

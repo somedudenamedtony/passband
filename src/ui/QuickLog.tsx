@@ -7,7 +7,7 @@ import { grid4, isValidGrid, normaliseGrid } from '../model/grid';
 import { newId } from '../model/ids';
 import type { RigSetting } from '../rig/rig';
 import type { Location, QsoRecord, Satellite, Station, Transmitter } from '../model/types';
-import { Banner, Button, Segmented, Sheet } from './common';
+import { Banner, Button, Segmented, Sheet, Toggle } from './common';
 import { Icon } from './icons';
 
 // The digit row is built rather than written out, so it can't be mistaken for a frequency (§10).
@@ -38,12 +38,15 @@ export function QuickLog({
   location: Location;
   station: Station;
   timeOn: number;
-  onSave: (q: QsoRecord) => void;
+  onSave: (q: QsoRecord) => void | Promise<void>;
   onClose: () => void;
 }) {
   const [call, setCall] = useState('');
   const [grid, setGrid] = useState('');
   const [target, setTarget] = useState<'call' | 'grid'>('call');
+  const [fieldKeypad, setFieldKeypad] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const modes = modesFor(tx);
   const [mode, setMode] = useState(modes[0]!);
 
@@ -53,8 +56,11 @@ export function QuickLog({
   const gridOk = grid === '' || isValidGrid(grid);
   const canSave = call.length >= 3 && /\d/.test(call) && gridOk;
 
-  function save() {
-    onSave({
+  async function save() {
+    if (!canSave || saving) return;
+    setSaving(true);
+    setSaveError(false);
+    try { await onSave({
       id: newId(),
       call,
       timeOn,
@@ -72,32 +78,30 @@ export function QuickLog({
       recordingId: null,
       exportedAt: null,
       note: null,
-    });
+    }); } catch { setSaveError(true); }
+    finally { setSaving(false); }
   }
 
   return (
     <Sheet title={`Log a contact on ${sat.name}`} onClose={onClose}>
-      <div className="stack">
-        <div className="lcd" style={{ display: 'flex', gap: 8, padding: 6 }}>
-          <button type="button" className="call-field" style={{ flex: 2 }} onClick={() => setTarget('call')} aria-pressed={target === 'call'}>
+      <form className="stack" onSubmit={(e) => { e.preventDefault(); void save(); }}>
+        <div className="lcd quicklog-fields">
+          <label className={`call-field${target === 'call' ? ' is-active' : ''}`}>
             <small>Their callsign</small>
-            <span className="readout readout-l" aria-label="Their callsign">
-              {call || <span className="muted">----</span>}
-            </span>
-          </button>
-          <button type="button" className="call-field" onClick={() => setTarget('grid')} aria-pressed={target === 'grid'}>
+            <input autoFocus aria-label="Their callsign" className="readout readout-l" value={call} placeholder="----"
+              autoCapitalize="characters" autoCorrect="off" spellCheck={false} maxLength={12} inputMode={fieldKeypad ? 'none' : 'text'}
+              onFocus={() => setTarget('call')} onChange={(e) => setCall(e.target.value.toUpperCase().replace(/[^A-Z0-9/]/g, ''))} />
+          </label>
+          <label className={`call-field${target === 'grid' ? ' is-active' : ''}`}>
             <small>Grid (optional)</small>
-            <span
-              className="readout readout-m"
-              style={{ textDecoration: gridOk ? undefined : 'line-through' }}
-              aria-label="Their grid"
-            >
-              {grid || <span className="muted">----</span>}
-            </span>
-          </button>
+            <input aria-label="Their grid" className="readout readout-m" value={grid} placeholder="----"
+              aria-invalid={!gridOk} autoCapitalize="characters" autoCorrect="off" spellCheck={false} maxLength={6} inputMode={fieldKeypad ? 'none' : 'text'}
+              onFocus={() => setTarget('grid')} onChange={(e) => setGrid(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} />
+          </label>
         </div>
 
-        <div className="keypad" aria-label="Keypad">
+        <Toggle checked={fieldKeypad} onChange={setFieldKeypad} hint="Typing and paste work with either option.">Use field keypad</Toggle>
+        {fieldKeypad && <div className="keypad" aria-label="Keypad">
           {ROWS.map((row) => (
             <div key={row} className="keypad-row">
               {row.split('').map((k) => (
@@ -112,7 +116,8 @@ export function QuickLog({
               )}
             </div>
           ))}
-        </div>
+        </div>}
+        {!gridOk && <p role="alert" className="danger-text">Enter a 4- or 6-character grid, or leave it blank.</p>}
 
         {modes.length > 1 && <Segmented label="Mode" value={mode} onChange={setMode} options={modes.map((m) => ({ value: m, label: m }))} />}
 
@@ -129,10 +134,11 @@ export function QuickLog({
         )}
         {!station.callsign && <Banner tone="warn">Set your own callsign in Settings before exporting.</Banner>}
 
-        <Button kind="primary" size="large" disabled={!canSave} onClick={save}>
-          Save {call || 'contact'}
+        {saveError && <Banner tone="danger">Couldn’t save this contact. Your entry is still here; try again.</Banner>}
+        <Button kind="primary" type="submit" size="large" disabled={!canSave || saving}>
+          {saving ? 'Saving…' : `Save ${call || 'contact'}`}
         </Button>
-      </div>
+      </form>
     </Sheet>
   );
 }

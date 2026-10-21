@@ -11,13 +11,16 @@ import { retuneSchedule, stepAt } from '../model/schedule';
 import { linearTuning, passband, passbandCentre } from '../model/linear';
 import { MINUTE } from '../model/time';
 import { sampleAt, type TrackPoint } from '../model/track';
-import { primaryTransmitter } from '../model/transmitters';
+import { operatingTransmitter, operatorPreferences } from '../model/operator';
+import { listPassResults, resultId, savePassResult, type PassResult } from '../data/passResults';
 import type { Location, Pass, QsoRecord, Recording, Satellite, Station } from '../model/types';
 import { usePassRecorder } from '../record/usePassRecorder';
 import { formatDistance } from '../model/units';
 import { passTrackFor } from '../predict/client';
 import { DisplayRig } from '../rig/rig';
-import { Banner, Button, Panel, Segmented, SectionTitle } from '../ui/common';
+import { Banner, Button, Fold, Panel, Segmented, SectionTitle } from '../ui/common';
+import { OperatingHelp } from '../ui/OperatingHelp';
+import { gearFor } from '../model/modes';
 import { Icon } from '../ui/icons';
 import { QuickLog } from '../ui/QuickLog';
 import { useNow } from '../ui/clock';
@@ -41,25 +44,33 @@ function bandName(hz: number): string {
   return adifBand(hz)?.replace(/(\d)(c?m)$/, '$1 $2') ?? '';
 }
 
-const PRE_PASS = 5 * MINUTE;
-
 export function LiveScreen({
   pass,
   sat,
   location,
   station,
+  onStation,
   onClose,
   onLog,
   onRecorded,
+  onPractice,
+  onReviewLog,
+  onAddContacts,
+  onNext,
   practice,
 }: {
   pass: Pass;
   sat: Satellite;
   location: Location;
   station: Station;
+  onStation: (s: Station) => void;
   onClose: () => void;
   /** Save a contact from the quick log. */
-  onLog: (q: QsoRecord) => void;
+  onLog: (q: QsoRecord) => Promise<void>;
+  onPractice: () => void;
+  onReviewLog: () => void;
+  onAddContacts: () => void;
+  onNext: () => void;
   /** D13: a recording was saved. */
   onRecorded: (r: Recording) => void;
   /** D16: present only in practice. Everything else on this screen is identical. */
@@ -67,19 +78,36 @@ export function LiveScreen({
 }) {
   const now = useNow(250);
   useBack(onClose);
-  const isNew = station.experience === 'new';
+  const prefs = operatorPreferences(station);
+  const isNew = prefs.tips;
+  const listenOnly = station.goal === 'listen';
   const [track, setTrack] = useState<TrackPoint[] | null>(null);
   const [ackStale, setAckStale] = useState(false);
   // D19: spoken cues on for beginners, off for experienced operators; one tap either way.
-  const [cuesOn, setCuesOn] = useState(isNew);
+  const cuesOn = prefs.cues;
   const [logAt, setLogAt] = useState<number | null>(null);
   // D10/D19: beginners get the big compass view when there is a compass; everyone can switch.
   const compass = useCompass(location, station);
-  const [view, setView] = useState<'sky' | 'compass' | 'ar'>(isNew ? 'compass' : 'sky');
+  const view = prefs.view;
   const compassOk = compass.status === 'ok' && compass.reading !== null;
   const effectiveView = view !== 'sky' && compass.status === 'unsupported' ? 'sky' : view;
   const [logged, setLogged] = useState<string | null>(null);
-  const tx = primaryTransmitter(sat);
+  const tx = operatingTransmitter(sat, station);
+  const [outcome, setOutcome] = useState<PassResult['outcome'] | null>(null);
+  const [outcomeError, setOutcomeError] = useState(false);
+  const [outcomeBusy, setOutcomeBusy] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    if (!practice) void listPassResults().then((rows) => { if (!cancelled) setOutcome(rows.find((r) => r.id === resultId(pass))?.outcome ?? null); }).catch(() => { if (!cancelled) setOutcomeError(true); });
+    return () => { cancelled = true; };
+  }, [pass, practice !== undefined]);
+  async function rememberOutcome(value: PassResult['outcome']) {
+    setOutcomeBusy(true);
+    setOutcomeError(false);
+    try { await savePassResult(pass, sat.name, value); setOutcome(value); }
+    catch { setOutcomeError(true); }
+    finally { setOutcomeBusy(false); }
+  }
   const pb = useMemo(() => (tx ? passband(tx) : null), [tx]);
   // §8.1: the spot in a linear passband, at the satellite. Starts mid-passband.
   const [spotHz, setSpotHz] = useState(() => (pb ? passbandCentre(pb) : 0));
@@ -99,8 +127,8 @@ export function LiveScreen({
     [track, tx, station.radioStepHz],
   );
   const cueEvents = useMemo(
-    () => (track ? passCues(sat.name, pass, track, schedule, formatMHz, station.speakInPass) : []),
-    [track, sat.name, pass, schedule, station.speakInPass],
+    () => (track ? passCues(sat.name, pass, track, listenOnly && schedule?.tuneSide === 'uplink' ? null : schedule, formatMHz, station.speakInPass) : []),
+    [track, sat.name, pass, schedule, station.speakInPass, listenOnly],
   );
 
   // D14: fire cues as the clock crosses them.
@@ -151,6 +179,8 @@ export function LiveScreen({
 
   const stale = elementAgeLevel(pass.elementsEpoch, now) === 'stale';
   const phase = now < pass.aos ? 'before' : now <= pass.los ? 'during' : 'after';
+  const pageRef = useRef<HTMLElement>(null);
+  useEffect(() => { pageRef.current?.scrollTo({ top: 0 }); }, [phase]);
   const here = track ? sampleAt(track, now) : null;
   const support = cueSupport();
   const anyCueOutput =
@@ -165,9 +195,9 @@ export function LiveScreen({
         </header>
         <main className="page">
           <div className="page-inner stack">
-            <h1 className="setup-title">These elements are {formatElementAge(pass.elementsEpoch, now)}</h1>
+            <h1 className="setup-title">Orbit data is {formatElementAge(pass.elementsEpoch, now)}</h1>
             <p>
-              Predictions for {sat.name} come from orbital elements more than two weeks old. The satellite may be minutes
+              Predictions for {sat.name} use orbit data more than two weeks old. The satellite may be minutes
               away from where this screen says, and pointing at the wrong patch of sky is the most common reason a first
               pass fails.
             </p>
@@ -187,6 +217,11 @@ export function LiveScreen({
   const nextHz = next ? (schedule?.tuneSide === 'uplink' ? next.uplinkHz : next.downlinkHz) : null;
 
   const bars = here && phase === 'during' ? Math.max(0, Math.round(here.elDeg / 9)) : 0;
+  const scheduleDetails = schedule && (!listenOnly || schedule.tuneSide === 'downlink') && (
+    <Fold title="Retune schedule" open={phase === 'before' || prefs.compact}>
+      <ScheduleList schedule={schedule} aos={pass.aos} now={now} listenOnly={listenOnly} />
+    </Fold>
+  );
 
   return (
     <LiveModal onClose={onClose}>
@@ -199,7 +234,7 @@ export function LiveScreen({
           aria-label={!anyCueOutput ? 'Cues are off in Settings' : cuesOn ? 'Cues on' : 'Cues off'}
           onClick={() => {
             if (!cuesOn) cue.unlock();
-            setCuesOn((c) => !c);
+            onStation({ ...station, liveCues: !cuesOn });
           }}
         >
           <Icon name={cuesOn && anyCueOutput ? 'volumeOn' : 'volumeOff'} />
@@ -213,9 +248,10 @@ export function LiveScreen({
         </Button>
       </header>
 
-      <main className="page">
+      <main className="page" ref={pageRef}>
         <div className="page-inner stack">
           <Panel>
+            <p className="phase-label">{practice ? 'Practice · ' : ''}{phase === 'before' ? 'Prepare for pass' : phase === 'during' ? 'Tracking live' : 'After the pass'}</p>
             <div className="lcd">
               <div className="lcd-line">
                 <span className="lcd-label">{phase === 'before' ? 'AOS' : phase === 'during' ? 'LOS' : ''}</span>
@@ -243,14 +279,14 @@ export function LiveScreen({
                   </p>
                 </>
               )}
-              {phase !== 'during' && (
+              {phase === 'before' && (
                 <p className="lcd-note" style={{ fontSize: 15 }}>
                   Rises{' '}
                   {isNew ? `in the ${compassWord(pass.aosAzDeg)}` : `${Math.round(pass.aosAzDeg)}° ${compassPoint(pass.aosAzDeg)}`}
                 </p>
               )}
 
-              {tx && setting && (
+              {tx && setting && phase !== 'after' && (
                 <section aria-label="Frequencies">
                   <hr className="lcd-rule" />
                   <p className="lcd-label" style={{ marginBottom: 4 }}>
@@ -262,32 +298,33 @@ export function LiveScreen({
                       <span className={`readout readout-l${flash('downlink')}`}>{formatMHz(setting.downlinkHz)}</span>
                     </div>
                   )}
-                  {setting.uplinkHz !== null && (
+                  {!listenOnly && setting.uplinkHz !== null && (
                     <div className="lcd-line">
                       <span className="lcd-label">↑ Transmit {bandName(setting.uplinkHz)}</span>
                       <span className={`readout readout-l${flash('uplink')}`}>{formatMHz(setting.uplinkHz)}</span>
                     </div>
                   )}
                   <div className="lcd-line" style={{ marginTop: 8 }}>
-                    <span style={{ fontStyle: setting.ctcssHz === 'unknown' ? 'italic' : undefined }}>
+                    {!listenOnly && tx.kind === 'fm_repeater' && <span style={{ fontStyle: setting.ctcssHz === 'unknown' ? 'italic' : undefined }}>
                       <span className="lcd-label">Tone </span>
                       {formatTone(setting.ctcssHz)}
-                    </span>
-                    {next && phase !== 'after' && (
+                    </span>}
+                    {next && phase === 'during' && (!listenOnly || schedule?.tuneSide === 'downlink') && (
                       <span className="tabular">
                         <span className="lcd-label">Next {schedule?.tuneSide === 'uplink' ? '↑' : '↓'} </span>
                         {formatClock(next.t - Math.max(now, pass.aos))}
                       </span>
                     )}
                   </div>
-                  {next && phase !== 'after' && nextHz !== null && (
+                  {next && nextHz !== null && (!listenOnly || schedule?.tuneSide === 'downlink') && (
                     <p className="lcd-note">
-                      Then {formatMHz(nextHz)}.{isNew && ` Retune the ${schedule?.tuneSide === 'uplink' ? 'transmit' : 'listen'} side only.`}
+                      {phase === 'before' ? `First retune: ${formatClock(next.t - pass.aos)} after rise → ` : 'Then '}{formatMHz(nextHz)}.
+                      {isNew && ` Retune the ${schedule?.tuneSide === 'uplink' ? 'transmit' : 'listen'} side${listenOnly ? '' : ' only'}.`}
                     </p>
                   )}
                   {linear && (
                     <p className="lcd-note">
-                      {linear.sendSideband} up, USB down · Doppler now {formatOffsetKHz(linear.hearHz - linear.downAtSatHz)} on the
+                      {listenOnly ? 'USB down' : `${linear.sendSideband} up, USB down`} · Doppler now {formatOffsetKHz(linear.hearHz - linear.downAtSatHz)} on the
                       downlink
                     </p>
                   )}
@@ -299,7 +336,7 @@ export function LiveScreen({
             </div>
           </Panel>
 
-          {pb && <LinearTuner pb={pb} tuning={linear} spotHz={spotHz} onSpot={setSpotHz} isNew={isNew} />}
+          {pb && phase !== 'after' && <LinearTuner pb={pb} tuning={linear} spotHz={spotHz} onSpot={setSpotHz} isNew={isNew} listenOnly={listenOnly} />}
 
           {rec.state === 'recording' && (
             <p role="status" className="recording-dot">
@@ -315,16 +352,51 @@ export function LiveScreen({
           )}
           {rec.state === 'error' && <Banner tone="warn">Couldn’t record — microphone access may have been refused.</Banner>}
           {(wake === 'failed' || wake === 'unsupported') && <Banner tone="warn">Keep the screen on — your phone may lock.</Banner>}
-          {stale && <Banner tone="danger">Elements {formatElementAge(pass.elementsEpoch, now)} — positions are approximate.</Banner>}
+          {stale && <Banner tone="danger">Orbit data {formatElementAge(pass.elementsEpoch, now)} — positions are approximate.</Banner>}
 
-          {practice && tx && (
+          {practice && tx && phase !== 'after' && (
             <PracticePanel controls={practice} tx={tx} schedule={schedule} here={here} up={phase === 'during'} now={now} stepHz={station.radioStepHz} />
           )}
 
+          {phase === 'after' && (
+            <Panel label="Pass review" className="stack pass-review">
+              <SectionTitle>{practice ? 'Practice complete' : 'How did the pass go?'}</SectionTitle>
+              {practice ? <><p>You practised the same pointing and tuning screen used for a real pass.</p><Button onClick={onPractice}>Practise again</Button></> : <>
+                <div className="key-row">
+                  <Button disabled={outcomeBusy} aria-pressed={outcome === 'heard'} onClick={() => void rememberOutcome('heard')}>Heard the satellite</Button>
+                  <Button disabled={outcomeBusy} aria-pressed={outcome === 'nothing'} onClick={() => void rememberOutcome('nothing')}>Heard nothing</Button>
+                </div>
+                {outcome === 'heard' && <p role="status">Listening result saved. Hearing and identifying a satellite is a successful pass.</p>}
+                {outcome === 'nothing' && <p role="status">Listening result saved. Use “I hear nothing” below to check the setup before another pass.</p>}
+                {outcomeError && <Banner tone="danger">Couldn’t save the listening result. Try again.</Banner>}
+                <Button onClick={onReviewLog}>Review recordings and contacts</Button>
+                {!listenOnly && tx?.uplinkHz != null && <Button onClick={onAddContacts}>Add contacts from this pass</Button>}
+              </>}
+              <Button kind="primary" onClick={onNext}>Find another pass</Button>
+            </Panel>
+          )}
+
+          {phase === 'before' && (
+            <Panel label="Pass preparation" className="stack">
+              <Fold title="Preparation checklist" open={prefs.tips}>
+                {tx && <p className="hint">{gearFor(tx)}</p>}
+                <Checklist pass={pass} tx={tx} listenOnly={listenOnly} />
+              </Fold>
+              <div className="key-row">
+                {!practice && tx?.kind === 'fm_repeater' && <Button onClick={onPractice}>Practice this pass</Button>}
+                <Button disabled={!anyCueOutput} onClick={() => { cue.unlock(); cue.emit({ kind: 'info', speak: true, text: 'Passband cue check', t: now }); }}>Test cues</Button>
+              </div>
+              {prefs.tips && <p className="hint">Set the displayed frequencies on your radio. Passband guides you; radio controls stay in your hands.</p>}
+            </Panel>
+          )}
+
+          {phase === 'before' && scheduleDetails}
+
+          {phase !== 'after' && <>
           <Segmented
             label="View"
             value={effectiveView}
-            onChange={setView}
+            onChange={(liveView) => onStation({ ...station, liveView })}
             options={[
               { value: 'sky', label: 'Sky' },
               { value: 'compass', label: 'Compass' },
@@ -354,22 +426,11 @@ export function LiveScreen({
               </div>
             )}
           </Panel>
+          </>}
 
-          {phase === 'before' && now >= pass.aos - PRE_PASS && (
-            <section>
-              <SectionTitle>Before it rises</SectionTitle>
-              <Checklist pass={pass} tx={tx} />
-            </section>
-          )}
+          {phase === 'during' && scheduleDetails}
+          {tx && <OperatingHelp tx={tx} listenOnly={listenOnly} troubleshoot={outcome === 'nothing'} />}
 
-          {schedule && (phase === 'before' || !isNew) && (
-            <section>
-              <SectionTitle>Retune schedule</SectionTitle>
-              <ScheduleList schedule={schedule} aos={pass.aos} now={now} />
-            </section>
-          )}
-
-          {phase === 'before' && now < pass.aos - PRE_PASS && <p className="hint">The checklist appears five minutes before the pass.</p>}
         </div>
       </main>
 
@@ -385,11 +446,11 @@ export function LiveScreen({
           <Icon name={rec.state === 'recording' ? 'stop' : 'mic'} />
           {rec.state === 'recording' ? 'Stop' : rec.state === 'saving' ? 'Saving…' : 'Rec'}
         </Button>
-        {tx?.uplinkHz != null && (
+        {!listenOnly && tx?.uplinkHz != null && (
           <Button
             size="large"
             disabled={!!practice}
-            onClick={() => setLogAt(now)}
+            onClick={() => { if (phase === 'after') onAddContacts(); else setLogAt(now); }}
             aria-label={practice ? 'Logging is off in practice' : 'Log a contact'}
           >
             <Icon name="add" />
@@ -408,8 +469,8 @@ export function LiveScreen({
           station={station}
           timeOn={logAt}
           onClose={() => setLogAt(null)}
-          onSave={(q) => {
-            onLog(q);
+          onSave={async (q) => {
+            await onLog(q);
             setLogAt(null);
             setLogged(q.call);
           }}

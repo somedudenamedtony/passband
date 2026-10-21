@@ -56,7 +56,7 @@ export function modeGuide(tx: Transmitter): ModeGuide {
         setRadio: 'USB or LSB (or CW) on both sides, full duplex',
         how: `It relays a whole slice of spectrum, so many SSB and CW contacts share it at once, each on its own frequency.${
           tx.inverting ? ' It’s inverting: tune up on the uplink and you move down on the downlink.' : ''
-        } The live screen tunes both sides by one frequency for you.`,
+        } The live screen shows the matching frequencies to set on your radio.`,
         twoWay: up,
       };
     case 'digipeater':

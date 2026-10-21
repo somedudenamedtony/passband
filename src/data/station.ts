@@ -5,6 +5,12 @@ export const DEFAULT_STATION: Station = {
   callsign: '',
   units: 'imperial', // D20
   experience: 'new', // D19
+  goal: 'contacts',
+  equipment: 'unknown',
+  showTips: null,
+  compactDetails: null,
+  liveView: null,
+  liveCues: null,
   radioStepHz: 5000, // D7
   cues: { speech: true, tones: false, vibration: false }, // D14: speech works everywhere
   compassOffsetDeg: 0,

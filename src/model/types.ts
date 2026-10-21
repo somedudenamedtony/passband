@@ -142,6 +142,13 @@ export interface Station {
   callsign: string;
   units: 'imperial' | 'metric';
   experience: 'new' | 'experienced';
+  goal: 'listen' | 'contacts' | 'explore';
+  equipment: 'unknown' | 'fm' | 'ssb' | 'sdr';
+  /** null follows the experience preset; an explicit choice always wins. */
+  showTips: boolean | null;
+  compactDetails: boolean | null;
+  liveView: 'sky' | 'compass' | 'ar' | null;
+  liveCues: boolean | null;
   radioStepHz: RadioStepHz;
   cues: { speech: boolean; tones: boolean; vibration: boolean };
   compassOffsetDeg: number;

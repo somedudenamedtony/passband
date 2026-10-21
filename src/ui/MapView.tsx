@@ -10,6 +10,7 @@ import type { LoadedCatalog } from '../data/catalog';
 import { circle, footprintAngle, footprintRadiusM, reachableGrids, splitAtAntimeridian } from '../model/footprint';
 import { gridToLatLon, grid4, isValidGrid, toGrid6 } from '../model/grid';
 import { listedSatellites, nextGoodPass } from '../model/selection';
+import { matchesOperator } from '../model/operator';
 import { MINUTE, SECOND } from '../model/time';
 import type { Location, QsoRecord, Station } from '../model/types';
 import { formatDistance } from '../model/units';
@@ -48,22 +49,28 @@ export function MapView({
   location,
   station,
   qsos,
+  satelliteId,
+  onSatellite,
 }: {
   catalog: LoadedCatalog;
   location: Location;
   station: Station;
   qsos: QsoRecord[];
+  satelliteId: number | null;
+  onSatellite: (id: number) => void;
 }) {
   const now = useNow(1000);
   const sats = useMemo(
-    () => listedSatellites(catalog.catalog, station.experience, { showAll: false, showInactive: false }),
+    () => listedSatellites(catalog.catalog, station.experience, { showAll: true, showInactive: true }),
     [catalog, station.experience],
   );
   const byId = useMemo(() => new Map(sats.map((s) => [s.noradId, s])), [sats]);
-  const { passes } = usePasses(sats, location);
-  const [choice, setChoice] = useState<number | null>(null);
+  const recommended = useMemo(() => listedSatellites(catalog.catalog, station.experience, {
+    showAll: station.goal === 'explore' || station.equipment === 'ssb', showInactive: false,
+  }).filter((s) => matchesOperator(s, station)), [catalog, station.experience, station.goal, station.equipment]);
+  const { passes } = usePasses(recommended, location);
   const next = passes ? nextGoodPass(passes, byId, station.experience, now, station.hours) : null;
-  const satId = choice ?? next?.noradId ?? sats[0]?.noradId ?? null;
+  const satId = satelliteId !== null && byId.has(satelliteId) ? satelliteId : next?.noradId ?? sats[0]?.noradId ?? null;
   const sat = satId === null ? undefined : byId.get(satId);
 
   const [zoom, setZoom] = useState<Zoom>('world');
@@ -135,7 +142,7 @@ export function MapView({
   return (
     <div className="stack">
       {satId !== null && (
-        <Select label="Satellite" value={satId} onChange={setChoice} options={sats.map((s) => ({ value: s.noradId, label: s.name }))} />
+        <Select label="Satellite" value={satId} onChange={onSatellite} options={sats.map((s) => ({ value: s.noradId, label: s.name }))} />
       )}
       <Segmented
         label="Zoom"

@@ -30,5 +30,5 @@ test('"Use this pass" selects the easiest pass on Tonight', async ({ page }) => 
   await page.getByRole('tab', { name: 'Learn' }).click();
   await page.getByRole('button', { name: 'Use this pass' }).click({ timeout: 30_000 });
   await expect(page.getByText(/Next good pass|Selected pass/)).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Tonight', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Passes', exact: true })).toHaveAttribute('aria-selected', 'true');
 });

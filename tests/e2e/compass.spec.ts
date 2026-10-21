@@ -35,7 +35,7 @@ async function setup(page: Page) {
 
 test('compass view points the way to the satellite and shows its accuracy state', async ({ page }) => {
   await setup(page);
-  await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click();
+  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
   await segment(page, 'Compass').click();
   await turnOnCompass(page);
   const feed = setInterval(() => void orient(page, 0, 20, 0).catch(() => undefined), 150);
@@ -50,7 +50,7 @@ test('compass view points the way to the satellite and shows its accuracy state'
 
 test('without a compass the live screen falls back to the north-up sky plot', async ({ page }) => {
   await setup(page);
-  await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click();
+  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
   await segment(page, 'Compass').click();
   await turnOnCompass(page);
   await expect(page.getByText('No compass on this device')).toBeVisible({ timeout: 10_000 });

@@ -5,6 +5,7 @@ import { compassPoint, formatCountdown, formatLocalTime } from '../model/format'
 import { elementAgeLevel } from '../model/elementAge';
 import { passOutlook } from '../model/outlook';
 import type { Pass, Satellite, Station } from '../model/types';
+import { operatorPreferences } from '../model/operator';
 
 /** Rows per page: enough to plan an evening without a long scroll. */
 export const PAGE = 8;
@@ -28,6 +29,7 @@ export function PassList({
   favorites?: ReadonlySet<number>;
 }) {
   const [shown, setShown] = useState(PAGE);
+  const compact = operatorPreferences(station).compact;
   const all = passes.filter((p) => isGoodPass(p, station.experience));
   const good = all.slice(0, shown);
   if (!good.length) return null;
@@ -59,7 +61,7 @@ export function PassList({
                     <span className="row-sub" style={{ display: 'block' }}>
                       {approx && '~'}
                       {formatLocalTime(p.aos)} · {Math.round(p.maxElDeg)}°
-                      {station.experience === 'experienced' && ` · ${compassPoint(p.aosAzDeg)}→${compassPoint(p.losAzDeg)}`}
+                      {compact && ` · ${compassPoint(p.aosAzDeg)}→${compassPoint(p.losAzDeg)}`}
                       {outlook.level !== 'likely' && outlook.short && <span className="row-flag"> · {outlook.short}</span>}
                     </span>
                   </span>

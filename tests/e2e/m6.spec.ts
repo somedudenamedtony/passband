@@ -12,7 +12,7 @@ async function setup(page: Page) {
 // D13: record, play back, and log a contact at a moment in the recording.
 test('record a pass, play it back, and log from playback', async ({ page }) => {
   await setup(page);
-  await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click();
+  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
   await page.getByRole('button', { name: 'Record the pass' }).click();
   await expect(page.getByText('● Recording')).toBeVisible();
   await page.waitForTimeout(2500);
@@ -36,7 +36,7 @@ test('record a pass, play it back, and log from playback', async ({ page }) => {
 test('remind me exports an .ics with an alarm', async ({ page }) => {
   await setup(page);
   const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Remind me' }).click();
+  await page.getByRole('button', { name: 'Add to calendar' }).click();
   const ics = await readFile(await (await download).path(), 'utf8');
   expect(ics).toContain('BEGIN:VEVENT');
   expect(ics).toContain('TRIGGER:-PT5M');

@@ -4,17 +4,18 @@ import { formatTone } from '../model/freq';
 import type { Pass, Transmitter } from '../model/types';
 
 /** §5.2 pre-pass checklist. Ticks are for the user's benefit only and aren't stored. */
-export function Checklist({ pass, tx }: { pass: Pass; tx: Transmitter | null }) {
+export function Checklist({ pass, tx, listenOnly = false }: { pass: Pass; tx: Transmitter | null; listenOnly?: boolean }) {
   const items: string[] = [];
-  if (tx?.uplinkHz != null) {
+  if (!listenOnly && tx?.uplinkHz != null) {
     if (tx.ctcssHz === 'unknown') items.push('Tone: unknown — check before you transmit.');
     else if (tx.ctcssHz === null) items.push('Tone: none needed. Make sure your radio isn’t sending one.');
     else items.push(`Tone set to ${formatTone(tx.ctcssHz)}.`);
   }
-  items.push('Frequencies below are in your radio, or in memory channels.');
+  items.push('Radio set to the displayed mode and frequencies, or memory channels programmed.');
   items.push(`Antenna pointed ${compassWord(pass.aosAzDeg)}, low on the horizon.`);
   items.push('Polarisation: twist the antenna slowly until the signal is loudest.');
-  if (tx?.uplinkHz != null) items.push('Listen first. Never transmit until you can hear the satellite.');
+  items.push('Antenna connected, audio checked, and recording ready if wanted.');
+  if (!listenOnly && tx?.uplinkHz != null) items.push('Listen first. Never transmit until you can hear the satellite.');
   const [done, setDone] = useState<boolean[]>(() => items.map(() => false));
   return (
     <ul className="rows">

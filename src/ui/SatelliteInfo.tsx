@@ -11,6 +11,7 @@ import { gearFor } from '../model/modes';
 import { orbitSummary } from '../model/orbit';
 import { YEAR } from '../model/time';
 import { primaryTransmitter } from '../model/transmitters';
+import { operatorPreferences } from '../model/operator';
 import type { Location, Pass, QsoRecord, Satellite, Station, StatusReport, Transmitter } from '../model/types';
 import { formatDistance, formatSpeed } from '../model/units';
 import { ActivityChart } from './ActivityChart';
@@ -235,7 +236,7 @@ export function SatelliteInfo({
                 </ul>
               </Fold>
             )}
-            {primary && station.experience === 'new' && (
+            {primary && operatorPreferences(station).tips && (
               <p>
                 <b>What you’ll need:</b> <span className="muted">{gearFor(primary)}</span>
               </p>

@@ -24,6 +24,7 @@ export function AddQso({
   now,
   onSave,
   onClose,
+  initialPass,
 }: {
   sats: readonly Satellite[];
   location: Location;
@@ -31,13 +32,14 @@ export function AddQso({
   now: number;
   onSave: (q: QsoRecord) => void;
   onClose: () => void;
+  initialPass?: Pass | null;
 }) {
   // Satellites you can work: a working uplink, or at least a LoTW name.
   const workable = useMemo(
     () => sats.filter((s) => hasWorkingUplink(s) || s.lotwName).sort((a, b) => a.name.localeCompare(b.name)),
     [sats],
   );
-  const [satId, setSatId] = useState<number>(workable.find((s) => s.overlay.difficulty === 'beginner')?.noradId ?? workable[0]?.noradId ?? 0);
+  const [satId, setSatId] = useState<number>(initialPass?.noradId ?? workable.find((s) => s.overlay.difficulty === 'beginner')?.noradId ?? workable[0]?.noradId ?? 0);
   const sat = workable.find((s) => s.noradId === satId);
   const tx = sat ? primaryTransmitter(sat) : null;
   const modes = tx ? modesFor(tx) : ['FM'];
@@ -60,7 +62,7 @@ export function AddQso({
 
   const [call, setCall] = useState('');
   const [grid, setGrid] = useState('');
-  const [time, setTime] = useState(formatUtcInput(now));
+  const [time, setTime] = useState(formatUtcInput(initialPass ? Math.min(initialPass.tca, now) : now));
   const [note, setNote] = useState('');
   const t = parseUtcInput(time);
   const gridOk = grid === '' || isValidGrid(grid);
