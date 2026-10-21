@@ -47,10 +47,10 @@ test('swiping in from the left edge goes back', async ({ page }) => {
   await edgeSwipe(page);
   await expect(page.getByRole('tab', { name: 'Map', exact: true })).toHaveAttribute('aria-selected', 'true');
   await edgeSwipe(page);
-  await expect(page.getByRole('tab', { name: 'Tonight', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Passes', exact: true })).toHaveAttribute('aria-selected', 'true');
 
   // The live screen closes.
-  await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click();
+  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
   await expect(page.getByRole('dialog', { name: 'Live pass' })).toBeVisible();
   await edgeSwipe(page);
   await expect(page.getByRole('dialog', { name: 'Live pass' })).toHaveCount(0);

@@ -8,6 +8,7 @@ Works offline in the field once loaded. Nothing you enter leaves your device.
 
 - **[SPEC.md](SPEC.md)** — what it does and the decisions behind it.
 - Status: all v1 milestones (M1–M6) built: catalog and prediction, live pass, practice and Learn, logging with ADIF export, compass/AR/horizon mask, recording, calendar reminders and the map. See SPEC.md §8 for what comes later.
+- Operating goals and radio-aware recommendations; independent tips and compact details; remembered filters, views and cues; immediate preparation and practice; contextual help; post-pass listening results and contact entry.
 
 ## Develop
 

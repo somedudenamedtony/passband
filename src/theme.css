@@ -395,6 +395,7 @@ select {
   margin-top: 4px;
 }
 .lcd-note {
+  font-family: var(--sans);
   font-size: 13px;
   line-height: 1.35;
   margin-top: 8px;
@@ -1023,6 +1024,36 @@ input[type='range'] {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--lcd-dim);
+}
+
+/* Pass planning: the next action comes before the optional instrument detail. */
+.pass-actions { margin: 12px 0; }
+.recommendation { line-height: 1.5; }
+.pass-card .fold-body { padding: 10px 0; }
+.pass-card .outlook { margin: 0; padding-top: 4px; padding-bottom: 4px; }
+.pass-card-compact .lcd { padding: 10px 12px; }
+.pass-card-compact .bargraph,
+.pass-card-compact .bargraph + .lcd-label { display: none; }
+.pass-card-compact .freq-line .readout { font-size: 1.35rem; }
+.operating-help { margin-top: 12px; }
+.operating-help p + p { margin-top: 8px; }
+.help-steps { padding-left: 24px; margin: 0 0 12px; }
+.help-steps li + li { margin-top: 10px; }
+.phase-label { color: var(--ink-dim); font-size: 14px; margin-bottom: 10px; }
+.learning-start { margin-bottom: 16px; }
+.quicklog-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.25fr); gap: 6px; padding: 6px; }
+.quicklog-fields .call-field { min-width: 0; padding: 8px; background: transparent; }
+.quicklog-fields .call-field.is-active { border-color: var(--lcd); }
+.quicklog-fields input { width: 100%; min-width: 0; padding: 6px 0; border: 0; color: var(--lcd); background: transparent; }
+.quicklog-fields input::placeholder { color: var(--lcd-dim); }
+.quicklog-fields input[aria-invalid='true'] { text-decoration: underline wavy; }
+.quicklog-fields .readout-l { font-size: 1.6rem; }
+.pass-review .key-row { flex-wrap: wrap; }
+.pass-review .key-row .key { flex: 1 1 140px; }
+@media (max-width: 420px) {
+  .pass-card .readout-l { font-size: 1.9rem; }
+  .pass-card .key-row { gap: 6px; }
+  .pass-card .key-row .key { font-size: 12px; letter-spacing: 0.04em; padding-left: 8px; padding-right: 8px; }
 }
 
 .sky-wrap {

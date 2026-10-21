@@ -4,6 +4,7 @@ import { isValidGrid } from '../model/grid';
 import type { Location, Station } from '../model/types';
 import { Button, Field, Panel, Segmented } from './common';
 import { Icon } from './icons';
+import { OperatingPreferences } from './OperatingPreferences';
 
 /** D8: a manually entered grid or the Geolocation API. Nothing is sent anywhere. */
 export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Location) => void; submitLabel?: string }) {
@@ -85,8 +86,8 @@ export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Loc
 }
 
 /**
- * First run: the two things that change what Passband shows (experience, D19, and callsign), then
- * where you are. Everything has a default, so only the location is needed to go on.
+ * First run: intent and radio, an experience preset, optional callsign, and location.
+ * Everything has a default, so only the location is needed to continue.
  */
 export function LocationSetup({
   onSave,
@@ -100,9 +101,12 @@ export function LocationSetup({
   return (
     <section className="stack">
       <h1 className="setup-title">Welcome to Passband</h1>
-      <p className="muted">Three quick questions, and you’ll see which satellites pass over you, and when.</p>
+      <p className="muted">Find a pass that suits what you want to do. Only your location is required.</p>
 
-      <h2 className="setup-step">1. Have you made a satellite contact before?</h2>
+      <h2 className="setup-step">What would you like to do?</h2>
+      <OperatingPreferences station={station} onChange={onStation} />
+
+      <h2 className="setup-step">Have you used satellites before?</h2>
       <Segmented
         label="Experience"
         value={station.experience}
@@ -114,12 +118,12 @@ export function LocationSetup({
       />
       <p className="hint">
         {station.experience === 'new'
-          ? 'You’ll start with the easy FM satellites and a first-contact guide.'
-          : 'You’ll see every satellite with a working uplink, and denser pass details.'}{' '}
-        Change it any time in Settings.
+          ? 'Operating tips start on, with pass details you can expand.'
+          : 'Compact details start on, with operating tips available when you want them.'}{' '}
+        Adjust either preference in Settings.
       </p>
 
-      <h2 className="setup-step">2. Your callsign (optional)</h2>
+      <h2 className="setup-step">Your callsign (optional)</h2>
       <Panel>
         <Field
           label="Callsign"
@@ -134,7 +138,7 @@ export function LocationSetup({
         />
       </Panel>
 
-      <h2 className="setup-step">3. Where are you operating from?</h2>
+      <h2 className="setup-step">Where are you operating from?</h2>
       <LocationForm onSave={onSave} submitLabel="Show my passes" />
     </section>
   );

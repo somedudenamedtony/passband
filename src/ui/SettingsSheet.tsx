@@ -9,6 +9,8 @@ import { SunCalibration } from '../compass/SunCalibration';
 import type { Location, RadioStepHz, Station } from '../model/types';
 import { Button, Field, Panel, SectionTitle, Segmented, Select, Sheet, Toggle } from './common';
 import { useNow } from './clock';
+import { operatorPreferences } from '../model/operator';
+import { OperatingPreferences } from './OperatingPreferences';
 
 const STEPS: RadioStepHz[] = [2500, 5000, 6250];
 
@@ -38,6 +40,7 @@ export function SettingsSheet({
   const [calibrating, setCalibrating] = useState(false);
   const now = useNow(60_000);
   const support = cueSupport();
+  const prefs = operatorPreferences(station);
   const cueRows: Array<{ key: keyof Station['cues']; label: string; missing: string }> = [
     { key: 'speech', label: 'Spoken cues', missing: 'This browser can’t speak.' },
     { key: 'tones', label: 'Tones', missing: 'This browser can’t play tones.' },
@@ -46,6 +49,8 @@ export function SettingsSheet({
 
   return (
     <Sheet title="Settings" onClose={onClose}>
+      <SectionTitle>Operating goal and radio</SectionTitle>
+      <Panel><OperatingPreferences station={station} onChange={onChange} /></Panel>
       <SectionTitle>Experience</SectionTitle>
       <Panel className="stack">
         <Segmented
@@ -57,7 +62,10 @@ export function SettingsSheet({
             { value: 'experienced', label: 'I’ve made contacts' },
           ]}
         />
-        <p className="hint">Changes what’s shown by default. Nothing is locked either way.</p>
+        <p className="hint">A starting preset. Your individual choices below take priority.</p>
+        <Toggle checked={prefs.tips} onChange={(showTips) => onChange({ ...station, showTips })}>Show operating tips</Toggle>
+        <Toggle checked={prefs.compact} onChange={(compactDetails) => onChange({ ...station, compactDetails })}>Compact pass details</Toggle>
+        <Button kind="ghost" onClick={() => onChange({ ...station, showTips: null, compactDetails: null, liveView: null, liveCues: null })}>Use experience defaults</Button>
       </Panel>
 
       <SectionTitle>Station</SectionTitle>
@@ -125,6 +133,9 @@ export function SettingsSheet({
 
       <SectionTitle>Live pass</SectionTitle>
       <Panel>
+        <Toggle checked={prefs.cues} onChange={(liveCues) => onChange({ ...station, liveCues })}>Enable cues when opening a pass</Toggle>
+        <Select label="Preferred tracking view" value={prefs.view} onChange={(liveView) => onChange({ ...station, liveView })}
+          options={[{ value: 'sky', label: 'Sky' }, { value: 'compass', label: 'Compass' }, { value: 'ar', label: 'AR' }]} />
         {cueRows.map((r) => (
           <Toggle
             key={r.key}

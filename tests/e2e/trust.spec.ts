@@ -90,11 +90,11 @@ test('a linear transponder pass tunes by one true frequency', async ({ page }) =
   await page.getByPlaceholder('CN87uo').fill('CN87uo');
   await page.getByRole('button', { name: 'Show my passes' }).click();
   await page.getByRole('heading', { name: 'Next 24 hours' }).waitFor({ timeout: 30_000 });
-  await page.getByRole('tab', { name: /^All active/ }).click();
+  await page.getByRole('tab', { name: /^Available/ }).click();
   await page.getByLabel('Find a satellite').fill('RS-44');
   const upcoming = page.getByRole('region', { name: 'Upcoming passes' });
   await upcoming.getByRole('button').first().click({ timeout: 30_000 });
-  await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click();
+  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
 
   const band = page.getByRole('region', { name: 'Passband' });
   await expect(band).toBeVisible();

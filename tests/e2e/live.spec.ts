@@ -6,7 +6,7 @@ test('live screen tracks a pass and returns with the back button', async ({ page
   await page.goto('./');
   await page.getByPlaceholder('CN87uo').fill('CN87uo');
   await page.getByRole('button', { name: 'Show my passes' }).click();
-  await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click({ timeout: 30_000 });
+  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click({ timeout: 30_000 });
 
   await expect(page.getByRole('img', { name: 'Sky plot' })).toBeVisible();
   const freqs = page.getByRole('region', { name: 'Frequencies' });

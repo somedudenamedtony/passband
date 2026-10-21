@@ -12,7 +12,7 @@ import {
   formatLocalTime,
   formatUtc,
 } from '../model/format';
-import { primaryTransmitter } from '../model/transmitters';
+import { operatingTransmitter, operatorPreferences, recommendationReason } from '../model/operator';
 import type { Location, Pass, Satellite, Station, Transmitter } from '../model/types';
 import { predictPasses, rangeRateAt } from '../predict/client';
 import { isGoodPass } from '../model/selection';
@@ -20,11 +20,13 @@ import { passOutlook } from '../model/outlook';
 import { DAY } from '../model/time';
 import { exportPassesToCalendar } from './calendar';
 import { createCue } from '../cue/cue';
-import { Banner, Button, Panel } from './common';
+import { Banner, Button, Fold, Panel } from './common';
 import { Icon } from './icons';
 import { FavoriteKey } from './FavoriteKey';
 import { RadioSetup } from './RadioSetup';
 import { DifficultyBadge, StatusBadge } from './badges';
+import { OperatingHelp } from './OperatingHelp';
+import { gearFor } from '../model/modes';
 
 interface Doppler {
   tuning: FmTuning | null;
@@ -76,6 +78,7 @@ export function PassCard({
   outsideHours = false,
   onBackToNext,
   onStart,
+  onPractice,
   onInfo,
   favorite = false,
   onFavorite,
@@ -90,26 +93,28 @@ export function PassCard({
   outsideHours?: boolean;
   onBackToNext?: () => void;
   onStart: () => void;
+  onPractice: () => void;
   /** Open the satellite's info sheet. */
   onInfo?: () => void;
   favorite?: boolean;
   onFavorite?: () => void;
 }) {
-  const tx = primaryTransmitter(sat);
+  const tx = operatingTransmitter(sat, station);
   const doppler = useDoppler(pass, sat, tx, location, station, now);
   const inProgress = now >= pass.aos && now < pass.los;
   const durationS = Math.round((pass.los - pass.aos) / 1000);
   const masked = pass.visibleSecondsAboveMask < durationS - 30;
   const age = elementAgeLevel(pass.elementsEpoch, now);
   const approx = age === 'stale';
-  const isNew = station.experience === 'new';
+  const prefs = operatorPreferences(station);
+  const listenOnly = station.goal === 'listen';
   const tilde = approx ? '~' : '';
 
   const bars = Math.max(1, Math.round(pass.maxElDeg / 9));
   const outlook = passOutlook(pass, sat, now);
 
   return (
-    <Panel label={`Pass of ${sat.name}`}>
+    <Panel label={`Pass of ${sat.name}`} className={`pass-card${prefs.compact ? ' pass-card-compact' : ''}`}>
       <div className="lcd">
         <div className="lcd-line lcd-label">
           <span>
@@ -142,12 +147,25 @@ export function PassCard({
           {formatLocalTime(pass.aos)}–{formatLocalTime(pass.los)} · {formatUtc(pass.aos)}
         </p>
 
+      </div>
+      <div className="stack pass-actions">
+        <p className={`outlook outlook-${outlook.level}`}><b>{OUTLOOK_WORD[outlook.level]}</b></p>
+        <p className="recommendation">{recommendationReason(sat, station)} High point {Math.round(pass.maxElDeg)}° · {formatDuration(durationS)} pass{masked && ` · ${formatDuration(pass.visibleSecondsAboveMask)} above your horizon`}.</p>
+        <p className="hint">Orbit data {formatElementAge(pass.elementsEpoch, now)}{approx && ' · times approximate'}</p>
+        <Button kind="primary" size="large" onClick={() => { createCue(station.cues).unlock(); onStart(); }}>
+          <Icon name="play" />{inProgress ? 'Track live' : 'Prepare for pass'}
+        </Button>
+        {onBackToNext && !isNext && <Button kind="ghost" onClick={onBackToNext}>Back to next</Button>}
+      </div>
+      <Fold title="Radio setup and pass details" open={prefs.compact}>
+      <div className="lcd">
         {tx && (
           <>
-            <hr className="lcd-rule" />
             <RadioSetup
               tx={tx}
-              isNew={isNew}
+              isNew={prefs.tips}
+              listenOnly={listenOnly}
+              size="small"
               tuning={
                 doppler?.tuning
                   ? { ...doppler.tuning, when: inProgress ? 'now' : 'at rise' }
@@ -178,18 +196,18 @@ export function PassCard({
           <span>90°</span>
         </div>
 
-        {!isNew && (
+        {(
           <div className="tabular" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 10 }}>
             <div>
-              <div className="lcd-label">AOS</div>
+              <div className="lcd-label"><abbr title="Acquisition of signal · rise">AOS</abbr></div>
               <div>{formatUtc(pass.aos, true)}</div>
             </div>
             <div>
-              <div className="lcd-label">TCA</div>
+              <div className="lcd-label"><abbr title="Time of closest approach · highest point">TCA</abbr></div>
               <div>{formatUtc(pass.tca, true)}</div>
             </div>
             <div>
-              <div className="lcd-label">LOS</div>
+              <div className="lcd-label"><abbr title="Loss of signal · set">LOS</abbr></div>
               <div>{formatUtc(pass.los, true)}</div>
             </div>
             {doppler?.spanHz != null && (
@@ -200,13 +218,12 @@ export function PassCard({
             )}
           </div>
         )}
+        {prefs.tips && <p className="lcd-note">AOS is rise, TCA is the highest point, and LOS is set. These detailed times are UTC.</p>}
       </div>
 
       <div className="stack" style={{ marginTop: 12 }}>
-        <p className={`outlook outlook-${outlook.level}`} role={outlook.level === 'unlikely' ? 'alert' : undefined}>
-          <b>{OUTLOOK_WORD[outlook.level]}</b> {outlook.reason}
-        </p>
-        {!isNew && (
+        <p>{outlook.reason}</p>
+        {(
           <p className="silk" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             <span>
               AOS {Math.round(pass.aosAzDeg)}° {compassPoint(pass.aosAzDeg)}
@@ -216,7 +233,7 @@ export function PassCard({
             </span>
           </p>
         )}
-        {isNew && (
+        {prefs.tips && (
           <p>
             Rises in the <b>{compassWord(pass.aosAzDeg)}</b>, sets in the <b>{compassWord(pass.losAzDeg)}</b>.
           </p>
@@ -226,31 +243,22 @@ export function PassCard({
 
 
         <p className={age === 'fresh' ? 'hint' : undefined} style={{ fontWeight: age === 'fresh' ? undefined : 700 }}>
-          Elements {formatElementAge(pass.elementsEpoch, now)}
+          Orbit data {formatElementAge(pass.elementsEpoch, now)}
           {approx && ' — times are approximate'}
         </p>
-        {onBackToNext && !isNext && (
-          <Button kind="ghost" onClick={onBackToNext}>
-            Back to next
-          </Button>
-        )}
-        <Button
-          kind="primary"
-          size="large"
-          onClick={() => {
-            // The tap is the user gesture browsers need before cues can make a sound (D14).
-            createCue(station.cues).unlock();
-            onStart();
-          }}
-        >
-          <Icon name="play" />
-          {inProgress ? 'Track it now' : 'Start'}
-        </Button>
-        <Reminders pass={pass} sat={sat} location={location} station={station} now={now} />
-        {approx && (
-          <Banner tone="danger">These elements are over two weeks old. The satellite may be minutes away from where this says.</Banner>
-        )}
+        {tx && prefs.tips && <p className="hint">{gearFor(tx)}</p>}
       </div>
+      </Fold>
+      <Fold title="Why this outlook?">
+        <p>{outlook.reason}</p>
+        <p className="hint">Orbit data {formatElementAge(pass.elementsEpoch, now)}. Reported activity is evidence, not a guarantee for this pass.</p>
+      </Fold>
+      <div className="stack" style={{ marginTop: 12 }}>
+        {tx?.kind === 'fm_repeater' && <Button onClick={onPractice}>Practice this pass</Button>}
+        <Reminders pass={pass} sat={sat} location={location} station={station} now={now} />
+      </div>
+      {tx && <OperatingHelp tx={tx} listenOnly={listenOnly} />}
+      {approx && <Banner tone="danger">Orbit data is over two weeks old. Times and positions are approximate.</Banner>}
     </Panel>
   );
 }
@@ -260,9 +268,9 @@ function Reminders({ pass, sat, location, station, now }: { pass: Pass; sat: Sat
   const [busy, setBusy] = useState(false);
   return (
     <div className="key-row">
-      <Button onClick={() => void exportPassesToCalendar([pass], sat, now, `${sat.name}-${formatLocalTime(pass.aos).replace(/\W/g, '')}`)}>
+      <Button onClick={() => void exportPassesToCalendar([pass], sat, now, `${sat.name}-${formatLocalTime(pass.aos).replace(/\W/g, '')}`, station)}>
         <Icon name="calendar" />
-        Remind me
+        Add to calendar
       </Button>
       <Button
         disabled={busy}
@@ -271,14 +279,14 @@ function Reminders({ pass, sat, location, station, now }: { pass: Pass; sat: Sat
           try {
             const week = await predictPasses([sat], location, now, now + 7 * DAY);
             const good = week.filter((p) => p.aos > now && isGoodPass(p, station.experience));
-            if (good.length) await exportPassesToCalendar(good, sat, now, `${sat.name}-this-week`);
+            if (good.length) await exportPassesToCalendar(good, sat, now, `${sat.name}-this-week`, station);
             else alert(`No good ${sat.name} passes in the next week.`);
           } finally {
             setBusy(false);
           }
         }}
       >
-        {busy ? 'Working…' : 'This week'}
+        {busy ? 'Working…' : 'Add week'}
       </Button>
     </div>
   );

@@ -1,7 +1,7 @@
 // §5.5: the first-contact guide, things to hear tonight, and practice (D16).
 // D19: open by default for new operators; folded away under Help for experienced ones.
 
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { LoadedCatalog } from '../data/catalog';
 import { formatMHz, formatTone } from '../model/freq';
 import { compassWord, formatCountdown, formatLocalDay, formatLocalTime } from '../model/format';
@@ -15,6 +15,8 @@ import type { Location, Pass, Satellite, Station } from '../model/types';
 import { Button, Fold, Panel } from './common';
 import { useNow } from './clock';
 import { usePasses } from './usePasses';
+import { matchesOperator, operatorPreferences } from '../model/operator';
+import { listPassResults, type PassResult } from '../data/passResults';
 
 const LOOKBACK = 12 * HOUR;
 
@@ -32,7 +34,9 @@ export function Learn({
   onPractice: (pass: Pass, sat: Satellite) => void;
 }) {
   const now = useNow(30_000);
-  const isNew = station.experience === 'new';
+  const isNew = operatorPreferences(station).tips;
+  const [results, setResults] = useState<PassResult[]>([]);
+  useEffect(() => { void listPassResults().then(setResults).catch(() => {}); }, []);
   const sats = useMemo(
     () =>
       catalog.catalog.satellites.filter(
@@ -46,10 +50,15 @@ export function Learn({
   const easiestSat = easiest ? byId.get(easiest.noradId) : undefined;
 
   // D19: the guide starts open for new operators and folded away for experienced ones.
-  const open = (k: string) => (isNew ? true : k === 'listen');
+  const open = (k: string) => k === 'first' && station.goal === 'listen' ? false : (isNew ? true : k === 'listen');
 
   return (
     <div>
+      <Panel className="stack learning-start">
+        <h1 className="setup-title">{station.goal === 'listen' ? 'Hear your first satellite' : 'Build confidence for your next pass'}</h1>
+        <p>Start with hearing and identifying a satellite. Practise tuning before going outside, then prepare a pass with the same controls.</p>
+        {results.some((r) => r.outcome === 'heard') && <p role="status">You’ve heard satellites on {results.filter((r) => r.outcome === 'heard').length} {results.filter((r) => r.outcome === 'heard').length === 1 ? 'pass' : 'passes'}. Your listening progress is saved on this device.</p>}
+      </Panel>
       <Section open={open('first')} title="Your first contact">
         <h3>1. Gear</h3>
         <ul>
@@ -112,9 +121,9 @@ export function Learn({
         </p>
       </Section>
 
-      <Section open={open('listen')} title="Listen tonight">
+      <Section open={open('listen') || station.goal === 'listen'} title="Listen on your next pass">
         <p className="hint">No licence needed to listen. Any radio or SDR that covers the frequency will do.</p>
-        <ListenList sats={sats} passes={passes} now={now} />
+        <ListenList sats={sats.filter((s) => matchesOperator(s, { ...station, goal: 'listen' }))} passes={passes} now={now} onPick={onPick} />
       </Section>
 
       <Section open={open('practice')} title="Practice a pass">
@@ -148,7 +157,7 @@ function Script({ children }: { children: ReactNode }) {
   );
 }
 
-function ListenList({ sats, passes, now }: { sats: Satellite[]; passes: Pass[] | null; now: number }) {
+function ListenList({ sats, passes, now, onPick }: { sats: Satellite[]; passes: Pass[] | null; now: number; onPick: (p: Pass) => void }) {
   if (!passes) return <p className="hint">Working out passes…</p>;
   const rows = sats
     .map((s) => ({ sat: s, tx: listeningTransmitter(s), next: passes.find((p) => p.noradId === s.noradId && p.los > now && p.maxElDeg >= 15) }))
@@ -171,7 +180,7 @@ function ListenList({ sats, passes, now }: { sats: Satellite[]; passes: Pass[] |
             </span>
             <span className="row-sub">{whatYoullHear(tx)}</span>
           </span>
-          <span className="row-end">{next.aos <= now ? 'up now' : formatLocalTime(next.aos)}</span>
+          <span className="row-end">{next.aos <= now ? 'up now' : formatLocalTime(next.aos)}<Button size="small" onClick={() => onPick(next)}>Prepare</Button></span>
         </li>
       ))}
     </ul>

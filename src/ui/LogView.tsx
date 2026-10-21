@@ -8,7 +8,7 @@ import { formatMHz } from '../model/freq';
 import { formatLocalDay, formatLocalTime, formatUtc } from '../model/format';
 import { grid4, isValidGrid, normaliseGrid } from '../model/grid';
 import type { LoadedCatalog } from '../data/catalog';
-import type { Location, QsoRecord, Recording, Station } from '../model/types';
+import type { Location, Pass, QsoRecord, Recording, Station } from '../model/types';
 import { Recordings } from './Recordings';
 import { shareOrDownload } from './share';
 
@@ -41,6 +41,8 @@ export function LogView({
   locations,
   location,
   onImport,
+  contactPass,
+  onContactPassUsed,
 }: {
   qsos: QsoRecord[];
   station: Station;
@@ -55,12 +57,14 @@ export function LogView({
   location: Location;
   /** Save many contacts at once (ADIF import). */
   onImport: (qsos: QsoRecord[]) => Promise<void>;
+  contactPass: Pass | null;
+  onContactPassUsed: () => void;
 }) {
   const clock = useClock();
   // By display name: imported contacts on satellites the catalog doesn't carry have no NORAD id.
   const [filter, setFilter] = useState<string>('all');
   const [editing, setEditing] = useState<QsoRecord | null>(null);
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(contactPass !== null);
   const [imported, setImported] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -202,10 +206,12 @@ export function LogView({
           location={location}
           station={station}
           now={clock.now()}
-          onClose={() => setAdding(false)}
+          initialPass={contactPass}
+          onClose={() => { setAdding(false); onContactPassUsed(); }}
           onSave={(q) => {
             onSave(q);
             setAdding(false);
+            onContactPassUsed();
           }}
         />
       )}

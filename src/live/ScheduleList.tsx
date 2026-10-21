@@ -3,14 +3,14 @@ import { formatClock, formatLocalTime } from '../model/format';
 import type { RetuneSchedule } from '../model/schedule';
 
 /** D7: the full retune schedule, for programming memory channels before AOS. */
-export function ScheduleList({ schedule, aos, now }: { schedule: RetuneSchedule; aos: number; now: number }) {
+export function ScheduleList({ schedule, aos, now, listenOnly = false }: { schedule: RetuneSchedule; aos: number; now: number; listenOnly?: boolean }) {
   const side = schedule.tuneSide;
   if (!side) return null;
   const currentIdx = schedule.steps.findLastIndex((s) => s.t <= now);
   return (
     <div>
       <p className="hint" style={{ marginBottom: 8 }}>
-        {side === 'downlink' ? 'Listen' : 'Transmit'} frequency through the pass. The other side stays put.
+        {side === 'downlink' ? 'Listen' : 'Transmit'} frequency through the pass.{!listenOnly && ' The other side stays put.'}
       </p>
       <div className="panel">
         <ul className="rows tabular">

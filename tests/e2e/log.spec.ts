@@ -12,11 +12,11 @@ test('log a contact during a pass and export it as ADIF', async ({ page }) => {
   await page.getByPlaceholder('W7LIT').fill('W7LIT');
   await page.getByRole('button', { name: 'Close' }).click();
 
-  await page.getByRole('button', { name: /^(Start|Track it now)$/ }).click({ timeout: 30_000 });
+  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Log a contact' }).click();
   const keypad = page.getByLabel('Keypad');
   for (const k of 'K1ABC') await keypad.getByRole('button', { name: k, exact: true }).click();
-  await page.getByRole('button', { name: /Grid/ }).click();
+  await page.getByRole('textbox', { name: 'Their grid' }).focus();
   for (const k of 'FN42') await keypad.getByRole('button', { name: k, exact: true }).click();
   await page.getByRole('button', { name: 'Save K1ABC' }).click();
   await expect(page.getByText('Logged K1ABC')).toBeVisible();

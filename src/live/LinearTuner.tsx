@@ -13,12 +13,14 @@ export function LinearTuner({
   spotHz,
   onSpot,
   isNew,
+  listenOnly = false,
 }: {
   pb: Passband;
   tuning: LinearTuning | null;
   spotHz: number;
   onSpot: (hz: number) => void;
   isNew: boolean;
+  listenOnly?: boolean;
 }) {
   const set = (hz: number) => onSpot(clampToPassband(pb, Math.round(hz / LINEAR_STEP_HZ) * LINEAR_STEP_HZ));
   return (
@@ -28,7 +30,7 @@ export function LinearTuner({
           <span className="lcd-label">Spot at the satellite ▼</span>
           <span className="readout readout-s">{formatMHz(spotHz)}</span>
         </div>
-        {tuning && (
+        {tuning && !listenOnly && (
           <div className="lcd-line">
             <span className="lcd-label">Its uplink ▲</span>
             <span className="readout readout-s">{formatMHz(tuning.upAtSatHz)}</span>
@@ -58,9 +60,9 @@ export function LinearTuner({
         ))}
       </div>
       <p className="hint">
-        {pb.inverting ? 'Inverting: transmit LSB to come out USB on the downlink.' : 'Non-inverting: transmit USB.'} Set TX and RX
+        {listenOnly ? 'Listen in USB. Choose a spot in the downlink passband, then follow the receive frequency shown above as it changes.' : <>{pb.inverting ? 'Inverting: transmit LSB to come out USB on the downlink.' : 'Non-inverting: transmit USB.'} Set TX and RX
         to the numbers above and follow them as they change; the spot at the satellite stays put, so you stay on the same
-        contact.{isNew && ' Find your own signal first: send a short whistle or CW and tune until you hear it come back.'}
+        contact.{isNew && ' Find your own signal first: send a short whistle or CW and tune until you hear it come back.'}</>}
       </p>
     </section>
   );

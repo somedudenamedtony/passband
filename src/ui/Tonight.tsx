@@ -1,10 +1,13 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LoadedCatalog } from '../data/catalog';
 import { elementAgeDays, elementAgeLevel } from '../model/elementAge';
 import { ACTIVITIES, activities, matchesActivities, type Activity } from '../model/activity';
 import { inHours, isGoodPass, listedSatellites, nextGoodPass, samePass, type ListOptions } from '../model/selection';
 import type { Location, Pass, QsoRecord, Satellite, Station } from '../model/types';
-import { Banner, Field, Segmented, SectionTitle } from './common';
+import { Banner, Field, Fold, Segmented, SectionTitle } from './common';
+import { matchesOperator } from '../model/operator';
+import type { SatScope } from '../data/browsing';
+import { OperatingPreferences } from './OperatingPreferences';
 import { useNow } from './clock';
 import { PassCard } from './PassCard';
 import { SatelliteInfo } from './SatelliteInfo';
@@ -19,10 +22,16 @@ export function Tonight({
   selected,
   onSelect,
   onStart,
+  onPractice,
+  onStation,
+  onFeatured,
   scope,
   onScope,
   chosen,
   onChosen,
+  query,
+  onQuery,
+  onClearFilters,
   qsos,
   favorites,
   onFavorite,
@@ -34,10 +43,16 @@ export function Tonight({
   selected: Pass | null;
   onSelect: (p: Pass | null) => void;
   onStart: (pass: Pass, sat: Satellite) => void;
+  onPractice: (pass: Pass, sat: Satellite) => void;
+  onStation: (station: Station) => void;
+  onFeatured: (id: number) => void;
+  query: string;
+  onQuery: (query: string) => void;
+  onClearFilters: () => void;
   /** Which satellites the lists cover. Kept by App so it survives switching tabs. */
   scope: SatScope;
   onScope: (s: SatScope) => void;
-  /** Activity keys pressed under All active; none pressed = no filter. Also kept by App. */
+  /** No activity keys pressed = no filter. Saved on this device by App. */
   chosen: ReadonlySet<Activity>;
   onChosen: (a: ReadonlySet<Activity>) => void;
   /** The log, for "your contacts" on the info sheet. */
@@ -71,24 +86,22 @@ export function Tonight({
       Object.fromEntries(
         (Object.keys(SCOPE_OPTS) as SatScope[]).map((k) => [
           k,
-          listedSatellites(catalog.catalog, station.experience, { ...SCOPE_OPTS[k], favorites }).length,
+          listedSatellites(catalog.catalog, station.experience, { ...SCOPE_OPTS[k], showAll: SCOPE_OPTS[k].showAll || station.goal === 'explore' || station.equipment === 'ssb', favorites }).filter((s) => k !== 'recommended' || matchesOperator(s, station)).length,
         ]),
       ) as Record<SatScope, number>,
-    [catalog, station.experience, favorites],
+    [catalog, station.experience, station.goal, station.equipment, favorites],
   );
-  const [query, setQuery] = useState('');
-  const narrowing = scope === 'all' || scope === 'inactive';
-  const q = narrowing ? query.trim().toLowerCase() : '';
-  const act = narrowing ? chosen : NO_ACTIVITIES;
+  const q = query.trim().toLowerCase();
+  const act = chosen;
   const sats = useMemo(
-    () => listedSatellites(catalog.catalog, station.experience, { ...SCOPE_OPTS[scope], favorites }),
-    [catalog, station.experience, scope, favorites],
+    () => listedSatellites(catalog.catalog, station.experience, { ...SCOPE_OPTS[scope], showAll: SCOPE_OPTS[scope].showAll || station.goal === 'explore' || station.equipment === 'ssb', favorites })
+      .filter((s) => scope !== 'recommended' || matchesOperator(s, station)),
+    [catalog, station.experience, station.goal, station.equipment, scope, favorites],
   );
-  const satById = useMemo(() => new Map(sats.map((s) => [s.noradId, s])), [sats]);
   const { passes, error } = usePasses(sats, location);
 
   const upcoming = useMemo(() => (passes ?? []).filter((p) => p.los > now), [passes, now]);
-  // Activity keys and search narrow the lists only; passes are predicted once for the whole selection.
+  // Predict once for the scope; search and activities govern the card and both lists.
   const actCounts = useMemo(() => {
     const m = new Map<Activity, number>();
     for (const sat of sats) for (const a of activities(sat)) m.set(a, (m.get(a) ?? 0) + 1);
@@ -103,16 +116,20 @@ export function Tonight({
   const shownPasses = useMemo(() => (filtered ? upcoming.filter((p) => shownById.has(p.noradId)) : upcoming), [filtered, upcoming, shownById]);
   const listKey = `${scope}:${q}:${[...act].sort().join(',')}`;
   const next = useMemo(
-    () => nextGoodPass(upcoming, satById, station.experience, now, station.hours),
-    [upcoming, satById, station.experience, now, station.hours],
+    () => nextGoodPass(shownPasses, shownById, station.experience, now, station.hours),
+    [shownPasses, shownById, station.experience, now, station.hours],
   );
-  const featured = selected && selected.los > now && satById.has(selected.noradId) ? selected : next;
-  const featuredSat = featured ? satById.get(featured.noradId) : undefined;
+  const featured = selected && selected.locationId === location.id && selected.los > now && shownById.has(selected.noradId) ? selected : next;
+  const featuredSat = featured ? shownById.get(featured.noradId) : undefined;
+  useEffect(() => { if (featured) onFeatured(featured.noradId); }, [featured?.noradId, onFeatured]);
 
   const catalogDays = elementAgeDays(catalog.catalog.generatedAt, now);
 
   return (
     <div className="stack">
+      <Fold title={`${station.goal === 'listen' ? 'Listen' : station.goal === 'contacts' ? 'Make contacts' : 'Explore'} · goal and radio`}>
+        <OperatingPreferences station={station} onChange={onStation} />
+      </Fold>
       <AgeBanner sats={sats} now={now} />
       {catalogDays >= 3 && (
         <Banner tone="warn">
@@ -139,6 +156,7 @@ export function Tonight({
             outsideHours={featured.aos > now && !inHours(featured.aos, station.hours)}
             onBackToNext={selected ? () => pick(null) : undefined}
             onStart={() => onStart(featured, featuredSat)}
+            onPractice={() => onPractice(featured, featuredSat)}
             onInfo={() => setInfo(featuredSat)}
             favorite={favorites.has(featuredSat.noradId)}
             onFavorite={() => onFavorite(featuredSat.noradId)}
@@ -148,12 +166,14 @@ export function Tonight({
         <Banner tone="info">
           {scope === 'favorites' && sats.length === 0 ? (
             <>No favorites yet. Tap ★ on a satellite’s card or info sheet to add it.</>
+          ) : scope === 'recommended' && station.goal === 'contacts' && station.equipment === 'sdr' ? (
+            <>Your SDR receiver can listen. Choose Listen in “goal and radio” above, or select a station that can transmit to find contact opportunities.</>
           ) : (
             <>
-              {upcoming.some((p) => satById.has(p.noradId) && isGoodPass(p, station.experience))
+              {shownPasses.some((p) => shownById.has(p.noradId) && isGoodPass(p, station.experience))
                 ? `The good passes in the next 24 hours from ${location.name} are on satellites that are probably off. They’re marked in the list below.`
                 : `No good passes in the next 24 hours for these satellites from ${location.name}.`}
-              {scope === 'recommended' && ' Try All active below.'}
+              {filtered ? ' Clear the filters or browse other satellites.' : scope === 'recommended' && ' Try Available below, or change your goal and radio.'}
             </>
           )}
         </Banner>
@@ -168,23 +188,21 @@ export function Tonight({
           options={[
             { value: 'favorites', label: `★ Favorites ${counts.favorites}` },
             { value: 'recommended', label: `Recommended ${counts.recommended}` },
-            { value: 'all', label: `All active ${counts.all}` },
-            { value: 'inactive', label: `+ Inactive ${counts.inactive}` },
+            { value: 'all', label: `Available ${counts.all}` },
+            { value: 'inactive', label: `Full catalog ${counts.inactive}` },
           ]}
         />
         <p className="hint" style={{ marginTop: 6 }}>
           {scope === 'favorites'
-            ? 'Satellites you starred. They\u2019re saved on this device only; no account needed.'
+            ? 'Satellites you starred. They’re saved on this device only; no account needed.'
             : scope === 'recommended'
-            ? station.experience === 'new'
-              ? 'Easy FM satellites, ones you can just listen to, and your favorites.'
-              : 'Satellites with a working uplink, ones you can just listen to, and your favorites.'
+            ? 'Targets for your goal, radio and experience preset.'
             : scope === 'all'
-              ? 'Every satellite not known to be dead, including hard and receive-only ones.'
+              ? 'Satellites not reported inactive, including those with unknown status.'
               : 'Everything in the catalog, including satellites reported inactive and objects not yet identified.'}{' '}
-          The lists below follow this.
+          The featured pass, list and timeline all follow your filters.
         </p>
-        {narrowing && (
+        {(
           <div className="stack" style={{ marginTop: 14 }}>
             <p className="silk">What do you want to do?</p>
             <div className="chips" role="group" aria-label="Activities">
@@ -215,7 +233,7 @@ export function Tonight({
             </p>
           </div>
         )}
-        {narrowing && (
+        {(
           <Field
             label="Find a satellite"
             type="search"
@@ -224,7 +242,7 @@ export function Tonight({
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => onQuery(e.target.value)}
           />
         )}
         {filtered && (
@@ -233,10 +251,7 @@ export function Tonight({
             <button
               type="button"
               className="linkish"
-              onClick={() => {
-                setQuery('');
-                onChosen(NO_ACTIVITIES);
-              }}
+              onClick={onClearFilters}
             >
               Clear filters
             </button>
@@ -280,10 +295,6 @@ export function Tonight({
   );
 }
 
-export type SatScope = 'favorites' | 'recommended' | 'all' | 'inactive';
-
-const NO_ACTIVITIES: ReadonlySet<Activity> = new Set();
-
 const SCOPE_OPTS: Record<SatScope, ListOptions> = {
   favorites: { showAll: false, showInactive: true, onlyFavorites: true },
   recommended: { showAll: false, showInactive: false },
@@ -301,10 +312,10 @@ function AgeBanner({ sats, now }: { sats: Satellite[]; now: number }) {
     <div className="stack">
       {stale.length > 0 && (
         <Banner tone="danger">
-          Elements over 14 days old for {names(stale)}. Their pass times are approximate.
+          Orbit data over 14 days old for {names(stale)}. Their pass times are approximate.
         </Banner>
       )}
-      {aging.length > 0 && <Banner tone="warn">Elements 3–14 days old for {names(aging)}.</Banner>}
+      {aging.length > 0 && <Banner tone="warn">Orbit data 3–14 days old for {names(aging)}.</Banner>}
     </div>
   );
 }

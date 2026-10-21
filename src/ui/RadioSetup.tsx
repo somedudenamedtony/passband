@@ -33,12 +33,14 @@ export function RadioSetup({
   tuning,
   size = 'large',
   isNew = false,
+  listenOnly = false,
 }: {
   tx: Transmitter;
   /** Doppler-corrected FM frequencies; without it the catalog's nominal ones are shown. */
   tuning?: Tuning | null;
   size?: 'large' | 'small';
   isNew?: boolean;
+  listenOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const id = useId();
@@ -80,7 +82,7 @@ export function RadioSetup({
           <span className={readout}>{down}</span>
         </div>
       )}
-      {up && (
+      {up && !listenOnly && (
         <div className="lcd-line freq-line">
           <span className="lcd-label">
             ↑ Transmit{when('uplink')}
@@ -89,7 +91,7 @@ export function RadioSetup({
           <span className={readout}>{up}</span>
         </div>
       )}
-      {tx.uplinkHz !== null && tx.kind === 'fm_repeater' && (
+      {!listenOnly && tx.uplinkHz !== null && tx.kind === 'fm_repeater' && (
         <div className="lcd-line freq-line">
           <span className="lcd-label">Tone</span>
           <span className="readout readout-s" style={{ fontStyle: tx.ctcssHz === 'unknown' ? 'italic' : undefined }}>
@@ -100,8 +102,8 @@ export function RadioSetup({
       {linear && <p className="lcd-note">These are the passband edges. The live screen gives you one frequency to tune.</p>}
       {isNew && tuning?.tuneSide && (
         <p className="lcd-note">
-          Leave the {tuning.tuneSide === 'downlink' ? 'transmit' : 'listen'} frequency alone and retune the{' '}
-          {tuning.tuneSide === 'downlink' ? 'listen' : 'transmit'} side as the satellite passes.
+          {listenOnly ? 'Follow the listen frequency as the satellite moves.' : <>Leave the {tuning.tuneSide === 'downlink' ? 'transmit' : 'listen'} frequency alone and retune the{' '}
+          {tuning.tuneSide === 'downlink' ? 'listen' : 'transmit'} side as the satellite passes.</>}
         </p>
       )}
     </div>

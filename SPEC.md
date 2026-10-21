@@ -332,16 +332,24 @@ formatters. A value converted to miles inside a calculation is the bug to look f
 
 ### D19 — Beginner and experienced modes are defaults, not walls.
 
-One setting, **Experience**: *New to satellites* / *I've made contacts*. It changes defaults only:
+**Experience** supplies an initial preset. **Operating goal** (*Listen*, *Make contacts*, *Explore*)
+and **Radio** (*Choose later / other*, *Dual-band FM*, *SSB / CW capable*, *SDR receiver*) are separate
+preferences. Recommendations respect the goal and radio; Available and Full catalog remain browsable.
+An SDR receiver does not receive two-way recommendations while the goal is Make contacts.
 
 | | New | Experienced |
 |---|---|---|
 | Satellites listed | Easy FM birds + receive-only targets | All with a working transponder |
-| Pass card | Plain-language note, gear hint | Dense: AOS/TCA/LOS, max el, azimuths, Doppler span |
-| Live screen | Big compass, one frequency, spoken cues on | Compass + full retune schedule, cues off |
+| Pass card | Action first, expandable radio setup and technical details | Compact details initially expanded: AOS/TCA/LOS, max el, azimuths, Doppler span |
+| Live screen | Compass and spoken cues initially on | Sky and cues initially off; full schedule readily available |
 | First-contact guide | Shown | Hidden in Help |
 
-Everything is reachable in either mode. Nothing is locked.
+**Show operating tips** and **Compact pass details** independently override the preset. Tracking view
+and cue enablement are remembered when changed, including across passes and reloads. Explicit false
+values remain false. Older saved stations acquire the new fields without losing existing choices.
+Settings can reset these overrides to the experience defaults. Technical details, the full schedule,
+preparation and help remain available in either preset. Listen mode removes transmit instructions,
+transmit frequency/tone readouts and contact logging actions from the tracking flow.
 
 ---
 
@@ -393,6 +401,12 @@ interface Station {
   callsign: string;                     // empty until set; examples and tests use W7LIT
   units: 'imperial' | 'metric';         // D20 — default 'imperial'
   experience: 'new' | 'experienced';    // D19
+  goal: 'listen' | 'contacts' | 'explore';
+  equipment: 'unknown' | 'fm' | 'ssb' | 'sdr';
+  showTips: boolean | null;            // null follows the experience preset
+  compactDetails: boolean | null;
+  liveView: 'sky' | 'compass' | 'ar' | null;
+  liveCues: boolean | null;
   radioStepHz: 2500 | 5000 | 6250;      // D7
   cues: { speech: boolean; tones: boolean; vibration: boolean };   // D14
   speakInPass: 'key' | 'all' | 'none';  // D14 — default 'key': rise, peak, set
@@ -452,34 +466,39 @@ interface Recording {
 
 ## 5. Screens
 
-Three tabs plus the live screen. Designed for sunlight, gloves, and one hand: high contrast, touch
+Four tabs plus the live screen. Designed for sunlight, gloves, and one hand: high contrast, touch
 targets ≥ 48 px, primary actions in the bottom third. A **red night mode** for dark sites.
 
 ### 5.0 First run
 
-One screen, three questions, every one with a default: *Have you made a satellite contact
-before?* (D19), *your callsign* (optional), and *where are you operating from?*. The phone's
-location is offered first, because many new licensees don't know their grid; a grid square is the
-fallback. Only the location is needed to go on.
+One screen with defaults: operating goal and radio, experience preset (D19), optional callsign,
+and location. Only location is required to continue. The phone's location is offered first;
+a Maidenhead grid is the manual fallback. Goal and radio remain directly editable on Passes
+and in Settings. Guidance explains what the preset changes without restricting individual choices.
 
-### 5.1 Tonight (home)
+### 5.1 Passes (home)
 
 - Location chip at the top (tap to switch, D8).
-- Next good pass as a large card: satellite, countdown, max elevation, rise/set directions, the
-  frequency to start on, tone, and the D21 outlook ("Should be on. Heard 3 h ago…"). It is the
-  soonest good pass that will probably be on, in the user's hours when one is. "Start" opens the
-  live screen; "Remind me" exports `.ics` (D17).
+- Next good pass as an action-first card: satellite, countdown and clock time, D21 outlook,
+  a reason tied to the operator's goal/radio, high point and duration, orbit-data age, and a visible
+  **Prepare for pass** action (**Track live** when up). Radio setup and detailed UTC times,
+  azimuths and Doppler span expand below the action; the compact preset starts them expanded.
+  **Why this outlook?** reveals the evidence and uncertainty. **Practice this pass** uses this
+  pass in the real tracking screen on a simulated clock. **Add to calendar** and **Add week**
+  export `.ics` (D17). The top pick follows D21 within the current filters and hours preference.
 - Below: a 24 h timeline, one row per satellite, passes as bars whose height is max elevation,
   dimmed where below the horizon mask. Soonest first, eight rows, the rest one tap away. Unknown
   shown with a marker.
 - **Favorites:** a ★ key on the pass card and the info sheet stars a satellite. Favorites are
-  NORAD ids in IndexedDB on this device (D1, §7): no account. They always join *Recommended*, and
-  the *★ Favorites* option lists only them, inactive ones included.
-- One **Satellites** selector governs both the coming-up list and the timeline: *★ Favorites*, *Recommended*
-  (the D19 default for the operator's experience), *All active*, or *+ Inactive*, each with its
-  count and a line saying what it includes. Outside *Recommended*, activity keys narrow the lists
-  by what you can do — Talk (FM), SSB / CW, Packet / APRS, Images, Telemetry — each with its count
-  (most of the catalog is telemetry-only cubesats), and a search box narrows by name.
+  NORAD ids in IndexedDB on this device (D1, §7): no account. Compatible favorites join *Recommended*;
+  the *★ Favorites* option lists only them, including incompatible and inactive targets for manual selection.
+- One **Satellites** selector governs the featured card, coming-up list and timeline: *★ Favorites*, *Recommended*
+  (the D19 default, goal and radio), *Available* (including unknown status), or *Full catalog*
+  (including inactive/unidentified objects), each with its count and a line saying what it includes.
+  In every scope, activity keys narrow the results
+  by what you can do — Talk (FM), SSB / CW, Packet / APRS, Images, Telemetry — each with its count,
+  and a search box narrows by name. Scope, activity keys and search survive tab changes and reloads.
+  A featured pass outside the filters cannot remain on screen. Empty results explain how to recover.
 - Picking a pass in either list swaps it into the card and brings the card back into view.
 - The card says what to set, not just numbers: every frequency is shown as a **radio setup** — the
   mode as a key (tap it for what to set the radio to and how working it goes), ↓ Listen and
@@ -515,10 +534,19 @@ The screen that matters most.
 
 - **Pointing:** sky plot with the pass track, and an **AR toggle** that overlays the satellite's
   position and an arrow on the camera view (D10).
-- **Pre-pass:** from AOS − 5 min, shows where it will rise, the full retune schedule, and a
-  checklist (tone set, recorder on, antenna polarisation hint).
+- **Preparation:** available immediately, however far away the pass is. Includes rise direction,
+  radio settings, gear/checklist, full retune schedule, test-cues action, and practice of this pass.
+  The preferred sky/compass/AR view can be checked ahead of time. Before rise, retune offsets are
+  explicitly labelled **after rise**; during the pass they become countdowns from now.
 - **Quick log:** callsign field with a large keypad-style entry, grid optional, time filled in.
-  One tap to save; edit later.
+  Real text inputs accept typing, paste and hardware keyboards with or without the field keypad.
+  Enter saves. Save errors retain the entry; success is announced after storage completes.
+- **After the pass:** a review panel offers a listening result (*Heard the satellite* / *Heard nothing*),
+  recording/contact review, contact entry with the satellite and pass time prefilled, and another pass.
+  Listening results are stored locally per pass/location and counted in Learn; practice cannot save
+  real listening results or contacts. A completed practice can restart with a fresh tuning session.
+- **Context help:** optional sections explain the expected sound, FM transmit tone, and troubleshooting
+  for this transmitter. A silent result expands troubleshooting. Help stays accessible with tips off.
 - **Linear transponders** (the first part of §8.1): pick a spot in the downlink passband *at the
   satellite* (slider and ±100 Hz / ±1 kHz keys, starting mid-passband). The matching uplink spot
   follows from the passband mapping (inverting or not), and Doppler (D7) turns both into the TX
@@ -529,6 +557,7 @@ The screen that matters most.
 ### 5.3 Map
 
 - Satellite footprint and ground track, live.
+- Opens on the satellite selected on Passes, including targets outside the recommendation preset.
 - Worked grids shaded (from the log); with a rover location selected, the grids that location's
   footprint covers.
 - Offline: vector tiles for the user's region cached on demand. If none are cached, a plain
@@ -552,9 +581,10 @@ The screen that matters most.
 - **Your first contact:** gear checklist, picking the pass (one tap selects the easiest coming
   one), what to say, etiquette (listen first, callsign and grid, keep it short, never transmit
   without hearing the downlink), what success sounds like.
-- **Listen tonight:** receive-only targets with what you'll hear. Voices, pictures, packets and
+- **Listen on your next pass:** receiving targets with what you'll hear, equipment fit and a Prepare action. Voices, pictures, packets and
   Morse come before telemetry only software can read; passes D21 calls probably off are left out.
 - **Practice a pass** (D16).
+- Listening progress counts successful listening results separately from contacts and grid awards.
 
 ---
 

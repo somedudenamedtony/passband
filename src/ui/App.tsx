@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SimulatedClock, systemClock } from '../clock';
 import { loadCatalog, type LoadedCatalog } from '../data/catalog';
 import {
@@ -11,6 +11,7 @@ import {
 import { DEFAULT_STATION, loadStation, saveStation } from '../data/station';
 import { applyTheme, loadTheme, saveTheme, type Theme } from '../data/theme';
 import { loadFavorites, saveFavorites } from '../data/favorites';
+import { DEFAULT_BROWSING, loadBrowsing, saveBrowsing, type Browsing } from '../data/browsing';
 import { toggleFavorite } from '../model/selection';
 import { LiveScreen } from '../live/LiveScreen';
 import { SECOND } from '../model/time';
@@ -30,8 +31,7 @@ import { MapView } from './MapView';
 import { LocationSheet } from './LocationSheet';
 import { LocationSetup } from './LocationSetup';
 import { SettingsSheet } from './SettingsSheet';
-import { Tonight, type SatScope } from './Tonight';
-import type { Activity } from '../model/activity';
+import { Tonight } from './Tonight';
 
 type Sheet = 'none' | 'locations' | 'settings';
 type Tab = 'tonight' | 'map' | 'log' | 'learn';
@@ -40,7 +40,7 @@ interface Live {
   pass: Pass;
   sat: Satellite;
   /** D16: practice is the live screen on a simulated clock. */
-  practice?: { clock: SimulatedClock; rate: PracticeRate };
+  practice?: { clock: SimulatedClock; rate: PracticeRate; run: number };
 }
 
 export function App() {
@@ -54,6 +54,8 @@ export function App() {
   const [sheet, setSheet] = useState<Sheet>('none');
   const [live, setLive] = useState<Live | null>(null);
   const [tab, setTab] = useState<Tab>('tonight');
+  const pageRef = useRef<HTMLElement>(null);
+  useEffect(() => { pageRef.current?.scrollTo({ top: 0, left: 0 }); }, [tab, activeId]);
   // The tabs visited, so back (the edge swipe) can retrace them like a native app.
   const [tabTrail, setTabTrail] = useState<Tab[]>([]);
   const selectTab = useCallback(
@@ -71,8 +73,13 @@ export function App() {
     setTabTrail(tabTrail.slice(0, -1));
   }, tabTrail.length > 0);
   const [selected, setSelected] = useState<Pass | null>(null);
-  const [scope, setScope] = useState<SatScope>('recommended');
-  const [chosen, setChosen] = useState<ReadonlySet<Activity>>(() => new Set());
+  const [contactPass, setContactPass] = useState<Pass | null>(null);
+  const [browsing, setBrowsing] = useState<Browsing>(DEFAULT_BROWSING);
+  const [focusedSatellite, setFocusedSatellite] = useState<number | null>(null);
+  const changeBrowsing = (value: Browsing) => {
+    setBrowsing(value);
+    void saveBrowsing(value);
+  };
   const [favorites, setFavorites] = useState<ReadonlySet<number>>(() => new Set());
   const flipFavorite = useCallback((noradId: number) => {
     setFavorites((f) => {
@@ -105,12 +112,12 @@ export function App() {
     setLive({ pass, sat });
   }, []);
   const openPractice = useCallback((pass: Pass, sat: Satellite) => {
-    history.pushState({ live: true }, '');
+    if (!(history.state as { live?: boolean } | null)?.live) history.pushState({ live: true }, '');
     // Start a minute before AOS: enough to see the pre-pass state and hear the rise cue.
-    setLive({ pass, sat, practice: { clock: new SimulatedClock(pass.aos - 60 * SECOND, 1), rate: 1 } });
+    setLive((previous) => ({ pass, sat, practice: { clock: new SimulatedClock(pass.aos - 60 * SECOND, 1), rate: 1, run: (previous?.practice?.run ?? 0) + 1 } }));
   }, []);
   const setPracticeRate = useCallback((rate: PracticeRate) => {
-    setLive((l) => (l?.practice ? { ...l, practice: { clock: new SimulatedClock(l.practice.clock.now(), rate), rate } } : l));
+    setLive((l) => (l?.practice ? { ...l, practice: { ...l.practice, clock: new SimulatedClock(l.practice.clock.now(), rate), rate } } : l));
   }, []);
   const closeLive = useCallback(() => {
     if ((history.state as { live?: boolean } | null)?.live) history.back();
@@ -119,13 +126,15 @@ export function App() {
 
   useEffect(() => {
     void (async () => {
-      const [s, t, locs, active, favs] = await Promise.all([
+      const [s, t, locs, active, favs, browse] = await Promise.all([
         loadStation(),
         loadTheme(),
         listLocations(),
         getActiveLocationId(),
         loadFavorites(),
+        loadBrowsing(),
       ]);
+      setBrowsing(browse);
       setFavorites(favs);
       setStation(s);
       setTheme(t);
@@ -183,7 +192,7 @@ export function App() {
   if (!ready) return null;
 
   const tabs = [
-    { id: 'tonight', label: 'Tonight', icon: 'pass' },
+    { id: 'tonight', label: 'Passes', icon: 'pass' },
     { id: 'map', label: 'Map', icon: 'map' },
     { id: 'log', label: 'Log', icon: 'log' },
     { id: 'learn', label: station.experience === 'new' ? 'Learn' : 'Help', icon: 'learn' },
@@ -205,7 +214,7 @@ export function App() {
           </Button>
         </header>
 
-        <main className="page">
+        <main className="page" ref={pageRef}>
           <div className="page-inner stack">
             {catalogError && (
               <Banner tone="danger">
@@ -231,11 +240,14 @@ export function App() {
               <LocationSetup onSave={addLocation} station={station} onStation={updateStation} />
             ) : catalog ? (
               tab === 'map' ? (
-                <MapView catalog={catalog} location={location} station={station} qsos={qsos} />
+                <MapView catalog={catalog} location={location} station={station} qsos={qsos}
+                  satelliteId={focusedSatellite} onSatellite={setFocusedSatellite} />
               ) : tab === 'log' ? (
                 <LogView
                   qsos={qsos}
                   station={station}
+                  contactPass={contactPass}
+                  onContactPassUsed={() => setContactPass(null)}
                   onSave={(q) => void logQso(q)}
                   onDelete={(id) => void deleteQso(id).then(refreshLog)}
                   onExported={(ids, at) => void markExported(ids, at).then(refreshLog)}
@@ -263,10 +275,16 @@ export function App() {
                     selected={selected}
                     onSelect={setSelected}
                     onStart={openLive}
-                    scope={scope}
-                    onScope={setScope}
-                    chosen={chosen}
-                    onChosen={setChosen}
+                    onPractice={openPractice}
+                    onStation={updateStation}
+                    onFeatured={setFocusedSatellite}
+                    scope={browsing.scope}
+                    onScope={(scope) => { setSelected(null); changeBrowsing({ ...browsing, scope }); }}
+                    chosen={new Set(browsing.activities)}
+                    onChosen={(activities) => { setSelected(null); changeBrowsing({ ...browsing, activities: [...activities] }); }}
+                    query={browsing.query}
+                    onQuery={(query) => { setSelected(null); changeBrowsing({ ...browsing, query }); }}
+                    onClearFilters={() => { setSelected(null); changeBrowsing({ ...browsing, query: '', activities: [] }); }}
                     qsos={qsos}
                     favorites={favorites}
                     onFavorite={flipFavorite}
@@ -279,6 +297,7 @@ export function App() {
                   station={station}
                   onPick={(p) => {
                     setSelected(p);
+                    changeBrowsing({ scope: 'all', activities: [], query: '' });
                     selectTab('tonight');
                   }}
                   onPractice={openPractice}
@@ -300,12 +319,18 @@ export function App() {
       {live && location && (
         <ClockContext.Provider value={live.practice?.clock ?? systemClock}>
           <LiveScreen
+            key={`${live.pass.noradId}-${live.pass.aos}-${live.practice?.run ?? 'live'}`}
             pass={live.pass}
             sat={live.sat}
             location={location}
             station={station}
+            onStation={updateStation}
             onClose={closeLive}
-            onLog={(q) => void logQso(q)}
+            onLog={logQso}
+            onPractice={() => openPractice(live.pass, live.sat)}
+            onReviewLog={() => { closeLive(); selectTab('log'); }}
+            onAddContacts={() => { setContactPass(live.pass); closeLive(); selectTab('log'); }}
+            onNext={() => { setSelected(null); closeLive(); selectTab('tonight'); }}
             onRecorded={() => void refreshRecordings()}
             practice={live.practice && { rate: live.practice.rate, onRate: setPracticeRate }}
           />
