@@ -25,10 +25,6 @@ test('tabs are history entries and back retraces them', async ({ page }) => {
   await expect(page.getByRole('tab', { name: 'Log' })).toHaveAttribute('aria-selected', 'true');
   await page.goBack();
   await expect(page).toHaveURL(/\/passband\/plan$/);
-  // Station is still an R1 shell: it leads back to the current app.
-  await page.getByRole('link', { name: 'Station' }).click();
-  await page.getByRole('link', { name: 'Open the current app' }).click();
-  await expect(page.getByPlaceholder('CN87uo')).toBeVisible();
 });
 
 test('an unknown address says so instead of guessing', async ({ page }) => {

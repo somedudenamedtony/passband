@@ -17,6 +17,10 @@ export type Route =
   | { name: 'live'; passId: PassId; practice?: true }
   | { name: 'sat'; noradId: number }
   | { name: 'station' }
+  /** SPEC-v2 §6.5: search the whole catalog. */
+  | { name: 'library' }
+  /** SPEC-v2 §6.8: help and the first-contact path. */
+  | { name: 'help' }
   | { name: 'notFound'; path: string };
 
 export type Tab = 'now' | 'plan' | 'log';
@@ -28,7 +32,7 @@ export function matchRoute(path: string): Route {
   const [head, a, b] = parts;
   const n = parts.length;
   if (n === 0 || head === 'classic') return { name: 'classic' };
-  if (n === 1 && (head === 'now' || head === 'plan' || head === 'log' || head === 'station')) return { name: head };
+  if (n === 1 && (head === 'now' || head === 'plan' || head === 'log' || head === 'station' || head === 'library' || head === 'help')) return { name: head };
   if (n === 2 && head === 'log') return { name: 'contact', qsoId: a! };
   if (head === 'pass' && a && parsePassId(a)) {
     if (n === 2) return { name: 'pass', passId: a };
@@ -41,7 +45,7 @@ export function matchRoute(path: string): Route {
 export function routePath(r: Route): string {
   switch (r.name) {
     case 'classic': return 'classic/';
-    case 'now': case 'plan': case 'log': case 'station': return r.name;
+    case 'now': case 'plan': case 'log': case 'station': case 'library': case 'help': return r.name;
     case 'contact': return `log/${encodeURIComponent(r.qsoId)}`;
     case 'pass': return `pass/${r.passId}`;
     case 'live': return `pass/${r.passId}/live${r.practice ? '?practice' : ''}`;
@@ -64,7 +68,8 @@ export function parentOf(r: Route): Route | null {
   switch (r.name) {
     case 'live': return { name: 'pass', passId: r.passId };
     case 'contact': return { name: 'log' };
-    case 'pass': case 'sat': case 'station': case 'notFound': return { name: 'now' };
+    case 'help': return { name: 'station' };
+    case 'pass': case 'sat': case 'station': case 'library': case 'notFound': return { name: 'now' };
     default: return null;
   }
 }

@@ -56,7 +56,16 @@ function flag(code: string): string {
   return String.fromCodePoint(...[...code].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
 }
 
-export function SatelliteInfo({
+export function SatelliteInfo(props: Parameters<typeof SatelliteProfile>[0] & { onClose: () => void }) {
+  return (
+    <Sheet title={props.sat.name} onClose={props.onClose}>
+      <SatelliteProfile {...props} />
+    </Sheet>
+  );
+}
+
+/** The profile itself: the v1 info sheet's body, and SPEC-v2's satellite page (§6.5). */
+export function SatelliteProfile({
   sat,
   location,
   station,
@@ -64,7 +73,6 @@ export function SatelliteInfo({
   passes,
   qsos,
   onPick,
-  onClose,
   favorite,
   onFavorite,
 }: {
@@ -76,7 +84,6 @@ export function SatelliteInfo({
   passes: Pass[];
   qsos: QsoRecord[];
   onPick: (p: Pass) => void;
-  onClose: () => void;
   favorite: boolean;
   onFavorite: () => void;
 }) {
@@ -98,8 +105,7 @@ export function SatelliteInfo({
   const meanAlt = orbit ? (orbit.perigeeM + orbit.apogeeM) / 2 : null;
 
   return (
-    <Sheet title={sat.name} onClose={onClose}>
-      <div className="stack profile">
+    <div className="stack profile">
         {/* Who it is */}
         <Panel className="profile-hero">
           {about?.image && photoOk && (
@@ -325,8 +331,7 @@ export function SatelliteInfo({
             )}
           </p>
         </section>
-      </div>
-    </Sheet>
+    </div>
   );
 }
 

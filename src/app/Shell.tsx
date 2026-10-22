@@ -15,9 +15,11 @@ import { PassPage } from '../routes/PassPage';
 import { LivePage } from '../routes/LivePage';
 import { PlanScreen } from '../routes/Plan';
 import { LogScreen } from '../routes/Log';
-import {
-  NotFoundScreen, SatelliteScreen, StationScreen,
-} from '../routes/screens';
+import { NotFoundScreen } from '../routes/screens';
+import { SatelliteScreen } from '../routes/Satellite';
+import { StationScreen } from '../routes/Station';
+import { LibraryScreen } from '../routes/Library';
+import { HelpScreen } from '../routes/Help';
 import { toV1Station } from '../model/stationV2';
 import { LocationSheet } from '../ui/LocationSheet';
 
@@ -37,6 +39,8 @@ function Screen({ route }: { route: Exclude<Route, { name: 'classic' }> }) {
     case 'live': return null; // drawn full screen by Shell
     case 'sat': return <SatelliteScreen noradId={route.noradId} />;
     case 'station': return <StationScreen />;
+    case 'library': return <LibraryScreen />;
+    case 'help': return <HelpScreen />;
     case 'notFound': return <NotFoundScreen />;
   }
 }
@@ -81,6 +85,9 @@ export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> })
         )}
         <Link to={{ name: 'station' }} className="key key-secondary key-sm" aria-label="Station">
           {callsign || 'Set up'}
+        </Link>
+        <Link to={{ name: 'library' }} className="key key-secondary key-icon" aria-label="Search satellites">
+          <Icon name="search" />
         </Link>
       </header>
       <main className="page" ref={pageRef}>

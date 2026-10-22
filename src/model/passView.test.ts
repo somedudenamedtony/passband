@@ -40,5 +40,6 @@ describe('pass at a glance (SPEC-v2 D23, D26)', () => {
     expect(passSentence(pass, 25 * MINUTE, 'great', 'FM voice repeater', '')).toBe(
       'Up now, sets in the north-east in 8:00, climbs high, FM voice repeater.',
     );
+    expect(passSentence(pass, now, 'fair', 'Inverting linear transponder', '')).toContain('climbs part way, inverting linear transponder.');
   });
 });
