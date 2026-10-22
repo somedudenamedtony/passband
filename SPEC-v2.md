@@ -224,7 +224,7 @@ in R4. Each v1 value maps as follows (`model/stationV2.ts`):
   with explicit choices kept.
 
 In R4, existing QSOs get `passId` back-filled by matching `satNoradId` and `timeOn` against a
-re-prediction for their location, where one matches; otherwise `null`. In R3, v1's listening
+re-prediction for their location, where one matches; otherwise `null`. In R4, v1's listening
 results (`passResults`) become plan outcomes. A test opens a seeded v3 database in v4
 (`data/migration.test.ts`).
 
@@ -462,7 +462,8 @@ Each milestone is one PR, ships to Pages, and leaves the app usable. v1 stays re
 |---|---|---|
 | **R1** | Router, store, schema v4 | Routes for §6 exist as shells; store wraps `data/`; v3→v4 migration tested; deep links work offline |
 | **R2** | Now + PassRow + pass page (Before/Soon) | Cold open answers "what's next" with zero taps; pass page shows track, radio setup, plan toggle |
-| **R3** | Live view + After phase | Live view in the new layout; one-tap log; LOS hands over to review; practice mode on the same route |
+| **R3** | Live view + After phase | The v1 live screen hosted at `/pass/:id/live`, logging with the pass id; practice on the same route; the pass page's After phase (outcome, contacts on the pass, add contact) |
+| **R3b** | Live layout | Live view in the §6.3 layout; one-tap log with callsign later; LOS hands over to review |
 | **R4** | Log | Pass-grouped history, contact edit, ADIF export/import validated against TQSL as in v1, grid map; `/classic/` removed |
 | **R5** | Plan | Week agenda, Going/outcomes, clashes, `.ics` for planned passes, location switching |
 | **R6** | Library, satellite page, Station, help | Search over full catalog, profile page, single settings screen, term sheets, first-contact path |

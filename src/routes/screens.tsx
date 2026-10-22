@@ -1,7 +1,6 @@
 // The SPEC-v2 §6 screens, as R1 shells. Each grows into its own file as its milestone lands.
 
 import { Link } from '../app/Link';
-import { parsePassId, type PassId } from '../model/passId';
 import { useAppState } from '../store/store';
 import { Placeholder } from './Placeholder';
 
@@ -19,11 +18,6 @@ export function LogScreen() {
 
 export function ContactScreen({ qsoId }: { qsoId: string }) {
   return <Placeholder title="Contact" milestone="R4"><p className="muted">Contact {qsoId}</p></Placeholder>;
-}
-
-export function LiveScreen({ passId }: { passId: PassId }) {
-  const { noradId } = parsePassId(passId)!;
-  return <Placeholder title={`${useSatName(noradId)} live`} milestone="R3" />;
 }
 
 export function SatelliteScreen({ noradId }: { noradId: number }) {

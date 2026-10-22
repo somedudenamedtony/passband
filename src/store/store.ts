@@ -5,12 +5,13 @@
 import { useSyncExternalStore } from 'react';
 import { loadCatalog, type LoadedCatalog } from '../data/catalog';
 import { deleteLocation, getActiveLocationId, listLocations, saveLocation, setActiveLocationId } from '../data/locations';
+import { listQsos, saveQso } from '../data/log';
 import { deletePlan, listPlans, savePlan } from '../data/plans';
 import { loadStationV2, saveStationV2 } from '../data/stationV2';
 import type { PassId } from '../model/passId';
 import type { Plan } from '../model/plan';
 import type { StationV2 } from '../model/stationV2';
-import type { Location } from '../model/types';
+import type { Location, QsoRecord } from '../model/types';
 
 export interface AppState {
   status: 'loading' | 'ready';
@@ -21,9 +22,11 @@ export interface AppState {
   station: StationV2 | null;
   /** Soonest first. */
   plans: Plan[];
+  /** The log, newest first; null until something asks for it. */
+  qsos: QsoRecord[] | null;
 }
 
-const INITIAL: AppState = { status: 'loading', catalog: null, locations: [], activeLocationId: null, station: null, plans: [] };
+const INITIAL: AppState = { status: 'loading', catalog: null, locations: [], activeLocationId: null, station: null, plans: [], qsos: null };
 
 export function createStore() {
   let state = INITIAL;
@@ -82,6 +85,14 @@ export function createStore() {
       const mine = state.station?.mySatellites ?? [];
       const next = mine.includes(noradId) ? mine.filter((n) => n !== noradId) : [...mine, noradId].sort((a, b) => a - b);
       await this.updateStation({ mySatellites: next });
+    },
+    /** Loads the log once; screens that show contacts call it. */
+    async loadLog() {
+      if (state.qsos === null) set({ qsos: await listQsos() });
+    },
+    async logQso(q: QsoRecord) {
+      await saveQso(q);
+      set({ qsos: await listQsos() });
     },
     async savePlan(p: Plan) {
       set({ plans: [...state.plans.filter((x) => x.id !== p.id), p].sort((a, b) => a.aos - b.aos) });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_STATION } from '../data/station';
-import { migrateStation, toV1Station } from './stationV2';
+import { fromV1Station, migrateStation, toV1Station } from './stationV2';
 
 describe('migrateStation (SPEC-v2 D19)', () => {
   it('turns the experience preset into guidance and remembered live choices', () => {
@@ -25,5 +25,12 @@ describe('migrateStation (SPEC-v2 D19)', () => {
   it('stands in for a v1 station, keeping what v1 components read', () => {
     const v1 = { ...DEFAULT_STATION, callsign: 'W7LIT', experience: 'experienced' as const, showTips: false, compactDetails: true, liveView: 'sky' as const, liveCues: false, goal: 'listen' as const, equipment: 'sdr' as const };
     expect(toV1Station(migrateStation(v1, []))).toEqual(v1);
+  });
+
+  it('comes back from a v1 change keeping what only v2 has', () => {
+    const v2 = { ...migrateStation(DEFAULT_STATION, [25544]), showEverythingWorkable: true, qualityThresholdsDeg: { fair: 15, great: 40 } };
+    const back = fromV1Station({ ...toV1Station(v2), liveView: 'sky', liveCues: false }, v2);
+    expect(back).toEqual({ ...v2, remembered: { ...v2.remembered, liveView: 'sky', cues: { ...v2.remembered.cues, on: false } } });
+    expect(fromV1Station(toV1Station({ ...v2, guidance: 'numbers' }), v2).guidance).toBe('numbers');
   });
 });

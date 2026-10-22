@@ -12,8 +12,9 @@ import { TabBar, type TabSpec } from '../ui/TabBar';
 import { Link } from './Link';
 import { NowScreen } from '../routes/Now';
 import { PassPage } from '../routes/PassPage';
+import { LivePage } from '../routes/LivePage';
 import {
-  ContactScreen, LiveScreen, LogScreen, NotFoundScreen, PlanScreen, SatelliteScreen, StationScreen,
+  ContactScreen, LogScreen, NotFoundScreen, PlanScreen, SatelliteScreen, StationScreen,
 } from '../routes/screens';
 import { toV1Station } from '../model/stationV2';
 import { LocationSheet } from '../ui/LocationSheet';
@@ -31,7 +32,7 @@ function Screen({ route }: { route: Exclude<Route, { name: 'classic' }> }) {
     case 'log': return <LogScreen />;
     case 'contact': return <ContactScreen qsoId={route.qsoId} />;
     case 'pass': return <PassPage id={route.passId} />;
-    case 'live': return <LiveScreen passId={route.passId} />;
+    case 'live': return null; // drawn full screen by Shell
     case 'sat': return <SatelliteScreen noradId={route.noradId} />;
     case 'station': return <StationScreen />;
     case 'notFound': return <NotFoundScreen />;
@@ -50,11 +51,13 @@ export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> })
   const tab = tabOf(route);
   const hasParent = parentOf(route) !== null;
   const live = route.name === 'live';
-  useBack(goUp, hasParent);
+  useBack(goUp, hasParent && !live);
 
   const pageRef = useRef<HTMLElement>(null);
   const key = JSON.stringify(route);
   useEffect(() => { pageRef.current?.scrollTo({ top: 0 }); }, [key]);
+
+  if (live) return status === 'loading' ? null : <LivePage id={route.passId} startPractice={route.practice === true} />;
 
   return (
     <div className="shell">
@@ -67,19 +70,15 @@ export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> })
           <span className="wordmark">Passband</span>
         )}
         <span className="topbar-rule" aria-hidden />
-        {!live && (
-          <>
-            {location && (
-              <Button expand="inline" size="small" onClick={() => setLocating(true)} aria-label={`Location: ${location.name}`}>
-                <Icon name="location" size={16} />
-                {location.name}
-              </Button>
-            )}
-            <Link to={{ name: 'station' }} className="key key-secondary key-sm" aria-label="Station">
-              {callsign || 'Set up'}
-            </Link>
-          </>
+        {location && (
+          <Button expand="inline" size="small" onClick={() => setLocating(true)} aria-label={`Location: ${location.name}`}>
+            <Icon name="location" size={16} />
+            {location.name}
+          </Button>
         )}
+        <Link to={{ name: 'station' }} className="key key-secondary key-sm" aria-label="Station">
+          {callsign || 'Set up'}
+        </Link>
       </header>
       <main className="page" ref={pageRef}>
         <div className="page-inner stack">
@@ -95,7 +94,7 @@ export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> })
           {status === 'loading' ? <p className="muted">Loading…</p> : <Screen route={route} />}
         </div>
       </main>
-      {!live && <TabBar tabs={TABS} selected={tab ?? ('' as Tab)} onSelect={(t) => navigate({ name: t })} />}
+      <TabBar tabs={TABS} selected={tab ?? ('' as Tab)} onSelect={(t) => navigate({ name: t })} />
       {locating && station && (
         <LocationSheet
           locations={locations}

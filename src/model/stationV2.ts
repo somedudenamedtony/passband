@@ -87,3 +87,12 @@ export function toV1Station(s: StationV2): Station {
     hours: s.hours,
   };
 }
+
+/** Back from a v1 station a v1 component changed, keeping what only v2 has. Goes with toV1Station. */
+export function fromV1Station(v1: Station, prev: StationV2): StationV2 {
+  return {
+    ...migrateStation(v1, prev.mySatellites),
+    showEverythingWorkable: prev.showEverythingWorkable,
+    qualityThresholdsDeg: prev.qualityThresholdsDeg,
+  };
+}
