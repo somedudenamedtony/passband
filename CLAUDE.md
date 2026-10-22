@@ -7,8 +7,8 @@ repo and package name.
 ## Read first
 
 - **`SPEC.md`** — the source of truth. Decisions D1–D20, data model, screens, milestones. If this
-- **`SPEC-v2.md`** — proposed rebuild (navigation around the pass). A proposal until accepted; then it replaces SPEC.md.
   file conflicts with it, SPEC.md wins.
+- **`SPEC-v2.md`** — proposed rebuild (navigation around the pass). A proposal until accepted; then it replaces SPEC.md.
 
 ## Environment
 
