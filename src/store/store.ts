@@ -5,13 +5,16 @@
 import { useSyncExternalStore } from 'react';
 import { loadCatalog, type LoadedCatalog } from '../data/catalog';
 import { deleteLocation, getActiveLocationId, listLocations, saveLocation, setActiveLocationId } from '../data/locations';
-import { listQsos, saveQso } from '../data/log';
+import { deleteQso, listQsos, markExported, saveQso, saveQsos } from '../data/log';
+import { deleteRecording, listRecordings } from '../data/recordings';
 import { deletePlan, listPlans, savePlan } from '../data/plans';
 import { loadStationV2, saveStationV2 } from '../data/stationV2';
 import type { PassId } from '../model/passId';
 import type { Plan } from '../model/plan';
 import type { StationV2 } from '../model/stationV2';
-import type { Location, QsoRecord } from '../model/types';
+import { passFor } from '../model/logGroups';
+import { DAY, MINUTE } from '../model/time';
+import type { Location, Pass, QsoRecord, Recording, Satellite } from '../model/types';
 
 export interface AppState {
   status: 'loading' | 'ready';
@@ -24,9 +27,16 @@ export interface AppState {
   plans: Plan[];
   /** The log, newest first; null until something asks for it. */
   qsos: QsoRecord[] | null;
+  /** Pass recordings, newest first; null until something asks for them. */
+  recordings: Recording[] | null;
 }
 
-const INITIAL: AppState = { status: 'loading', catalog: null, locations: [], activeLocationId: null, station: null, plans: [], qsos: null };
+const INITIAL: AppState = { status: 'loading', catalog: null, locations: [], activeLocationId: null, station: null, plans: [], qsos: null, recordings: null };
+
+/** Older contacts aren't matched to a pass: today's elements no longer place a months-old pass. */
+export const BACKFILL_WINDOW = 14 * DAY;
+
+export type Predict = (sats: Satellite[], location: Location, from: number, to: number) => Promise<Pass[]>;
 
 export function createStore() {
   let state = INITIAL;
@@ -90,9 +100,53 @@ export function createStore() {
     async loadLog() {
       if (state.qsos === null) set({ qsos: await listQsos() });
     },
+    /** Adds or replaces a contact. */
     async logQso(q: QsoRecord) {
       await saveQso(q);
       set({ qsos: await listQsos() });
+    },
+    async deleteQso(id: string) {
+      await deleteQso(id);
+      set({ qsos: await listQsos() });
+    },
+    async importQsos(qs: QsoRecord[]) {
+      await saveQsos(qs);
+      set({ qsos: await listQsos() });
+    },
+    async markExported(ids: string[], at: number) {
+      await markExported(ids, at);
+      set({ qsos: await listQsos() });
+    },
+    /**
+     * SPEC-v2 §5: contacts logged before pass ids existed get one by re-prediction, once. A contact
+     * that can't be matched gets null, so it isn't tried again.
+     */
+    async backfillPassIds(predict: Predict, now: number) {
+      const todo = (state.qsos ?? []).filter((q) => q.passId === undefined);
+      if (todo.length === 0) return;
+      const sats = new Map((state.catalog?.catalog.satellites ?? []).map((x) => [x.noradId, x]));
+      const updated: QsoRecord[] = [];
+      for (const q of todo) {
+        const sat = sats.get(q.satNoradId);
+        const loc = state.locations.find((l) => l.id === q.locationId);
+        let id: string | null = null;
+        if (sat && loc && now - q.timeOn <= BACKFILL_WINDOW) {
+          try {
+            id = passFor(q, await predict([sat], loc, q.timeOn - 30 * MINUTE, q.timeOn + 30 * MINUTE));
+          } catch {
+            continue; // the worker failed; try again next time
+          }
+        }
+        updated.push({ ...q, passId: id });
+      }
+      if (updated.length) await this.importQsos(updated);
+    },
+    async loadRecordings() {
+      if (state.recordings === null) set({ recordings: await listRecordings() });
+    },
+    async deleteRecording(id: string) {
+      await deleteRecording(id);
+      set({ recordings: await listRecordings() });
     },
     async savePlan(p: Plan) {
       set({ plans: [...state.plans.filter((x) => x.id !== p.id), p].sort((a, b) => a.aos - b.aos) });

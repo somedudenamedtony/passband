@@ -7,6 +7,7 @@ import type { TrackPoint } from '../model/track';
 import type { Location, Pass, Satellite } from '../model/types';
 import { passTrackFor, predictPasses } from '../predict/client';
 import { useClock } from '../ui/clock';
+import { store, useAppState } from './store';
 
 const REFRESH = 30 * MINUTE;
 
@@ -75,4 +76,13 @@ export function usePassTrack(sat: Satellite | null, location: Location | null, p
 
 export function useSatelliteMap(sats: readonly Satellite[] | undefined): ReadonlyMap<number, Satellite> {
   return useMemo(() => new Map((sats ?? []).map((s) => [s.noradId, s])), [sats]);
+}
+
+/** Matches recent contacts to their passes once the log and catalog are in (SPEC-v2 §5). */
+export function useBackfillPassIds(): void {
+  const clock = useClock();
+  const ready = useAppState((s) => s.qsos !== null && s.catalog !== null);
+  useEffect(() => {
+    if (ready) void store.backfillPassIds(predictPasses, clock.now());
+  }, [ready, clock]);
 }
