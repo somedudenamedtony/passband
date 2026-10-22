@@ -35,3 +35,20 @@ export function inEarthShadow(posEciKm: { x: number; y: number; z: number }, t: 
   const pz = posEciKm.z - along * s.z;
   return Math.hypot(px, py, pz) < EARTH_RADIUS_KM;
 }
+
+/**
+ * Sunrise and sunset between `from` and `to` (UTC ms), found by stepping the sun's elevation.
+ * Two-minute steps put each event within a minute: plenty for a day header.
+ */
+export function sunEvents(from: number, to: number, latDeg: number, lonDeg: number): Array<{ t: number; kind: 'rise' | 'set' }> {
+  const STEP = 2 * 60 * 1000;
+  const out: Array<{ t: number; kind: 'rise' | 'set' }> = [];
+  let prev = sunPosition(from, latDeg, lonDeg).elDeg;
+  for (let t = from + STEP; t <= to; t += STEP) {
+    const el = sunPosition(t, latDeg, lonDeg).elDeg;
+    if (prev < 0 && el >= 0) out.push({ t: t - STEP / 2, kind: 'rise' });
+    if (prev >= 0 && el < 0) out.push({ t: t - STEP / 2, kind: 'set' });
+    prev = el;
+  }
+  return out;
+}

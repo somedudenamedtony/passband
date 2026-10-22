@@ -13,9 +13,10 @@ import { Link } from './Link';
 import { NowScreen } from '../routes/Now';
 import { PassPage } from '../routes/PassPage';
 import { LivePage } from '../routes/LivePage';
+import { PlanScreen } from '../routes/Plan';
 import { LogScreen } from '../routes/Log';
 import {
-  NotFoundScreen, PlanScreen, SatelliteScreen, StationScreen,
+  NotFoundScreen, SatelliteScreen, StationScreen,
 } from '../routes/screens';
 import { toV1Station } from '../model/stationV2';
 import { LocationSheet } from '../ui/LocationSheet';
