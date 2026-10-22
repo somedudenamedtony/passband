@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
-import { liveFromPassPage, openFuturePass, openNextLive, setup } from './v2';
+import { liveFromPassPage, openFuturePass, openNextLive, setup, waitForStored } from './v2';
 
 // §5.2 / D16: the live screen runs on whatever clock the page has; here Playwright's fake one.
 test('live screen tracks a pass and returns with the back button', async ({ page }) => {
@@ -74,6 +74,7 @@ test('listener preparation has a checklist, receive-only controls, and a remembe
   await expect(page.getByRole('button', { name: 'Log a contact' })).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Frequencies' })).not.toContainText('Transmit');
   await page.getByRole('tab', { name: 'Sky', exact: true }).click();
+  await waitForStored(page, 'settings', "rows.some((r) => r && r.remembered && r.remembered.liveView === 'sky')");
   await page.reload();
   await expect(page.getByRole('tab', { name: 'Sky', exact: true })).toHaveAttribute('aria-selected', 'true');
 });

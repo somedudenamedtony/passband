@@ -28,3 +28,24 @@ export async function openFuturePass(page: Page, mode?: RegExp) {
 export async function liveFromPassPage(page: Page) {
   await page.goto(`${new URL(page.url()).pathname}/live`);
 }
+
+/**
+ * Wait until IndexedDB holds what the UI just showed. A reload aborts a write still in flight, which
+ * a person never manages but a test on a busy runner does.
+ */
+export async function waitForStored(page: Page, store: string, test: string) {
+  await page.waitForFunction(
+    ([storeName, body]) =>
+      new Promise<boolean>((resolve) => {
+        const open = indexedDB.open('passband');
+        open.onsuccess = () => {
+          const all = open.result.transaction(storeName!).objectStore(storeName!).getAll();
+          all.onsuccess = () => {
+            resolve((new Function('rows', `return ${body}`) as (rows: unknown[]) => boolean)(all.result));
+            open.result.close();
+          };
+        };
+      }),
+    [store, test],
+  );
+}

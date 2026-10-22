@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
+import { waitForStored } from './v2';
 
 // SPEC-v2 R5: the week ahead; star passes to plan them, filter to the plan, export it in one file.
 test('plan two passes this week and export them together', async ({ page }) => {
@@ -15,6 +16,7 @@ test('plan two passes this week and export them together', async ({ page }) => {
   await stars.nth(5).click();
   await page.getByRole('button', { name: 'Planned only' }).click();
   await expect(page.locator('.pass-row')).toHaveCount(2);
+  await waitForStored(page, 'plans', 'rows.length === 2');
 
   await page.reload();
   await page.getByRole('button', { name: 'Planned only' }).click();
