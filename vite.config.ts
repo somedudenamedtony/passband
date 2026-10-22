@@ -2,6 +2,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { copyFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 // D2: served from a project path on GitHub Pages. Every asset and the service-worker scope
 // derive from this; nothing in src/ may hardcode '/'.
@@ -11,6 +13,16 @@ export default defineConfig({
   base,
   plugins: [
     react(),
+    // D22: GitHub Pages has no SPA fallback, so a first visit to a deep link (/passband/now) gets
+    // 404.html. Make that the app; after one visit the service worker answers every navigation.
+    {
+      name: 'passband-spa-404',
+      apply: 'build',
+      async writeBundle(options) {
+        const dir = options.dir ?? 'dist';
+        await copyFile(join(dir, 'index.html'), join(dir, '404.html'));
+      },
+    },
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {

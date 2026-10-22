@@ -209,18 +209,24 @@ interface Station {
 }
 ```
 
-**Migration (v3 → v4).** Each existing value maps as follows:
+**Migration (v3 → v4).** While the v1 screens still run beside v2 (until R4), v4 only *adds*: the
+`plans` store, and an optional `passId` on QSOs and recordings. The v2 station is saved under its
+own `stationV2` key, derived from the v1 station the first time it's read. My satellites stays in
+the shared `favorites` setting, so a star set in either app shows in both. The v1 keys are dropped
+in R4. Each v1 value maps as follows (`model/stationV2.ts`):
 
-- `experience: 'new'` becomes `guidance: 'guided'`; `'experienced'` becomes `'numbers'`.
+- `experience: 'new'` becomes `guidance: 'guided'`; `'experienced'` becomes `'numbers'`. An
+  explicit `showTips` wins over the preset.
 - `goal: 'explore'` becomes `'both'`.
 - `equipment` becomes `radio`.
 - `favorites` becomes `mySatellites`.
 - `showTips`, `compactDetails`, `liveView`, `liveCues` and related fields fold into `remembered`,
   with explicit choices kept.
 
-Existing QSOs get `passId` back-filled by matching `satName` and `timeOn` against a re-prediction
-for their location, where one matches; otherwise `null`. The migration has a test that round-trips
-a real v3 export.
+In R4, existing QSOs get `passId` back-filled by matching `satNoradId` and `timeOn` against a
+re-prediction for their location, where one matches; otherwise `null`. In R3, v1's listening
+results (`passResults`) become plan outcomes. A test opens a seeded v3 database in v4
+(`data/migration.test.ts`).
 
 ---
 
