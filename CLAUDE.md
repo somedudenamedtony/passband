@@ -8,7 +8,8 @@ repo and package name.
 
 - **`SPEC.md`** — the source of truth. Decisions D1–D20, data model, screens, milestones. If this
   file conflicts with it, SPEC.md wins.
-- **`SPEC-v2.md`** — proposed rebuild (navigation around the pass). A proposal until accepted; then it replaces SPEC.md.
+- **`SPEC-v2.md`** — the accepted rebuild, being built in milestones R1–R6. New screens follow it;
+  the v1 screens (the root and `/classic/`) still follow SPEC.md until R4 retires them.
 
 ## Environment
 

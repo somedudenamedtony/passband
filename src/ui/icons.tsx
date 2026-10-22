@@ -25,6 +25,8 @@ const PATHS = {
   chevronDown: 'M5 7.5l5 5 5-5',
   chevronUp: 'M5 12.5l5-5 5 5',
   chevronLeft: 'M12.5 5l-5 5 5 5',
+  search: 'M8.5 3a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM12.5 12.5L17 17',
+  plan: 'M3 5h14v12H3zM3 8.5h14M6.5 2.5v4M13.5 2.5v4M6.5 12l2 2 4-4',
   star: 'M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z',
 } as const;
 

@@ -214,6 +214,8 @@ export interface QsoRecord {
   recordingId: string | null;
   exportedAt: number | null;
   note: string | null;
+  /** SPEC-v2 D23: the pass it was made on; absent or null when unknown (imported, manual). */
+  passId?: string | null;
 }
 
 /** D13: a pass recording. Blobs stay on the device (§7). */
@@ -230,4 +232,6 @@ export interface Recording {
   interrupted: boolean;
   mimeType: string;
   blob: Blob;
+  /** SPEC-v2 D23: the pass it was recorded on; absent or null when unknown. */
+  passId?: string | null;
 }

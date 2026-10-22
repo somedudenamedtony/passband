@@ -31,7 +31,14 @@ test('filters govern the featured pass, persist across tabs and reloads, and car
 test('listener preparation has an immediate checklist, receive-only controls, and saved listening progress', async ({ page }) => {
   await page.clock.install();
   await setup(page, true);
-  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
+  // Preparation only exists before AOS. On the real clock the featured pass may already be up
+  // (Track live), so step past it until the featured pass is still to come.
+  const prepare = page.getByRole('button', { name: 'Prepare for pass', exact: true });
+  for (let i = 0; i < 8 && !(await prepare.isVisible()); i++) {
+    await page.clock.fastForward(20 * 60 * 1000);
+    await page.clock.runFor(1000);
+  }
+  await prepare.click();
   const preparation = page.getByRole('region', { name: 'Pass preparation' });
   await expect(preparation.getByRole('checkbox').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Test cues' })).toBeVisible();
