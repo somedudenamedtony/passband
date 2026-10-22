@@ -46,4 +46,12 @@ test('after LOS the pass page takes the outcome and holds its contacts', async (
   await page.reload();
   await expect(page.getByRole('region', { name: 'Contacts on this pass' })).toContainText('K1ABC');
   await expect(page.getByRole('region', { name: 'How did it go?' }).getByRole('button', { name: 'Worked' })).toHaveAttribute('aria-pressed', 'true');
+
+  // The Log shows it under its pass, marked worked, with a way back to the pass.
+  const passUrl = page.url();
+  await page.getByRole('tab', { name: 'Log' }).click();
+  const group = page.locator('.log-group').filter({ hasText: 'K1ABC' });
+  await expect(group).toContainText('worked');
+  await group.getByRole('link', { name: /→$/ }).click();
+  await expect(page).toHaveURL(passUrl);
 });

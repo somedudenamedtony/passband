@@ -12,14 +12,6 @@ export function PlanScreen() {
   return <Placeholder title="Plan" milestone="R5" />;
 }
 
-export function LogScreen() {
-  return <Placeholder title="Log" milestone="R4" />;
-}
-
-export function ContactScreen({ qsoId }: { qsoId: string }) {
-  return <Placeholder title="Contact" milestone="R4"><p className="muted">Contact {qsoId}</p></Placeholder>;
-}
-
 export function SatelliteScreen({ noradId }: { noradId: number }) {
   return <Placeholder title={useSatName(noradId)} milestone="R6" />;
 }
