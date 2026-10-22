@@ -8,14 +8,6 @@ function useSatName(noradId: number): string {
   return useAppState((s) => s.catalog?.catalog.satellites.find((x) => x.noradId === noradId)?.name ?? `NORAD ${noradId}`);
 }
 
-export function LogScreen() {
-  return <Placeholder title="Log" milestone="R4" />;
-}
-
-export function ContactScreen({ qsoId }: { qsoId: string }) {
-  return <Placeholder title="Contact" milestone="R4"><p className="muted">Contact {qsoId}</p></Placeholder>;
-}
-
 export function SatelliteScreen({ noradId }: { noradId: number }) {
   return <Placeholder title={useSatName(noradId)} milestone="R6" />;
 }

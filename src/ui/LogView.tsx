@@ -234,7 +234,7 @@ export function LogView({
   );
 }
 
-function importSummary(r: ImportResult): string {
+export function importSummary(r: ImportResult): string {
   const parts = [`Imported ${r.qsos.length} satellite contact${r.qsos.length === 1 ? '' : 's'}.`];
   if (r.duplicates) parts.push(`${r.duplicates} already in the log.`);
   if (r.notSatellite) parts.push(`${r.notSatellite} non-satellite contact${r.notSatellite === 1 ? '' : 's'} left out.`);
@@ -243,7 +243,7 @@ function importSummary(r: ImportResult): string {
   return parts.join(' ');
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+export function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="panel" style={{ padding: 8 }}>
       <div className="lcd">
@@ -267,7 +267,7 @@ export function parseUtcInput(s: string): number | null {
   return Number.isNaN(t) ? null : t;
 }
 
-function EditQso({
+export function EditQso({
   qso,
   onSave,
   onDelete,

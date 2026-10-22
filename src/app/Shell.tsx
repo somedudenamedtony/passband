@@ -14,8 +14,9 @@ import { NowScreen } from '../routes/Now';
 import { PassPage } from '../routes/PassPage';
 import { LivePage } from '../routes/LivePage';
 import { PlanScreen } from '../routes/Plan';
+import { LogScreen } from '../routes/Log';
 import {
-  ContactScreen, LogScreen, NotFoundScreen, SatelliteScreen, StationScreen,
+  NotFoundScreen, SatelliteScreen, StationScreen,
 } from '../routes/screens';
 import { toV1Station } from '../model/stationV2';
 import { LocationSheet } from '../ui/LocationSheet';
@@ -31,7 +32,7 @@ function Screen({ route }: { route: Exclude<Route, { name: 'classic' }> }) {
     case 'now': return <NowScreen />;
     case 'plan': return <PlanScreen />;
     case 'log': return <LogScreen />;
-    case 'contact': return <ContactScreen qsoId={route.qsoId} />;
+    case 'contact': return <LogScreen editing={route.qsoId} />;
     case 'pass': return <PassPage id={route.passId} />;
     case 'live': return null; // drawn full screen by Shell
     case 'sat': return <SatelliteScreen noradId={route.noradId} />;
@@ -55,7 +56,8 @@ export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> })
   useBack(goUp, hasParent && !live);
 
   const pageRef = useRef<HTMLElement>(null);
-  const key = JSON.stringify(route);
+  // A contact opens as a sheet over the log: keep the log where it was scrolled to.
+  const key = route.name === 'contact' ? 'log' : JSON.stringify(route);
   useEffect(() => { pageRef.current?.scrollTo({ top: 0 }); }, [key]);
 
   if (live) return status === 'loading' ? null : <LivePage id={route.passId} startPractice={route.practice === true} />;

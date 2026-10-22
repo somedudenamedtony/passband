@@ -1644,4 +1644,56 @@ a.key {
 }
 .plan-filters .key {
   min-height: 36px;
+
+/* ---- Log (SPEC-v2 §6.6) ---- */
+
+.log-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.log-total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--lcd-bg);
+  box-shadow: var(--lcd-glow);
+  color: var(--lcd);
+  font-family: var(--mono);
+  border: 0;
+  text-align: left;
+}
+button.log-total {
+  cursor: pointer;
+}
+button.log-total[aria-expanded='true'] {
+  outline: 1px solid var(--lcd);
+}
+.log-total .readout {
+  font-size: 26px;
+}
+.log-total small {
+  font-size: 13px;
+  color: var(--lcd-dim);
+}
+.log-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.log-group-title {
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+a.log-group-title {
+  color: var(--amber);
+}
+.log-row {
+  color: inherit;
+  text-decoration: none;
 }

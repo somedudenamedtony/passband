@@ -209,11 +209,11 @@ interface Station {
 }
 ```
 
-**Migration (v3 → v4).** While the v1 screens still run beside v2 (until R4), v4 only *adds*: the
+**Migration (v3 → v4).** While the v1 screens still run beside v2 (until R6), v4 only *adds*: the
 `plans` store, and an optional `passId` on QSOs and recordings. The v2 station is saved under its
 own `stationV2` key, derived from the v1 station the first time it's read. My satellites stays in
 the shared `favorites` setting, so a star set in either app shows in both. The v1 keys are dropped
-in R4. Each v1 value maps as follows (`model/stationV2.ts`):
+in R6. Each v1 value maps as follows (`model/stationV2.ts`):
 
 - `experience: 'new'` becomes `guidance: 'guided'`; `'experienced'` becomes `'numbers'`. An
   explicit `showTips` wins over the preset.
@@ -223,8 +223,9 @@ in R4. Each v1 value maps as follows (`model/stationV2.ts`):
 - `showTips`, `compactDetails`, `liveView`, `liveCues` and related fields fold into `remembered`,
   with explicit choices kept.
 
-In R4, existing QSOs get `passId` back-filled by matching `satNoradId` and `timeOn` against a
-re-prediction for their location, where one matches; otherwise `null`. In R4, v1's listening
+Since R4, existing QSOs get `passId` back-filled by matching `satNoradId` and `timeOn` against a
+re-prediction for their location, where one matches; otherwise `null`. Only contacts from the last
+14 days are matched: today's elements no longer place an older pass. In R6, v1's listening
 results (`passResults`) become plan outcomes. A test opens a seeded v3 database in v4
 (`data/migration.test.ts`).
 
@@ -458,7 +459,8 @@ src/
 ## 9. Milestones
 
 Each milestone is one PR, ships to Pages, and leaves the app usable. v1 stays reachable at
-`/passband/classic/` until R4 lands, so nothing is lost mid-rebuild.
+`/passband/classic/` until R6 lands, so nothing is lost mid-rebuild: settings, Learn and the map
+have no v2 home before then.
 
 | | Milestone | Done when |
 |---|---|---|
@@ -466,9 +468,9 @@ Each milestone is one PR, ships to Pages, and leaves the app usable. v1 stays re
 | **R2** | Now + PassRow + pass page (Before/Soon) | Cold open answers "what's next" with zero taps; pass page shows track, radio setup, plan toggle |
 | **R3** | Live view + After phase | The v1 live screen hosted at `/pass/:id/live`, logging with the pass id; practice on the same route; the pass page's After phase (outcome, contacts on the pass, add contact) |
 | **R3b** | Live layout | Live view in the §6.3 layout; one-tap log with callsign later; LOS hands over to review |
-| **R4** | Log | Pass-grouped history, contact edit, ADIF export/import validated against TQSL as in v1, grid map; `/classic/` removed |
+| **R4** | Log | Pass-grouped history, contact at `/log/:id`, ADIF export/import as in v1, grid map, recordings; recent contacts matched to passes |
 | **R5** | Plan | Week agenda, Going/outcomes, clashes, `.ics` for planned passes, location switching |
-| **R6** | Library, satellite page, Station, help | Search over full catalog, profile page, single settings screen, term sheets, first-contact path |
+| **R6** | Library, satellite page, Station, help | Search over full catalog, profile page, single settings screen, term sheets, first-contact path; the root becomes Now and `/classic/` is removed |
 
 ---
 
