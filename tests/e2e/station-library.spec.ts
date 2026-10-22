@@ -32,6 +32,20 @@ test('Station sets the callsign and goal, and opens help', async ({ page }) => {
   await page.getByRole('link', { name: 'Station' }).click();
   await page.getByLabel('Callsign').fill('W7LIT');
   await page.getByRole('tab', { name: 'Listen', exact: true }).click();
+  // A reload aborts an IndexedDB write still in flight: wait until the choice is stored.
+  await page.waitForFunction(
+    () =>
+      new Promise<boolean>((resolve) => {
+        const open = indexedDB.open('passband');
+        open.onsuccess = () => {
+          const get = open.result.transaction('settings').objectStore('settings').get('stationV2');
+          get.onsuccess = () => {
+            resolve((get.result as { goal?: string } | undefined)?.goal === 'listen');
+            open.result.close();
+          };
+        };
+      }),
+  );
   await page.reload();
   await expect(page.getByRole('link', { name: 'Station' })).toHaveText('W7LIT');
   await expect(page.getByRole('tab', { name: 'Listen', exact: true })).toHaveAttribute('aria-selected', 'true');
