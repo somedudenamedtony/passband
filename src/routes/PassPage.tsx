@@ -1,8 +1,8 @@
 // SPEC-v2 §6.2: one pass, one page, in the phase the clock says (D23). R2 builds Before and Soon:
 // the track, how to set the radio, and the plan. During offers the live view (R3) and keeps the
-// radio setup in reach; After and Past arrive with R3.
+// radio setup in reach; After and Past say how it went and hold its contacts.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from '../app/Link';
 import { ModeChip, OnAirMark, passFacts, QualityBar } from '../components/pass';
 import { Checklist } from '../live/Checklist';
@@ -11,7 +11,10 @@ import { formatElementAge } from '../model/elementAge';
 import { formatCountdown, formatDuration, formatLocalDay, formatLocalTime } from '../model/format';
 import { parsePassId, type PassId } from '../model/passId';
 import { direction, phaseOf } from '../model/passView';
-import { toV1Station } from '../model/stationV2';
+import type { Plan, PlanOutcome } from '../model/plan';
+import { toV1Station, type StationV2 } from '../model/stationV2';
+import type { Location, Pass, Satellite } from '../model/types';
+import { AddQso } from '../ui/AddQso';
 import { usePass, usePassTrack } from '../store/passes';
 import { store, useActiveLocation, useAppState } from '../store/store';
 import { exportPassesToCalendar } from '../ui/calendar';
@@ -71,12 +74,7 @@ export function PassPage({ id }: { id: PassId }) {
           <Link to={{ name: 'live', passId: id }} className="key key-primary key-block">Track</Link>
         </Panel>
       )}
-      {(phase === 'after' || phase === 'past') && (
-        <Panel label="Ended">
-          <h2 className="lcd-label">Ended</h2>
-          <p>This pass ended {formatLocalTime(pass.los)}. Reviewing and logging after a pass arrive with the next rebuild step.</p>
-        </Panel>
-      )}
+      {(phase === 'after' || phase === 'past') && <AfterPass id={id} pass={pass} sat={sat} location={location} station={station} plan={plan} now={now} />}
 
       {(phase === 'before' || phase === 'soon' || phase === 'during') && (
         <>
@@ -125,17 +123,91 @@ export function PassPage({ id }: { id: PassId }) {
         </>
       )}
 
+      {(phase === 'before' || phase === 'soon') && (
+        <Link to={{ name: 'live', passId: id, practice: true }} className="key key-secondary key-block">Practice this pass</Link>
+      )}
       <Link to={{ name: 'sat', noradId }} className="key key-ghost key-block">About {sat.name} →</Link>
     </div>
   );
 }
 
-function Gone({ title, text }: { title: string; text: string }) {
+export function Gone({ title, text }: { title: string; text: string }) {
   return (
     <div className="stack">
       <h1 className="screen-title">{title}</h1>
       <p>{text}</p>
       <Link to={{ name: 'now' }} className="key key-secondary key-block">Go to Now</Link>
     </div>
+  );
+}
+
+const OUTCOMES: Array<{ id: PlanOutcome; label: string; twoWay: boolean }> = [
+  { id: 'worked', label: 'Worked', twoWay: true },
+  { id: 'heard', label: 'Heard', twoWay: false },
+  { id: 'missed', label: 'Missed', twoWay: false },
+];
+
+/** SPEC-v2 §6.2 After / Past: how it went, and the contacts made on this pass (D23). */
+function AfterPass({ id, pass, sat, location, station, plan, now }: { id: PassId; pass: Pass; sat: Satellite; location: Location; station: StationV2; plan: Plan | null; now: number }) {
+  useEffect(() => {
+    void store.loadLog();
+  }, []);
+  const qsos = useAppState((s) => s.qsos);
+  const catalog = useAppState((s) => s.catalog?.catalog.satellites ?? []);
+  const [adding, setAdding] = useState(false);
+  const listenOnly = station.goal === 'listen';
+  const mine = (qsos ?? []).filter((q) => q.passId === id);
+  const outcome = plan?.outcome === 'planned' ? null : (plan?.outcome ?? null);
+  const setOutcome = (o: PlanOutcome) => void store.savePlan({ ...(plan ?? planFor(pass, location, now)), outcome: o });
+
+  return (
+    <>
+      <Panel label="How did it go?" className="stack">
+        <h2 className="lcd-label">How did it go?</h2>
+        <p className="muted">Ended {formatLocalTime(pass.los)}.</p>
+        <div className="chips" role="group" aria-label="Outcome">
+          {OUTCOMES.filter((o) => !(listenOnly && o.twoWay)).map((o) => (
+            <button key={o.id} type="button" className="key key-secondary" aria-pressed={outcome === o.id} onClick={() => setOutcome(o.id)}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </Panel>
+      {!listenOnly && (
+        <Panel label="Contacts on this pass" className="stack">
+          <h2 className="lcd-label">Contacts on this pass</h2>
+          {mine.length === 0 ? (
+            <p className="muted">None logged on this pass.</p>
+          ) : (
+            <ul className="rows">
+              {mine.map((q) => (
+                <li key={q.id} className="row">
+                  <span className="row-main">
+                    <span className="row-title mono">{q.call || 'Callsign?'}</span>
+                    <span className="row-sub mono"> {q.gridsquare ?? 'grid?'} · {formatLocalTime(q.timeOn)}</span>
+                  </span>
+                  {(!q.call || !q.gridsquare) && <span className="tag tag-warn">Incomplete</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+          <Button onClick={() => setAdding(true)}>Add contact</Button>
+        </Panel>
+      )}
+      {adding && (
+        <AddQso
+          sats={catalog}
+          location={location}
+          station={toV1Station(station)}
+          now={now}
+          initialPass={pass}
+          onSave={(q) => {
+            void store.logQso({ ...q, passId: q.satNoradId === sat.noradId ? id : null });
+            setAdding(false);
+          }}
+          onClose={() => setAdding(false)}
+        />
+      )}
+    </>
   );
 }

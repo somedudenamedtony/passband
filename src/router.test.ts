@@ -8,7 +8,7 @@ describe('routes (D22)', () => {
   it('round-trips every screen through its path', () => {
     const routes: Route[] = [
       { name: 'now' }, { name: 'plan' }, { name: 'log' }, { name: 'station' },
-      { name: 'contact', qsoId: 'abc-123' }, { name: 'pass', passId: pid }, { name: 'live', passId: pid },
+      { name: 'contact', qsoId: 'abc-123' }, { name: 'pass', passId: pid }, { name: 'live', passId: pid }, { name: 'live', passId: pid, practice: true },
       { name: 'sat', noradId: 25544 },
     ];
     for (const r of routes) expect(matchRoute(routePath(r))).toEqual(r);

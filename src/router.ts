@@ -13,7 +13,8 @@ export type Route =
   | { name: 'log' }
   | { name: 'contact'; qsoId: string }
   | { name: 'pass'; passId: PassId }
-  | { name: 'live'; passId: PassId }
+  /** practice: run it on a simulated clock (D16). */
+  | { name: 'live'; passId: PassId; practice?: true }
   | { name: 'sat'; noradId: number }
   | { name: 'station' }
   | { name: 'notFound'; path: string };
@@ -22,7 +23,8 @@ export type Tab = 'now' | 'plan' | 'log';
 
 /** `path` is relative to the base, without a leading slash: "pass/25544-1761100800000". */
 export function matchRoute(path: string): Route {
-  const parts = path.split(/[?#]/)[0]!.split('/').filter(Boolean).map(decodeURIComponent);
+  const [pathPart = '', query = ''] = path.split('#')[0]!.split('?');
+  const parts = pathPart.split('/').filter(Boolean).map(decodeURIComponent);
   const [head, a, b] = parts;
   const n = parts.length;
   if (n === 0 || head === 'classic') return { name: 'classic' };
@@ -30,7 +32,7 @@ export function matchRoute(path: string): Route {
   if (n === 2 && head === 'log') return { name: 'contact', qsoId: a! };
   if (head === 'pass' && a && parsePassId(a)) {
     if (n === 2) return { name: 'pass', passId: a };
-    if (n === 3 && b === 'live') return { name: 'live', passId: a };
+    if (n === 3 && b === 'live') return new URLSearchParams(query).has('practice') ? { name: 'live', passId: a, practice: true } : { name: 'live', passId: a };
   }
   if (n === 2 && head === 'sat' && /^\d{1,9}$/.test(a!)) return { name: 'sat', noradId: Number(a) };
   return { name: 'notFound', path };
@@ -42,7 +44,7 @@ export function routePath(r: Route): string {
     case 'now': case 'plan': case 'log': case 'station': return r.name;
     case 'contact': return `log/${encodeURIComponent(r.qsoId)}`;
     case 'pass': return `pass/${r.passId}`;
-    case 'live': return `pass/${r.passId}/live`;
+    case 'live': return `pass/${r.passId}/live${r.practice ? '?practice' : ''}`;
     case 'sat': return `sat/${r.noradId}`;
     case 'notFound': return r.path;
   }
@@ -77,7 +79,7 @@ export function href(r: Route): string {
 
 function currentPath(): string {
   const p = location.pathname;
-  return p.startsWith(base) ? p.slice(base.length) : p.replace(/^\//, '');
+  return (p.startsWith(base) ? p.slice(base.length) : p.replace(/^\//, '')) + location.search;
 }
 
 interface NavState { pbDepth?: number }

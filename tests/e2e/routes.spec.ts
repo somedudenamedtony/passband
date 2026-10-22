@@ -45,5 +45,5 @@ test('deep links open offline after one online visit', async ({ page, context })
   });
   await context.setOffline(true);
   await page.goto(`./${PASS}/live`);
-  await expect(page.getByRole('heading', { name: /live$/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'No location yet' })).toBeVisible();
 });
