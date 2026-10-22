@@ -71,3 +71,13 @@ export function formatAgo(ms: number): string {
   if (ms < 48 * HOUR) return `${Math.round(ms / HOUR)} h ago`;
   return `${Math.floor(ms / (24 * HOUR))} days ago`;
 }
+
+const shortTime = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+
+/** "4:29p" / "16:29": a local time for a one-line row (SPEC-v2 D26). */
+export function formatLocalTimeShort(t: number): string {
+  return shortTime
+    .formatToParts(new Date(t))
+    .map((p) => (p.type === 'dayPeriod' ? p.value.trim().charAt(0).toLowerCase() : p.type === 'literal' && /^\s+$/.test(p.value) ? '' : p.value))
+    .join('');
+}

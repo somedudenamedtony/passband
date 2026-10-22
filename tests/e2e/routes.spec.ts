@@ -10,10 +10,11 @@ test('the root is still the current app', async ({ page }) => {
 
 test('a deep link to a pass opens it, and back goes up to Now', async ({ page }) => {
   await page.goto(`./${PASS}`);
-  await expect(page.getByRole('heading', { name: /pass$/ })).toBeVisible();
+  // No location on this device yet: the pass page says so rather than guessing one.
+  await expect(page.getByRole('heading', { name: 'No location yet' })).toBeVisible();
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page).toHaveURL(/\/passband\/now$/);
-  await expect(page.getByRole('heading', { name: 'Now' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Where are you?' })).toBeVisible();
 });
 
 test('tabs are history entries and back retraces them', async ({ page }) => {
@@ -35,7 +36,7 @@ test('an unknown address says so instead of guessing', async ({ page }) => {
 
 test('deep links open offline after one online visit', async ({ page, context }) => {
   await page.goto('./now');
-  await expect(page.getByRole('heading', { name: 'Now' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Where are you?' })).toBeVisible();
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
     if (!navigator.serviceWorker.controller) {

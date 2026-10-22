@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_STATION } from '../data/station';
-import { migrateStation } from './stationV2';
+import { migrateStation, toV1Station } from './stationV2';
 
 describe('migrateStation (SPEC-v2 D19)', () => {
   it('turns the experience preset into guidance and remembered live choices', () => {
@@ -20,5 +20,10 @@ describe('migrateStation (SPEC-v2 D19)', () => {
       mySatellites: [25544, 43017], compassOffsetDeg: 4,
       remembered: { liveView: 'ar', cues: { on: false }, stepHz: 2500, recordPasses: true },
     });
+  });
+
+  it('stands in for a v1 station, keeping what v1 components read', () => {
+    const v1 = { ...DEFAULT_STATION, callsign: 'W7LIT', experience: 'experienced' as const, showTips: false, compactDetails: true, liveView: 'sky' as const, liveCues: false, goal: 'listen' as const, equipment: 'sdr' as const };
+    expect(toV1Station(migrateStation(v1, []))).toEqual(v1);
   });
 });

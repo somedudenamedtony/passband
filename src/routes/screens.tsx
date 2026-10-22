@@ -9,10 +9,6 @@ function useSatName(noradId: number): string {
   return useAppState((s) => s.catalog?.catalog.satellites.find((x) => x.noradId === noradId)?.name ?? `NORAD ${noradId}`);
 }
 
-export function NowScreen() {
-  return <Placeholder title="Now" milestone="R2" />;
-}
-
 export function PlanScreen() {
   return <Placeholder title="Plan" milestone="R5" />;
 }
@@ -25,10 +21,9 @@ export function ContactScreen({ qsoId }: { qsoId: string }) {
   return <Placeholder title="Contact" milestone="R4"><p className="muted">Contact {qsoId}</p></Placeholder>;
 }
 
-export function PassScreen({ passId, live = false }: { passId: PassId; live?: boolean }) {
+export function LiveScreen({ passId }: { passId: PassId }) {
   const { noradId } = parsePassId(passId)!;
-  const name = useSatName(noradId);
-  return <Placeholder title={live ? `${name} live` : `${name} pass`} milestone={live ? 'R3' : 'R2'} />;
+  return <Placeholder title={`${useSatName(noradId)} live`} milestone="R3" />;
 }
 
 export function SatelliteScreen({ noradId }: { noradId: number }) {

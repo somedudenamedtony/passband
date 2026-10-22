@@ -4,7 +4,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { loadCatalog, type LoadedCatalog } from '../data/catalog';
-import { getActiveLocationId, listLocations, setActiveLocationId } from '../data/locations';
+import { deleteLocation, getActiveLocationId, listLocations, saveLocation, setActiveLocationId } from '../data/locations';
 import { deletePlan, listPlans, savePlan } from '../data/plans';
 import { loadStationV2, saveStationV2 } from '../data/stationV2';
 import type { PassId } from '../model/passId';
@@ -58,6 +58,19 @@ export function createStore() {
     async setActiveLocation(id: string) {
       await setActiveLocationId(id);
       set({ activeLocationId: id });
+    },
+    /** Adds or replaces a location; a new one becomes the active one. */
+    async saveLocation(loc: Location) {
+      const isNew = !state.locations.some((l) => l.id === loc.id);
+      set({ locations: [...state.locations.filter((l) => l.id !== loc.id), loc] });
+      await saveLocation(loc);
+      if (isNew) await this.setActiveLocation(loc.id);
+    },
+    async deleteLocation(id: string) {
+      const locations = state.locations.filter((l) => l.id !== id);
+      set({ locations, activeLocationId: state.activeLocationId === id ? (locations[0]?.id ?? null) : state.activeLocationId });
+      await deleteLocation(id);
+      if (state.activeLocationId) await setActiveLocationId(state.activeLocationId);
     },
     async updateStation(patch: Partial<StationV2>) {
       if (!state.station) return;
