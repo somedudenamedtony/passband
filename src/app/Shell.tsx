@@ -1,18 +1,22 @@
 // SPEC-v2 §6: three tabs (Now · Plan · Log), a header with the location and station, and one
 // screen per URL. Back (the ← key, the edge swipe, the browser) goes up one level (D22).
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { goUp, navigate, parentOf, tabOf, type Route, type Tab } from '../router';
 import { store, useActiveLocation, useAppState } from '../store/store';
 import { useBack } from '../ui/back';
-import { Banner, Button, Tag } from '../ui/common';
+import { Banner, Button } from '../ui/common';
 import { EdgeSwipe } from '../ui/EdgeSwipe';
 import { Icon } from '../ui/icons';
 import { TabBar, type TabSpec } from '../ui/TabBar';
 import { Link } from './Link';
+import { NowScreen } from '../routes/Now';
+import { PassPage } from '../routes/PassPage';
 import {
-  ContactScreen, LogScreen, NotFoundScreen, NowScreen, PassScreen, PlanScreen, SatelliteScreen, StationScreen,
+  ContactScreen, LiveScreen, LogScreen, NotFoundScreen, PlanScreen, SatelliteScreen, StationScreen,
 } from '../routes/screens';
+import { toV1Station } from '../model/stationV2';
+import { LocationSheet } from '../ui/LocationSheet';
 
 const TABS = [
   { id: 'now', label: 'Now', icon: 'pass' },
@@ -26,8 +30,8 @@ function Screen({ route }: { route: Exclude<Route, { name: 'classic' }> }) {
     case 'plan': return <PlanScreen />;
     case 'log': return <LogScreen />;
     case 'contact': return <ContactScreen qsoId={route.qsoId} />;
-    case 'pass': return <PassScreen passId={route.passId} />;
-    case 'live': return <PassScreen passId={route.passId} live />;
+    case 'pass': return <PassPage id={route.passId} />;
+    case 'live': return <LiveScreen passId={route.passId} />;
     case 'sat': return <SatelliteScreen noradId={route.noradId} />;
     case 'station': return <StationScreen />;
     case 'notFound': return <NotFoundScreen />;
@@ -40,6 +44,9 @@ export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> })
   const noCatalog = useAppState((s) => s.status === 'ready' && s.catalog === null);
   const callsign = useAppState((s) => s.station?.callsign ?? '');
   const location = useActiveLocation();
+  const locations = useAppState((s) => s.locations);
+  const station = useAppState((s) => s.station);
+  const [locating, setLocating] = useState(false);
   const tab = tabOf(route);
   const hasParent = parentOf(route) !== null;
   const live = route.name === 'live';
@@ -62,8 +69,12 @@ export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> })
         <span className="topbar-rule" aria-hidden />
         {!live && (
           <>
-            {/* The location switcher and library search arrive with R2 and R6. */}
-            {location && <Tag>{location.name}</Tag>}
+            {location && (
+              <Button expand="inline" size="small" onClick={() => setLocating(true)} aria-label={`Location: ${location.name}`}>
+                <Icon name="location" size={16} />
+                {location.name}
+              </Button>
+            )}
             <Link to={{ name: 'station' }} className="key key-secondary key-sm" aria-label="Station">
               {callsign || 'Set up'}
             </Link>
@@ -85,6 +96,18 @@ export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> })
         </div>
       </main>
       {!live && <TabBar tabs={TABS} selected={tab ?? ('' as Tab)} onSelect={(t) => navigate({ name: t })} />}
+      {locating && station && (
+        <LocationSheet
+          locations={locations}
+          activeId={location?.id ?? null}
+          onSelect={(id) => void store.setActiveLocation(id)}
+          onAdd={(l) => void store.saveLocation(l)}
+          onDelete={(id) => void store.deleteLocation(id)}
+          onUpdate={(l) => void store.saveLocation(l)}
+          station={toV1Station(station)}
+          onClose={() => setLocating(false)}
+        />
+      )}
       <EdgeSwipe />
     </div>
   );

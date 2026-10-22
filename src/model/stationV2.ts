@@ -62,3 +62,28 @@ export function migrateStation(v1: Station, favorites: readonly number[]): Stati
     compassCalibratedAt: v1.compassCalibratedAt,
   };
 }
+
+/**
+ * The v1 station a v2 one stands for, so v1 components (location sheet, checklist, calendar export,
+ * transmitter choice) can be reused until their own rebuild. Goes when the v1 screens do (R4).
+ */
+export function toV1Station(s: StationV2): Station {
+  return {
+    callsign: s.callsign,
+    units: s.units,
+    experience: s.guidance === 'guided' ? 'new' : 'experienced',
+    goal: s.goal === 'both' ? 'explore' : s.goal,
+    equipment: s.radio,
+    showTips: s.guidance === 'guided',
+    compactDetails: s.guidance === 'numbers',
+    liveView: s.remembered.liveView,
+    liveCues: s.remembered.cues.on,
+    radioStepHz: s.remembered.stepHz,
+    cues: { speech: s.remembered.cues.speech, tones: s.remembered.cues.tones, vibration: s.remembered.cues.vibration },
+    compassOffsetDeg: s.compassOffsetDeg,
+    recordPasses: s.remembered.recordPasses,
+    compassCalibratedAt: s.compassCalibratedAt,
+    speakInPass: s.remembered.speakInPass,
+    hours: s.hours,
+  };
+}
