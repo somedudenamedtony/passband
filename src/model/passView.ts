@@ -78,3 +78,10 @@ export function passSentence(
 ): string {
   return `${[when(pass, now), CLIMB[q], what, onAir].filter(Boolean).join(', ')}.`;
 }
+
+/** Local midnight at or before t. Display only (CLAUDE.md #4). */
+export function localDayStart(t: number): number {
+  const d = new Date(t);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}

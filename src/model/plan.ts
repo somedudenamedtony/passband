@@ -17,3 +17,16 @@ export interface Plan {
   outcome: PlanOutcome;
   createdAt: number;
 }
+
+/** SPEC-v2 D25: plans whose windows overlap another plan's. You can only point at one bird. */
+export function clashingIds(plans: readonly Pick<Plan, 'id' | 'aos' | 'los' | 'outcome'>[]): Set<string> {
+  const live = plans.filter((p) => p.outcome === 'planned').slice().sort((a, b) => a.aos - b.aos);
+  const out = new Set<string>();
+  for (let i = 0; i < live.length; i++) {
+    for (let j = i + 1; j < live.length && live[j]!.aos < live[i]!.los; j++) {
+      out.add(live[i]!.id);
+      out.add(live[j]!.id);
+    }
+  }
+  return out;
+}

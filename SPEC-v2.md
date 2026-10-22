@@ -356,7 +356,9 @@ The week ahead for My satellites, so you can decide where your evenings go.
 - **Rover windows:** v1 §8 rover alerts / hams.at stay *later*. The Plan tab is where they will
   land.
 
-v1's timeline is the agenda's alternative view (a toggle), not a separate widget.
+v1's timeline is the agenda's alternative view (a toggle), not a separate widget; it comes after R6.
+Each day shows planned and fair-or-better passes first, at most twelve before *Show more*, with low
+passes folded into one line: a week of everything workable runs to thousands of passes.
 
 ### 6.5 Library and satellite page (`/sat/:noradId`)
 

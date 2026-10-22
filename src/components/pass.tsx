@@ -74,13 +74,29 @@ export function OnAirMark({ outlook }: { outlook: Outlook }) {
   );
 }
 
-export function PassRow({ facts, now, planned, onTogglePlan }: { facts: PassFacts; now: number; planned: boolean; onTogglePlan: () => void }) {
+export function PassRow({
+  facts,
+  now,
+  planned,
+  onTogglePlan,
+  clash = false,
+  dim = false,
+}: {
+  facts: PassFacts;
+  now: number;
+  planned: boolean;
+  onTogglePlan: () => void;
+  /** Overlaps another planned pass (D25). */
+  clash?: boolean;
+  /** Outside the operator's hours: dimmed, never hidden (§6.4). */
+  dim?: boolean;
+}) {
   const { pass, sat, guide, outlook, stale } = facts;
   const up = now >= pass.aos && now < pass.los;
   const time = up ? 'UP' : formatLocalTimeShort(pass.aos);
   const el = Math.round(pass.maxElDeg);
   return (
-    <li className={`pass-row${outlook.level === 'unlikely' ? ' pass-row-unlikely' : ''}`}>
+    <li className={['pass-row', outlook.level === 'unlikely' && 'pass-row-unlikely', dim && 'pass-row-dim', clash && 'pass-row-clash'].filter(Boolean).join(' ')}>
       <Link
         to={{ name: 'pass', passId: passId(pass.noradId, pass.aos) }}
         className="pass-row-link"
@@ -98,6 +114,11 @@ export function PassRow({ facts, now, planned, onTogglePlan }: { facts: PassFact
         <span className="pr-dir mono">{direction(pass).replace(' → ', '→')}</span>
         <span className="pr-status">
           <OnAirMark outlook={outlook} />
+          {clash && (
+            <span role="img" aria-label="Clashes with another planned pass" className="pr-stale">
+              <Icon name="alert" size={14} />
+            </span>
+          )}
           {stale && (
             <span role="img" aria-label={`Elements ${formatElementAge(pass.elementsEpoch, now)}`} className="pr-stale">
               <Icon name="warning" size={14} />

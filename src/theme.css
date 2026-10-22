@@ -1474,7 +1474,7 @@ a.key {
   flex: 1;
   min-width: 0;
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 46px 50px 16px;
+  grid-template-columns: 44px minmax(0, 1fr) 46px 50px 30px;
   align-items: center;
   gap: 5px;
   min-height: 48px;
@@ -1615,4 +1615,33 @@ a.key {
 }
 .warn-text {
   color: var(--amber);
+}
+.pass-row-dim {
+  opacity: 0.55;
+}
+.pass-row-clash {
+  box-shadow: inset 3px 0 0 var(--amber);
+  padding-left: 6px;
+}
+.pass-low + .pass-low {
+  margin-top: 6px;
+}
+.plan-day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.plan-sun {
+  font-size: 12px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+.plan-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.plan-filters .key {
+  min-height: 36px;
 }

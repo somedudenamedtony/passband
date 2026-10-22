@@ -37,3 +37,9 @@ export async function exportPassesToCalendar(passes: readonly Pass[], sat: Satel
   const file = new File([ics], `${name}.ics`, { type: 'text/calendar' });
   await shareOrDownload(file, name);
 }
+
+/** SPEC-v2 §6.4: every planned pass, across satellites, as one calendar file (D17). */
+export async function exportPlannedToCalendar(items: ReadonlyArray<{ pass: Pass; sat: Satellite }>, now: number, station?: Station): Promise<void> {
+  const ics = toIcs(items.map(({ pass, sat }) => passEvent(pass, sat, now, station)), now);
+  await shareOrDownload(new File([ics], 'passband-plan.ics', { type: 'text/calendar' }), 'Planned passes');
+}
