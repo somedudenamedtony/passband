@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { segment } from './segment';
+import { openNextLive, setup } from './v2';
 
 /** Feed the page an Android-style absolute orientation reading (D10). */
 async function orient(page: Page, alpha: number, beta: number, gamma: number) {
@@ -26,16 +27,9 @@ async function turnOnCompass(page: Page) {
   if (await button.isVisible().catch(() => false)) await button.click();
 }
 
-async function setup(page: Page) {
-  await page.goto('./');
-  await page.getByPlaceholder('CN87uo').fill('CN87uo');
-  await page.getByRole('button', { name: 'Show my passes' }).click();
-  await page.getByRole('heading', { name: 'Next 24 hours' }).waitFor({ timeout: 30_000 });
-}
-
 test('compass view points the way to the satellite and shows its accuracy state', async ({ page }) => {
   await setup(page);
-  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
+  await openNextLive(page);
   await segment(page, 'Compass').click();
   await turnOnCompass(page);
   const feed = setInterval(() => void orient(page, 0, 20, 0).catch(() => undefined), 150);
@@ -50,7 +44,7 @@ test('compass view points the way to the satellite and shows its accuracy state'
 
 test('without a compass the live screen falls back to the north-up sky plot', async ({ page }) => {
   await setup(page);
-  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
+  await openNextLive(page);
   await segment(page, 'Compass').click();
   await turnOnCompass(page);
   await expect(page.getByText('No compass on this device')).toBeVisible({ timeout: 10_000 });
@@ -59,7 +53,7 @@ test('without a compass the live screen falls back to the north-up sky plot', as
 
 test('a horizon mask set by hand is saved with the location', async ({ page }) => {
   await setup(page);
-  await page.getByRole('button', { name: /CN87/ }).first().click();
+  await page.getByRole('button', { name: /^Location: / }).click();
   await page.getByRole('button', { name: /Horizon mask for/ }).click();
   await page.getByText('Adjust by hand').click();
   await page.getByRole('slider', { name: 'Minimum elevation from 180° to 190°' }).fill('20');

@@ -1,6 +1,5 @@
 // SPEC-v2 §6.7: one Station screen. Goal, radio and guidance are v2's three answers (D19); quality
-// thresholds are v2's (D26). The rest (callsign, units, hours, live cues, compass, display) is the
-// settings both apps share until R6b.
+// thresholds are v2's (D26). Then callsign, units, hours, live cues, compass and display.
 
 import { useEffect, useState } from 'react';
 import { Link } from '../app/Link';
@@ -28,36 +27,7 @@ export function StationScreen() {
 
       <SectionTitle>You</SectionTitle>
       <Panel className="stack">
-        <Segmented
-          label="What you want to do"
-          value={station.goal}
-          onChange={(goal) => update({ goal })}
-          options={[
-            { value: 'listen', label: 'Listen' },
-            { value: 'contacts', label: 'Make contacts' },
-            { value: 'both', label: 'Both' },
-          ]}
-        />
-        <Select
-          label="Your radio"
-          value={station.radio}
-          onChange={(radio) => update({ radio })}
-          options={[
-            { value: 'fm', label: 'FM handheld' },
-            { value: 'ssb', label: 'SSB / CW' },
-            { value: 'sdr', label: 'SDR / receiver' },
-            { value: 'unknown', label: 'Not sure' },
-          ]}
-        />
-        <Segmented
-          label="Guidance"
-          value={station.guidance}
-          onChange={(guidance) => update({ guidance })}
-          options={[
-            { value: 'guided', label: 'Walk me through it' },
-            { value: 'numbers', label: 'Just the numbers' },
-          ]}
-        />
+        <YouFields station={station} update={update} />
         <p className="hint">Walk me through it shows tips, the checklist and the first-contact guide. Everything stays reachable either way.</p>
         <Link to={{ name: 'help' }} className="key key-secondary key-block">Help and your first contact</Link>
       </Panel>
@@ -94,7 +64,6 @@ export function StationScreen() {
       </Panel>
 
       <SettingsBody
-        shared
         station={toV1Station(station)}
         onChange={(v1) => void store.updateStation(fromV1Station(v1, station))}
         theme={theme}
@@ -107,5 +76,45 @@ export function StationScreen() {
         location={location}
       />
     </div>
+  );
+}
+
+/** SPEC-v2 D19's three answers. On Station, and on first run. */
+export function YouFields({ station, update }: { station: StationV2; update: (patch: Partial<StationV2>) => void }) {
+  return (
+    <>
+          <p className="seg-question">What do you want to do?</p>
+          <Segmented
+            label="What you want to do"
+            value={station.goal}
+            onChange={(goal) => update({ goal })}
+            options={[
+              { value: 'listen', label: 'Listen' },
+              { value: 'contacts', label: 'Make contacts' },
+              { value: 'both', label: 'Both' },
+            ]}
+          />
+          <Select
+            label="Your radio"
+            value={station.radio}
+            onChange={(radio) => update({ radio })}
+            options={[
+              { value: 'fm', label: 'FM handheld' },
+              { value: 'ssb', label: 'SSB / CW' },
+              { value: 'sdr', label: 'SDR / receiver' },
+              { value: 'unknown', label: 'Not sure' },
+            ]}
+          />
+          <p className="seg-question">How much help do you want?</p>
+          <Segmented
+            label="Guidance"
+            value={station.guidance}
+            onChange={(guidance) => update({ guidance })}
+            options={[
+              { value: 'guided', label: 'Walk me through it' },
+              { value: 'numbers', label: 'Just the numbers' },
+            ]}
+          />
+    </>
   );
 }

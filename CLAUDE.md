@@ -6,10 +6,10 @@ repo and package name.
 
 ## Read first
 
-- **`SPEC.md`** — the source of truth. Decisions D1–D20, data model, screens, milestones. If this
-  file conflicts with it, SPEC.md wins.
-- **`SPEC-v2.md`** — the accepted rebuild, being built in milestones R1–R6. New screens follow it;
-  the v1 screens (the root and `/classic/`) still follow SPEC.md until R6b retires them.
+- **`SPEC-v2.md`** — the source of truth: screens, navigation, data model, decisions D22 onwards.
+- **`SPEC.md`** — decisions D1–D21, which SPEC-v2 keeps (it lists the ones it changed or retired);
+  its screens and milestones describe the v1 app, now replaced. If this file conflicts with either,
+  the specs win.
 
 ## Environment
 
@@ -19,7 +19,8 @@ repo and package name.
 ## Stack
 
 Vite · React · TypeScript · custom radio-panel UI (no UI library; `src/ui/common.tsx` + `src/theme.css`) · `vite-plugin-pwa` · `satellite.js` in a Web Worker ·
-IndexedDB via `idb`. Static hosting; **no backend** (D1).
+IndexedDB via `idb`. Static hosting; **no backend** (D1). Screens are routes (`src/router.ts`, `src/routes/`)
+over one store (`src/store/`); they never call `idb` or the worker directly (D27).
 
 ## The things most likely to be got wrong
 

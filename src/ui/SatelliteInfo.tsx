@@ -16,7 +16,7 @@ import type { Location, Pass, QsoRecord, Satellite, Station, StatusReport, Trans
 import { formatDistance, formatSpeed } from '../model/units';
 import { ActivityChart } from './ActivityChart';
 import { DifficultyBadge, StatusBadge } from './badges';
-import { Button, Fold, Panel, SectionTitle, Sheet, Tag } from './common';
+import { Button, Fold, Panel, SectionTitle, Tag } from './common';
 import { FavoriteKey } from './FavoriteKey';
 import { RadioSetup } from './RadioSetup';
 
@@ -56,15 +56,7 @@ function flag(code: string): string {
   return String.fromCodePoint(...[...code].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
 }
 
-export function SatelliteInfo(props: Parameters<typeof SatelliteProfile>[0] & { onClose: () => void }) {
-  return (
-    <Sheet title={props.sat.name} onClose={props.onClose}>
-      <SatelliteProfile {...props} />
-    </Sheet>
-  );
-}
-
-/** The profile itself: the v1 info sheet's body, and SPEC-v2's satellite page (§6.5). */
+/** SPEC-v2's satellite page (§6.5): who it is, what's on board, how it's been heard, its passes. */
 export function SatelliteProfile({
   sat,
   location,

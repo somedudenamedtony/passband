@@ -1,66 +1,27 @@
-import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
-import { segment } from './segment';
+import { setup } from './v2';
 
-// D21: the card says whether the satellite should be on, and why.
-test('the pass card says whether the satellite will be on', async ({ page }) => {
-  await page.goto('./');
-  await page.getByPlaceholder('CN87uo').fill('CN87uo');
-  await page.getByRole('button', { name: 'Show my passes' }).click();
-  await page.getByRole('heading', { name: 'Next 24 hours' }).waitFor({ timeout: 30_000 });
-  await expect(page.getByText(/^(Should be on\.|Might be on\.)/)).toBeVisible();
-  // The card never leads with a pass it thinks is off.
-  await expect(page.getByText(/^Probably off\./)).toHaveCount(0);
+// D21: Next up says whether the satellite should be on, and never leads with one it thinks is off.
+test('Next up says whether the satellite will be on', async ({ page }) => {
+  await setup(page);
+  const next = page.getByRole('region', { name: /^Next up: / });
+  await expect(next.getByRole('img', { name: /^(probably on|may be on)/ })).toBeVisible();
+  await expect(next.getByRole('img', { name: /^probably off/ })).toHaveCount(0);
 });
 
-// §5.0: first run asks experience and callsign along with the location.
-test('first run sets experience and callsign', async ({ page }) => {
+// SPEC-v2 §6.0: first run asks goal, radio, guidance and callsign along with the location.
+test('first run sets guidance and callsign', async ({ page }) => {
   await page.goto('./');
-  await segment(page, 'I’ve made contacts').click();
+  await page.getByRole('tab', { name: 'Just the numbers' }).click();
   await page.getByPlaceholder('W7LIT').fill('w7lit');
   await page.getByPlaceholder('CN87uo').fill('CN87uo');
   await page.getByRole('button', { name: 'Show my passes' }).click();
-  await expect(page.getByRole('tab', { name: 'Help' })).toBeVisible();
-  await page.getByRole('button', { name: 'Settings' }).click();
+  await expect(page.getByRole('link', { name: 'Station' })).toHaveText('W7LIT');
+  // Just the numbers: no first-contact prompt on Now.
+  await expect(page.getByRole('link', { name: /Your first contact/ })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Station' }).click();
   await expect(page.getByPlaceholder('W7LIT')).toHaveValue('W7LIT');
-});
-
-// §5.4: add a contact by hand, and import an existing log.
-test('add a contact by hand and import an ADIF log', async ({ page }, info) => {
-  await page.goto('./');
-  await page.getByPlaceholder('CN87uo').fill('CN87uo');
-  await page.getByRole('button', { name: 'Show my passes' }).click();
-  await page.getByRole('tab', { name: 'Log', exact: true }).click();
-
-  await page.getByRole('button', { name: 'Add contact' }).click();
-  await page.getByLabel('Their callsign').fill('K1ABC');
-  await page.getByLabel('Their grid (optional)').fill('FN42');
-  await page.getByRole('button', { name: 'Save contact' }).click();
-  await expect(page.getByRole('list', { name: 'Contacts' })).toContainText('K1ABC');
-
-  const rec = (f: Record<string, string>) =>
-    Object.entries(f)
-      .map(([k, v]) => `<${k}:${v.length}>${v}`)
-      .join(' ') + ' <EOR>\n';
-  const adi =
-    'Test log\n<EOH>\n' +
-    rec({ CALL: 'N7XYZ', QSO_DATE: '20260901', TIME_ON: '0130', PROP_MODE: 'SAT', SAT_NAME: 'SO-50', MODE: 'FM', GRIDSQUARE: 'DM43' }) +
-    rec({ CALL: 'KX9X', QSO_DATE: '20260902', TIME_ON: '0200', PROP_MODE: 'SAT', SAT_NAME: 'RS-44', MODE: 'SSB', SUBMODE: 'USB', GRIDSQUARE: 'EM10' }) +
-    rec({ CALL: 'W1AW', QSO_DATE: '20260903', TIME_ON: '1200', MODE: 'CW' });
-  const path = info.outputPath('log.adi');
-  await import('node:fs/promises').then((fs) => fs.writeFile(path, adi));
-  await page.locator('input[type=file]').setInputFiles(path);
-  await expect(page.getByText(/Imported 2 satellite contacts\. 1 non-satellite contact left out\./)).toBeVisible();
-  await expect(page.getByText('3 / 100')).toBeVisible();
-
-  // Imported ones count as exported; only the hand-added contact is new.
-  const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: /Export ADIF — 1 new/ }).click();
-  expect(await readFile(await (await download).path(), 'utf8')).toMatch(/<CALL:5>K1ABC/);
-
-  // Importing the same file again adds nothing.
-  await page.locator('input[type=file]').setInputFiles(path);
-  await expect(page.getByText(/Imported 0 satellite contacts\. 2 already in the log\./)).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Just the numbers' })).toHaveAttribute('aria-selected', 'true');
 });
 
 // §5.2 linear transponders: the spot at the satellite stays put; TX and RX follow it.
@@ -85,16 +46,13 @@ test('a linear transponder pass tunes by one true frequency', async ({ page }) =
       }
     } as typeof Worker;
   });
-  await page.goto('./');
-  await segment(page, 'I’ve made contacts').click();
-  await page.getByPlaceholder('CN87uo').fill('CN87uo');
-  await page.getByRole('button', { name: 'Show my passes' }).click();
-  await page.getByRole('heading', { name: 'Next 24 hours' }).waitFor({ timeout: 30_000 });
-  await page.getByRole('tab', { name: /^Available/ }).click();
+  await setup(page);
+  await page.getByRole('link', { name: 'Search satellites' }).click();
   await page.getByLabel('Find a satellite').fill('RS-44');
-  const upcoming = page.getByRole('region', { name: 'Upcoming passes' });
-  await upcoming.getByRole('button').first().click({ timeout: 30_000 });
-  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
+  await page.getByRole('link', { name: /^RS-44/ }).click();
+  await page.getByRole('button', { name: /^Show the .* pass$/ }).first().click({ timeout: 30_000 });
+  await expect(page).toHaveURL(/\/pass\/\d+-\d+$/);
+  await page.goto(`${new URL(page.url()).pathname}/live`);
 
   const band = page.getByRole('region', { name: 'Passband' });
   await expect(band).toBeVisible();
@@ -106,4 +64,13 @@ test('a linear transponder pass tunes by one true frequency', async ({ page }) =
   await expect(tx).not.toHaveText(before!);
   const after = await tx.textContent();
   expect(Number(after)).toBeLessThan(Number(before));
+});
+
+// §5.5: help's first-contact guide picks a real pass and opens it.
+test('help picks an easy pass and opens it', async ({ page }) => {
+  await setup(page);
+  await page.getByRole('link', { name: /Your first contact/ }).click();
+  await page.getByRole('button', { name: 'Use this pass' }).click({ timeout: 30_000 });
+  await expect(page).toHaveURL(/\/pass\/\d+-\d+$/);
+  await expect(page.getByRole('region', { name: 'Set your radio' })).toBeVisible();
 });

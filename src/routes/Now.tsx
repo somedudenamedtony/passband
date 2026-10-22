@@ -17,8 +17,9 @@ import { usePasses, useSatelliteMap } from '../store/passes';
 import { useShownSatellites } from '../store/selection';
 import { store, useActiveLocation, useAppState } from '../store/store';
 import { useNow } from '../ui/clock';
-import { Banner, Panel, Toggle } from '../ui/common';
+import { Banner, Field, Panel, Toggle } from '../ui/common';
 import { LocationForm } from '../ui/LocationSetup';
+import { YouFields } from './Station';
 
 /** Include passes already up, so "up now" shows. */
 const LOOK_BACK = 20 * MINUTE;
@@ -35,9 +36,27 @@ export function NowScreen() {
   const station = useAppState((s) => s.station);
   const hasCatalog = useAppState((s) => s.catalog !== null);
   if (!location) {
+    // SPEC-v2 §6.0 first run: everything has a default, so only the location is needed.
     return (
       <div className="stack">
-        <h1 className="screen-title">Where are you?</h1>
+        <h1 className="screen-title">Welcome to Passband</h1>
+        {station && (
+          <Panel className="stack">
+            <YouFields station={station} update={(patch) => void store.updateStation(patch)} />
+            <Field
+              label="Your callsign (optional)"
+              className="callsign-input"
+              value={station.callsign}
+              placeholder="W7LIT"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              hint="Goes in your log exports. No licence yet? Leave it blank."
+              onChange={(e) => void store.updateStation({ callsign: e.target.value.toUpperCase().trim() })}
+            />
+          </Panel>
+        )}
+        <h2 className="section-title">Where are you?</h2>
         <p>Passband works out passes for where you stand. Your location stays on this device.</p>
         <Panel>
           <LocationForm submitLabel="Show my passes" onSave={(l) => void store.saveLocation(l)} />
