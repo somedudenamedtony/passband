@@ -1,20 +1,6 @@
-// The SPEC-v2 §6 screens, as R1 shells. Each grows into its own file as its milestone lands.
+// The address that isn't a Passband screen.
 
 import { Link } from '../app/Link';
-import { useAppState } from '../store/store';
-import { Placeholder } from './Placeholder';
-
-function useSatName(noradId: number): string {
-  return useAppState((s) => s.catalog?.catalog.satellites.find((x) => x.noradId === noradId)?.name ?? `NORAD ${noradId}`);
-}
-
-export function SatelliteScreen({ noradId }: { noradId: number }) {
-  return <Placeholder title={useSatName(noradId)} milestone="R6" />;
-}
-
-export function StationScreen() {
-  return <Placeholder title="Station" milestone="R6" />;
-}
 
 export function NotFoundScreen() {
   return (

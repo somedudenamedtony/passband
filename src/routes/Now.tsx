@@ -100,6 +100,9 @@ function NowPasses({ location, station }: { location: Location; station: Station
             Everything workable
           </Toggle>
         </div>
+        {station.guidance === 'guided' && (
+          <Link to={{ name: 'help' }} className="key key-ghost key-block">New to this? Your first contact →</Link>
+        )}
         {station.mySatellites.length === 0 && (
           <p className="muted">Showing every satellite that works with your radio. Star passes and satellites to make this your list.</p>
         )}

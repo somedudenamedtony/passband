@@ -76,7 +76,9 @@ export function passSentence(
   what: string,
   onAir: string,
 ): string {
-  return `${[when(pass, now), CLIMB[q], what, onAir].filter(Boolean).join(', ')}.`;
+  // "Inverting linear transponder" reads mid-sentence in lower case; "FM voice repeater" keeps its capitals.
+  const mid = /^[A-Z][a-z]/.test(what) ? what.charAt(0).toLowerCase() + what.slice(1) : what;
+  return `${[when(pass, now), CLIMB[q], mid, onAir].filter(Boolean).join(', ')}.`;
 }
 
 /** Local midnight at or before t. Display only (CLAUDE.md #4). */

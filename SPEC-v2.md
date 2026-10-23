@@ -209,11 +209,11 @@ interface Station {
 }
 ```
 
-**Migration (v3 → v4).** While the v1 screens still run beside v2 (until R6), v4 only *adds*: the
+**Migration (v3 → v4).** While the v1 screens still run beside v2 (until R6b), v4 only *adds*: the
 `plans` store, and an optional `passId` on QSOs and recordings. The v2 station is saved under its
 own `stationV2` key, derived from the v1 station the first time it's read. My satellites stays in
 the shared `favorites` setting, so a star set in either app shows in both. The v1 keys are dropped
-in R6. Each v1 value maps as follows (`model/stationV2.ts`):
+in R6b. Each v1 value maps as follows (`model/stationV2.ts`):
 
 - `experience: 'new'` becomes `guidance: 'guided'`; `'experienced'` becomes `'numbers'`. An
   explicit `showTips` wins over the preset.
@@ -225,7 +225,7 @@ in R6. Each v1 value maps as follows (`model/stationV2.ts`):
 
 Since R4, existing QSOs get `passId` back-filled by matching `satNoradId` and `timeOn` against a
 re-prediction for their location, where one matches; otherwise `null`. Only contacts from the last
-14 days are matched: today's elements no longer place an older pass. In R6, v1's listening
+14 days are matched: today's elements no longer place an older pass. In R6b, v1's listening
 results (`passResults`) become plan outcomes. A test opens a seeded v3 database in v4
 (`data/migration.test.ts`).
 
@@ -459,8 +459,7 @@ src/
 ## 9. Milestones
 
 Each milestone is one PR, ships to Pages, and leaves the app usable. v1 stays reachable at
-`/passband/classic/` until R6 lands, so nothing is lost mid-rebuild: settings, Learn and the map
-have no v2 home before then.
+`/passband/classic/` until R6b lands, so nothing is lost mid-rebuild.
 
 | | Milestone | Done when |
 |---|---|---|
@@ -470,7 +469,8 @@ have no v2 home before then.
 | **R3b** | Live layout | Live view in the §6.3 layout; one-tap log with callsign later; LOS hands over to review |
 | **R4** | Log | Pass-grouped history, contact at `/log/:id`, ADIF export/import as in v1, grid map, recordings; recent contacts matched to passes |
 | **R5** | Plan | Week agenda, Going/outcomes, clashes, `.ics` for planned passes, location switching |
-| **R6** | Library, satellite page, Station, help | Search over full catalog, profile page, single settings screen, term sheets, first-contact path; the root becomes Now and `/classic/` is removed |
+| **R6a** | Library, satellite page, Station, help | Search over the full catalog, profile page with next passes, one Station screen, v1's Learn as help with the first-contact path |
+| **R6b** | Retire v1 | The root becomes Now, `/classic/` and the v1 screens are removed, their e2e tests ported, v1 settings keys dropped; term sheets for jargon |
 
 ---
 

@@ -7,7 +7,7 @@ const pid = passId(25544, 1_761_100_800_000);
 describe('routes (D22)', () => {
   it('round-trips every screen through its path', () => {
     const routes: Route[] = [
-      { name: 'now' }, { name: 'plan' }, { name: 'log' }, { name: 'station' },
+      { name: 'now' }, { name: 'plan' }, { name: 'log' }, { name: 'station' }, { name: 'library' }, { name: 'help' },
       { name: 'contact', qsoId: 'abc-123' }, { name: 'pass', passId: pid }, { name: 'live', passId: pid }, { name: 'live', passId: pid, practice: true },
       { name: 'sat', noradId: 25544 },
     ];
@@ -32,6 +32,7 @@ describe('routes (D22)', () => {
     expect(parentOf({ name: 'pass', passId: pid })).toEqual({ name: 'now' });
     expect(parentOf({ name: 'contact', qsoId: 'x' })).toEqual({ name: 'log' });
     expect(parentOf({ name: 'plan' })).toBeNull();
+    expect(parentOf({ name: 'help' })).toEqual({ name: 'station' });
     expect(tabOf({ name: 'contact', qsoId: 'x' })).toBe('log');
     expect(tabOf({ name: 'pass', passId: pid })).toBeNull();
   });

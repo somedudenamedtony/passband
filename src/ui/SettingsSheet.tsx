@@ -20,14 +20,26 @@ const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => ({
   label: h === 0 ? 'Midnight' : h === 12 ? 'Noon' : `${h % 12} ${h < 12 ? 'AM' : 'PM'}`,
 }));
 
-export function SettingsSheet({
+export function SettingsSheet(props: Parameters<typeof SettingsBody>[0] & { onClose: () => void }) {
+  return (
+    <Sheet title="Settings" onClose={props.onClose}>
+      <SettingsBody {...props} />
+    </Sheet>
+  );
+}
+
+/**
+ * The settings themselves. SPEC-v2's Station screen shows them with `shared` set: goal, radio and
+ * the experience preset are its own (D19), the rest is common to both apps until R6b.
+ */
+export function SettingsBody({
   station,
   onChange,
   theme,
   onTheme,
   catalog,
   location,
-  onClose,
+  shared = false,
 }: {
   station: Station;
   onChange: (s: Station) => void;
@@ -35,7 +47,7 @@ export function SettingsSheet({
   onTheme: (t: Theme) => void;
   catalog: LoadedCatalog | null;
   location: Location | null;
-  onClose: () => void;
+  shared?: boolean;
 }) {
   const [calibrating, setCalibrating] = useState(false);
   const now = useNow(60_000);
@@ -48,7 +60,8 @@ export function SettingsSheet({
   ];
 
   return (
-    <Sheet title="Settings" onClose={onClose}>
+    <>
+      {!shared && <>
       <SectionTitle>Operating goal and radio</SectionTitle>
       <Panel><OperatingPreferences station={station} onChange={onChange} /></Panel>
       <SectionTitle>Experience</SectionTitle>
@@ -67,6 +80,8 @@ export function SettingsSheet({
         <Toggle checked={prefs.compact} onChange={(compactDetails) => onChange({ ...station, compactDetails })}>Compact pass details</Toggle>
         <Button kind="ghost" onClick={() => onChange({ ...station, showTips: null, compactDetails: null, liveView: null, liveCues: null })}>Use experience defaults</Button>
       </Panel>
+
+      </>}
 
       <SectionTitle>Station</SectionTitle>
       <Panel className="stack">
@@ -213,6 +228,6 @@ export function SettingsSheet({
       {calibrating && location && (
         <SunCalibration location={location} station={station} onChange={onChange} onClose={() => setCalibrating(false)} />
       )}
-    </Sheet>
+    </>
   );
 }
