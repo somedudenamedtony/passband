@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { waitForStored } from './v2';
 
 // SPEC-v2 R2: Now answers "what's next" with zero taps; one tap reaches the radio setup.
 test.use({ viewport: { width: 360, height: 780 } });
@@ -33,6 +34,7 @@ test('one tap from a row reaches the radio setup, and a plan survives a reload',
   await page.getByRole('button', { name: /I’m going for this one/ }).click();
   await page.getByLabel('Note').fill('From the park');
   await page.getByLabel('Note').blur();
+  await waitForStored(page, 'plans', "rows.some((p) => p.note === 'From the park')");
   await page.reload();
   await expect(page.getByRole('button', { name: '★ Going' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Note')).toHaveValue('From the park');

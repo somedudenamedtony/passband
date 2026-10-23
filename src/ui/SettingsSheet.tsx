@@ -7,10 +7,9 @@ import type { Theme } from '../data/theme';
 import { formatElementAge } from '../model/elementAge';
 import { SunCalibration } from '../compass/SunCalibration';
 import type { Location, RadioStepHz, Station } from '../model/types';
-import { Button, Field, Panel, SectionTitle, Segmented, Select, Sheet, Toggle } from './common';
+import { Button, Field, Panel, SectionTitle, Segmented, Select, Toggle } from './common';
 import { useNow } from './clock';
 import { operatorPreferences } from '../model/operator';
-import { OperatingPreferences } from './OperatingPreferences';
 
 const STEPS: RadioStepHz[] = [2500, 5000, 6250];
 
@@ -20,18 +19,7 @@ const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => ({
   label: h === 0 ? 'Midnight' : h === 12 ? 'Noon' : `${h % 12} ${h < 12 ? 'AM' : 'PM'}`,
 }));
 
-export function SettingsSheet(props: Parameters<typeof SettingsBody>[0] & { onClose: () => void }) {
-  return (
-    <Sheet title="Settings" onClose={props.onClose}>
-      <SettingsBody {...props} />
-    </Sheet>
-  );
-}
-
-/**
- * The settings themselves. SPEC-v2's Station screen shows them with `shared` set: goal, radio and
- * the experience preset are its own (D19), the rest is common to both apps until R6b.
- */
+/** Station's shared settings (SPEC-v2 §6.7): callsign, tuning, units, hours, live, compass, display. */
 export function SettingsBody({
   station,
   onChange,
@@ -39,7 +27,6 @@ export function SettingsBody({
   onTheme,
   catalog,
   location,
-  shared = false,
 }: {
   station: Station;
   onChange: (s: Station) => void;
@@ -47,7 +34,6 @@ export function SettingsBody({
   onTheme: (t: Theme) => void;
   catalog: LoadedCatalog | null;
   location: Location | null;
-  shared?: boolean;
 }) {
   const [calibrating, setCalibrating] = useState(false);
   const now = useNow(60_000);
@@ -61,28 +47,6 @@ export function SettingsBody({
 
   return (
     <>
-      {!shared && <>
-      <SectionTitle>Operating goal and radio</SectionTitle>
-      <Panel><OperatingPreferences station={station} onChange={onChange} /></Panel>
-      <SectionTitle>Experience</SectionTitle>
-      <Panel className="stack">
-        <Segmented
-          label="Experience"
-          value={station.experience}
-          onChange={(experience) => onChange({ ...station, experience })}
-          options={[
-            { value: 'new', label: 'New' },
-            { value: 'experienced', label: 'I’ve made contacts' },
-          ]}
-        />
-        <p className="hint">A starting preset. Your individual choices below take priority.</p>
-        <Toggle checked={prefs.tips} onChange={(showTips) => onChange({ ...station, showTips })}>Show operating tips</Toggle>
-        <Toggle checked={prefs.compact} onChange={(compactDetails) => onChange({ ...station, compactDetails })}>Compact pass details</Toggle>
-        <Button kind="ghost" onClick={() => onChange({ ...station, showTips: null, compactDetails: null, liveView: null, liveCues: null })}>Use experience defaults</Button>
-      </Panel>
-
-      </>}
-
       <SectionTitle>Station</SectionTitle>
       <Panel className="stack">
         <Field

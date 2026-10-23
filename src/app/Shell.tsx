@@ -2,7 +2,7 @@
 // screen per URL. Back (the ← key, the edge swipe, the browser) goes up one level (D22).
 
 import { useEffect, useRef, useState } from 'react';
-import { goUp, navigate, parentOf, tabOf, type Route, type Tab } from '../router';
+import { goUp, inAppDepth, navigate, parentOf, tabOf, type Route, type Tab } from '../router';
 import { store, useActiveLocation, useAppState } from '../store/store';
 import { useBack } from '../ui/back';
 import { Banner, Button } from '../ui/common';
@@ -29,7 +29,7 @@ const TABS = [
   { id: 'log', label: 'Log', icon: 'log' },
 ] as const satisfies ReadonlyArray<TabSpec<Tab>>;
 
-function Screen({ route }: { route: Exclude<Route, { name: 'classic' }> }) {
+function Screen({ route }: { route: Route }) {
   switch (route.name) {
     case 'now': return <NowScreen />;
     case 'plan': return <PlanScreen />;
@@ -45,7 +45,7 @@ function Screen({ route }: { route: Exclude<Route, { name: 'classic' }> }) {
   }
 }
 
-export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> }) {
+export function Shell({ route }: { route: Route }) {
   useEffect(() => { void store.load(); }, []);
   const status = useAppState((s) => s.status);
   const noCatalog = useAppState((s) => s.status === 'ready' && s.catalog === null);
@@ -57,14 +57,22 @@ export function Shell({ route }: { route: Exclude<Route, { name: 'classic' }> })
   const tab = tabOf(route);
   const hasParent = parentOf(route) !== null;
   const live = route.name === 'live';
-  useBack(goUp, hasParent && !live);
+  // The edge swipe retraces tabs too, like the browser's back; the ← key is for going up a level.
+  useBack(goUp, (hasParent || inAppDepth() > 0) && !live);
 
   const pageRef = useRef<HTMLElement>(null);
   // A contact opens as a sheet over the log: keep the log where it was scrolled to.
   const key = route.name === 'contact' ? 'log' : JSON.stringify(route);
   useEffect(() => { pageRef.current?.scrollTo({ top: 0 }); }, [key]);
 
-  if (live) return status === 'loading' ? null : <LivePage id={route.passId} startPractice={route.practice === true} />;
+  if (live) {
+    return status === 'loading' ? null : (
+      <>
+        <LivePage id={route.passId} startPractice={route.practice === true} />
+        <EdgeSwipe />
+      </>
+    );
+  }
 
   return (
     <div className="shell">

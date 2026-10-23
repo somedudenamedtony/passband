@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { waitForStored } from './v2';
 
 // SPEC-v2 R3: the pass page hosts practice and the live view, and after LOS it says how the pass
 // went and holds the contacts made on it (D23).
@@ -43,6 +44,8 @@ test('after LOS the pass page takes the outcome and holds its contacts', async (
   await page.getByRole('button', { name: 'Save contact' }).click();
   await expect(contacts).toContainText('K1ABC');
   await expect(contacts).toContainText('Incomplete');
+  await waitForStored(page, 'qsos', "rows.some((q) => q.call === 'K1ABC')");
+  await waitForStored(page, 'plans', "rows.some((p) => p.outcome === 'worked')");
   await page.reload();
   await expect(page.getByRole('region', { name: 'Contacts on this pass' })).toContainText('K1ABC');
   await expect(page.getByRole('region', { name: 'How did it go?' }).getByRole('button', { name: 'Worked' })).toHaveAttribute('aria-pressed', 'true');

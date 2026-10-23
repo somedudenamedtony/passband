@@ -1,7 +1,8 @@
 # Passband v2 — Rebuild specification
 
-**Status:** proposal. When the owner accepts it, this file replaces `SPEC.md` and becomes the source
-of truth. Until then `SPEC.md` still governs the running app.
+**Status:** accepted and built (R1–R6b). This file is the source of truth for the app's screens,
+navigation and data model. The v1 decisions it keeps (§4, "Kept as written") are written out in
+`SPEC.md`, which otherwise describes the v1 app this replaced.
 
 **Why a rebuild.** The engine is sound: prediction, Doppler, the catalog build, ADIF and offline all
 work and are tested. What doesn't work is how you move through the app. Today you open a long
@@ -470,7 +471,8 @@ Each milestone is one PR, ships to Pages, and leaves the app usable. v1 stays re
 | **R4** | Log | Pass-grouped history, contact at `/log/:id`, ADIF export/import as in v1, grid map, recordings; recent contacts matched to passes |
 | **R5** | Plan | Week agenda, Going/outcomes, clashes, `.ics` for planned passes, location switching |
 | **R6a** | Library, satellite page, Station, help | Search over the full catalog, profile page with next passes, one Station screen, v1's Learn as help with the first-contact path |
-| **R6b** | Retire v1 | The root becomes Now, `/classic/` and the v1 screens are removed, their e2e tests ported, v1 settings keys dropped; term sheets for jargon |
+| **R6b** | Retire v1 | The root becomes Now (old `/classic/` links land there), the v1 screens are removed and their e2e tests ported, first run asks goal, radio, guidance and callsign (§6.0) |
+| **Next** | After the rebuild | R3b's live layout; term sheets for jargon (§6.8); the Plan timeline view; v1's listening results (`passResults`) folded into plan outcomes. The v1 `station` key is still read once, to derive the v2 station for someone upgrading |
 
 ---
 

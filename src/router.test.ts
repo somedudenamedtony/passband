@@ -14,10 +14,10 @@ describe('routes (D22)', () => {
     for (const r of routes) expect(matchRoute(routePath(r))).toEqual(r);
   });
 
-  it('keeps v1 on the root and under classic until R4', () => {
-    expect(matchRoute('')).toEqual({ name: 'classic' });
-    expect(matchRoute('classic/')).toEqual({ name: 'classic' });
-    expect(matchRoute('?utm=1')).toEqual({ name: 'classic' });
+  it('opens Now at the root, and on old v1 bookmarks', () => {
+    expect(matchRoute('')).toEqual({ name: 'now' });
+    expect(matchRoute('classic/')).toEqual({ name: 'now' });
+    expect(matchRoute('?utm=1')).toEqual({ name: 'now' });
   });
 
   it('refuses malformed ids rather than guessing', () => {

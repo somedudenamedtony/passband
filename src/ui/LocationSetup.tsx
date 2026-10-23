@@ -1,10 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { locationFromCoords, locationFromGrid } from '../data/locations';
 import { isValidGrid } from '../model/grid';
-import type { Location, Station } from '../model/types';
-import { Button, Field, Panel, Segmented } from './common';
+import type { Location } from '../model/types';
+import { Button, Field, Panel } from './common';
 import { Icon } from './icons';
-import { OperatingPreferences } from './OperatingPreferences';
 
 /** D8: a manually entered grid or the Geolocation API. Nothing is sent anywhere. */
 export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Location) => void; submitLabel?: string }) {
@@ -82,64 +81,5 @@ export function LocationForm({ onSave, submitLabel = 'Save' }: { onSave: (l: Loc
       )}
       <p className="hint">Your location stays on this device.</p>
     </form>
-  );
-}
-
-/**
- * First run: intent and radio, an experience preset, optional callsign, and location.
- * Everything has a default, so only the location is needed to continue.
- */
-export function LocationSetup({
-  onSave,
-  station,
-  onStation,
-}: {
-  onSave: (l: Location) => void;
-  station: Station;
-  onStation: (s: Station) => void;
-}) {
-  return (
-    <section className="stack">
-      <h1 className="setup-title">Welcome to Passband</h1>
-      <p className="muted">Find a pass that suits what you want to do. Only your location is required.</p>
-
-      <h2 className="setup-step">What would you like to do?</h2>
-      <OperatingPreferences station={station} onChange={onStation} />
-
-      <h2 className="setup-step">Have you used satellites before?</h2>
-      <Segmented
-        label="Experience"
-        value={station.experience}
-        onChange={(experience) => onStation({ ...station, experience })}
-        options={[
-          { value: 'new', label: 'Not yet' },
-          { value: 'experienced', label: 'I’ve made contacts' },
-        ]}
-      />
-      <p className="hint">
-        {station.experience === 'new'
-          ? 'Operating tips start on, with pass details you can expand.'
-          : 'Compact details start on, with operating tips available when you want them.'}{' '}
-        Adjust either preference in Settings.
-      </p>
-
-      <h2 className="setup-step">Your callsign (optional)</h2>
-      <Panel>
-        <Field
-          label="Callsign"
-          className="callsign-input"
-          value={station.callsign}
-          placeholder="W7LIT"
-          autoCapitalize="characters"
-          autoCorrect="off"
-          spellCheck={false}
-          hint="Goes in your log exports. No licence yet? Leave it blank."
-          onChange={(e) => onStation({ ...station, callsign: e.target.value.toUpperCase().trim() })}
-        />
-      </Panel>
-
-      <h2 className="setup-step">Where are you operating from?</h2>
-      <LocationForm onSave={onSave} submitLabel="Show my passes" />
-    </section>
   );
 }

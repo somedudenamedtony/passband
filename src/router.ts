@@ -6,8 +6,6 @@ import { useSyncExternalStore } from 'react';
 import { parsePassId, type PassId } from './model/passId';
 
 export type Route =
-  /** v1, kept reachable until R4 (SPEC-v2 §9). */
-  | { name: 'classic' }
   | { name: 'now' }
   | { name: 'plan' }
   | { name: 'log' }
@@ -31,7 +29,8 @@ export function matchRoute(path: string): Route {
   const parts = pathPart.split('/').filter(Boolean).map(decodeURIComponent);
   const [head, a, b] = parts;
   const n = parts.length;
-  if (n === 0 || head === 'classic') return { name: 'classic' };
+  // The root is Now. /classic/ was v1's address during the rebuild; old bookmarks land on Now.
+  if (n === 0 || (head === 'classic' && n === 1)) return { name: 'now' };
   if (n === 1 && (head === 'now' || head === 'plan' || head === 'log' || head === 'station' || head === 'library' || head === 'help')) return { name: head };
   if (n === 2 && head === 'log') return { name: 'contact', qsoId: a! };
   if (head === 'pass' && a && parsePassId(a)) {
@@ -44,7 +43,6 @@ export function matchRoute(path: string): Route {
 
 export function routePath(r: Route): string {
   switch (r.name) {
-    case 'classic': return 'classic/';
     case 'now': case 'plan': case 'log': case 'station': case 'library': case 'help': return r.name;
     case 'contact': return `log/${encodeURIComponent(r.qsoId)}`;
     case 'pass': return `pass/${r.passId}`;
@@ -106,6 +104,11 @@ export function navigate(r: Route, opts: { replace?: boolean } = {}): void {
   if (opts.replace) history.replaceState({ pbDepth: depth() } satisfies NavState, '', url);
   else history.pushState({ pbDepth: depth() + 1 } satisfies NavState, '', url);
   notify();
+}
+
+/** Entries pushed in-app before this one: back can retrace them (tabs included). */
+export function inAppDepth(): number {
+  return depth();
 }
 
 /** Back one level: the previous in-app entry if there is one, else the parent (deep link). */

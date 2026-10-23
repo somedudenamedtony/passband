@@ -1,7 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from './db';
-import { loadBrowsing, saveBrowsing } from './browsing';
 import { loadStation, saveStation } from './station';
 import { listPassResults, savePassResult } from './passResults';
 import type { Pass } from '../model/types';
@@ -15,13 +14,6 @@ describe('saved operator choices', () => {
     expect(station).toMatchObject({ experience: 'experienced', goal: 'contacts', equipment: 'unknown', showTips: null, callsign: 'W7LIT', cues: { speech: false, tones: false } });
     await saveStation({ ...station, showTips: true, compactDetails: false, liveCues: false, liveView: 'sky' });
     expect(await loadStation()).toMatchObject({ showTips: true, compactDetails: false, liveCues: false, liveView: 'sky' });
-  });
-
-  it('keeps browsing filters and ignores unsupported stored activity keys', async () => {
-    await saveBrowsing({ scope: 'all', activities: ['voice'], query: 'ISS' });
-    expect(await loadBrowsing()).toEqual({ scope: 'all', activities: ['voice'], query: 'ISS' });
-    await (await db()).put('settings', { scope: 'invalid', activities: ['voice', 'invalid'], query: 9 }, 'browsing');
-    expect(await loadBrowsing()).toEqual({ scope: 'recommended', activities: ['voice'], query: '' });
   });
 
   it('records one listening result per pass and keeps locations distinct', async () => {

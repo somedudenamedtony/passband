@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openFuturePass, openNextLive, setup } from './v2';
 
 test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
 
@@ -30,29 +31,28 @@ async function edgeSwipe(page: Page) {
 }
 
 test('swiping in from the left edge goes back', async ({ page }) => {
-  await page.goto('./');
-  await page.getByPlaceholder('CN87uo').fill('CN87uo');
-  await page.getByRole('button', { name: 'Show my passes' }).click();
-  await page.getByRole('heading', { name: 'Next 24 hours' }).waitFor({ timeout: 30_000 });
+  await setup(page);
 
   // A sheet closes.
-  await page.getByRole('button', { name: 'Settings' }).click();
-  await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
+  await page.getByRole('button', { name: /^Location: / }).click();
+  await expect(page.getByRole('dialog', { name: 'Locations' })).toBeVisible();
   await edgeSwipe(page);
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
   // The previous tab comes back.
-  await page.getByRole('tab', { name: 'Map', exact: true }).click();
+  await page.getByRole('tab', { name: 'Plan', exact: true }).click();
   await page.getByRole('tab', { name: 'Log', exact: true }).click();
   await edgeSwipe(page);
-  await expect(page.getByRole('tab', { name: 'Map', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Plan', exact: true })).toHaveAttribute('aria-selected', 'true');
   await edgeSwipe(page);
-  await expect(page.getByRole('tab', { name: 'Passes', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Now', exact: true })).toHaveAttribute('aria-selected', 'true');
 
-  // The live screen closes.
-  await page.getByRole('button', { name: /^(Prepare for pass|Track live)$/ }).click();
+  // A pass goes back to Now, and the live screen closes to its pass.
+  await openFuturePass(page);
+  await edgeSwipe(page);
+  await expect(page.getByRole('tab', { name: 'Now', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await openNextLive(page);
   await expect(page.getByRole('dialog', { name: 'Live pass' })).toBeVisible();
   await edgeSwipe(page);
   await expect(page.getByRole('dialog', { name: 'Live pass' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Next 24 hours' })).toBeVisible();
 });
