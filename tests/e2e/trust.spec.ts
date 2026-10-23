@@ -50,8 +50,17 @@ test('a linear transponder pass tunes by one true frequency', async ({ page }) =
   await page.getByRole('link', { name: 'Search satellites' }).click();
   await page.getByLabel('Find a satellite').fill('RS-44');
   await page.getByRole('link', { name: /^RS-44/ }).click();
-  await page.getByRole('button', { name: /^Show the .* pass$/ }).first().click({ timeout: 30_000 });
-  await expect(page).toHaveURL(/\/pass\/\d+-\d+$/);
+  // A pass already up may end mid-test, and a pass that has ended shows no frequencies: take the
+  // first one that hasn't started.
+  const passes = page.getByRole('button', { name: /^Show the .* pass$/ });
+  await passes.first().waitFor({ timeout: 30_000 });
+  for (let i = 0; ; i++) {
+    await passes.nth(i).click();
+    await expect(page).toHaveURL(/\/pass\/\d+-\d+$/);
+    const aos = Number(/-(\d+)$/.exec(page.url())![1]);
+    if (aos > (await page.evaluate(() => Date.now())) + 60_000) break;
+    await page.goBack();
+  }
   await page.goto(`${new URL(page.url()).pathname}/live`);
 
   const band = page.getByRole('region', { name: 'Passband' });
